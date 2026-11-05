@@ -21,6 +21,7 @@ include(FeatureSummary)
 option(ANKH_DE_STYLE       "Compiler le style des contrôles (lot 3)"      ON)
 option(ANKH_DE_DECORATION  "Compiler la décoration des fenêtres (lot 2)"  ON)
 option(ANKH_DE_DATA        "Installer les thèmes et les réglages"         ON)
+option(ANKH_DE_SESSION     "Installer la session (DE-010)"                ON)
 option(ANKH_DE_PLASMA_NON_TESTE
     "Construire malgré une version de Plasma non suivie (DE-008)"         OFF)
 
@@ -72,6 +73,39 @@ if(ANKH_DE_STYLE)
 endif()
 if(ANKH_DE_DECORATION)
     add_subdirectory(src/decoration)
+endif()
+
+# --- La session (DE-010) --------------------------------------------------
+# C'est elle qui fait d'Ankh DE un environnement de bureau qu'on CHOISIT à
+# l'écran de connexion, et non un thème qu'on applique depuis Plasma. Et
+# c'est elle qui porte les polices, le rendu, les animations et l'accent, que
+# le thème global ne sait pas porter (vérifié le 2026-11-05).
+if(ANKH_DE_SESSION)
+    set(ANKH_DE_BINDIR "${CMAKE_INSTALL_PREFIX}/${KDE_INSTALL_BINDIR}")
+    set(ANKH_DE_CONFIGDIR "${CMAKE_INSTALL_PREFIX}/${KDE_INSTALL_DATADIR}/ankh-de/config")
+    set(ANKH_DE_VERSION "${PROJECT_VERSION}")
+    # KDE_INSTALL_QTPLUGINDIR peut être absolu ou relatif au préfixe.
+    if(IS_ABSOLUTE "${KDE_INSTALL_QTPLUGINDIR}")
+        set(ANKH_DE_PLUGINDIR "${KDE_INSTALL_QTPLUGINDIR}")
+    else()
+        set(ANKH_DE_PLUGINDIR "${CMAKE_INSTALL_PREFIX}/${KDE_INSTALL_QTPLUGINDIR}")
+    endif()
+
+    configure_file(src/session/ankh-de-session.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/ankh-de-session @ONLY)
+    configure_file(src/session/ankh-de.desktop.in
+                   ${CMAKE_CURRENT_BINARY_DIR}/ankh-de.desktop @ONLY)
+
+    install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/ankh-de-session
+            DESTINATION ${KDE_INSTALL_BINDIR})
+    # Plasma 6.8 est Wayland seul (ANKH-DE-SPEC §5.8) : pas de session X11.
+    install(FILES ${CMAKE_CURRENT_BINARY_DIR}/ankh-de.desktop
+            DESTINATION ${KDE_INSTALL_DATADIR}/wayland-sessions)
+
+    # La couche de valeurs par défaut que la session place dans
+    # XDG_CONFIG_DIRS. Elle n'est jamais copiée chez l'utilisateur.
+    install(FILES src/config/kdeglobals src/config/kwinrc
+            DESTINATION ${KDE_INSTALL_DATADIR}/ankh-de/config)
 endif()
 
 # --- Thèmes et réglages ---------------------------------------------------
@@ -134,6 +168,10 @@ if(ANKH_DE_DATA)
             install(DIRECTORY "${ANKH_DE_PREPARE}/icones/${ANKH_DE_ICONS}"
                 DESTINATION ${KDE_INSTALL_DATADIR}/icons
             )
+        else()
+            # « Fluent-Ankh » n'est pas encore fabriqué (lot 9). Le dire,
+            # plutôt que de laisser un if(EXISTS) qui ne se vérifie jamais.
+            message(STATUS "Ankh DE : ${ANKH_DE_ICONS} absent de third_party/sortie/icones")
         endif()
     endforeach()
     if(EXISTS "${ANKH_DE_PREPARE}/themes/Fluent-Ankh")

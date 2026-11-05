@@ -1,0 +1,16 @@
+[Desktop Entry]
+Exec=@ANKH_DE_BINDIR@/ankh-de-session
+TryExec=@ANKH_DE_BINDIR@/ankh-de-session
+# « KDE », et non « Ankh-DE;KDE » : XDG_CURRENT_DESKTOP sert aussi à choisir
+# le portail XDG (dialogues de fichiers des applications Flatpak) et le thème
+# de plateforme de Qt. Un premier nom inconnu ferait retomber le portail sur
+# un défaut, au risque de casser ce qui marche — et la règle du projet est de
+# ne rien casser (CLAUDE.md §3). Notre identité passe par XDG_SESSION_DESKTOP,
+# que le gestionnaire de connexion remplit avec le nom de ce fichier.
+# « Ankh-DE;KDE » est à reprendre quand le comportement des portails aura été
+# vérifié en VM.
+DesktopNames=KDE
+Name=Ankh DE
+Comment=Windows 11 geometry, Ankh colours
+Comment[fr]=La géométrie de Windows 11, les couleurs d'Ankh
+X-KDE-PluginInfo-Version=@ANKH_DE_VERSION@

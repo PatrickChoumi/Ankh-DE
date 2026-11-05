@@ -1,0 +1,66 @@
+#!/bin/sh
+# Session d'Ankh DE (DE-010).
+#
+# Elle ne remplace ni le compositeur, ni le gestionnaire de session, ni le
+# shell : elle lance la session de Plasma, en ayant d'abord placé nos valeurs
+# par défaut dans XDG_CONFIG_DIRS.
+#
+# Pourquoi c'est nécessaire : le thème global ne sait pas porter les polices,
+# le rendu, les durées d'animation ni l'accent qui suit le fond d'écran.
+# Vérifié le 2026-11-05 : après « plasma-apply-lookandfeel -a », la clé
+# « font » reste vide. L'outil ne recopie qu'un ensemble fixe de clés, et ni
+# Breeze ni Fedora ne mettent de police dans leur « defaults ».
+#
+# Pourquoi XDG_CONFIG_DIRS plutôt qu'écrire dans un fichier : les valeurs y
+# sont lues APRÈS celles de l'utilisateur, qui gardent donc la priorité, et
+# AVANT celles de la distribution. Rien n'est écrasé, rien n'est écrit chez
+# l'utilisateur, et quitter la session suffit à tout défaire.
+set -eu
+
+ANKH_DE_CONFIG="@ANKH_DE_CONFIGDIR@"
+
+if [ ! -r "${ANKH_DE_CONFIG}/kdeglobals" ]; then
+    echo "ankh-de-session : ${ANKH_DE_CONFIG}/kdeglobals est introuvable." >&2
+    echo "L'installation d'Ankh DE est incomplète ; la session s'ouvrira sans" >&2
+    echo "ses polices ni ses animations." >&2
+fi
+
+# La valeur par défaut de la spécification XDG est /etc/xdg : si la variable
+# est vide, la remplacer sans la rétablir priverait la session des réglages
+# de la distribution.
+XDG_CONFIG_DIRS="${XDG_CONFIG_DIRS:-/etc/xdg}"
+XDG_CONFIG_DIRS="${ANKH_DE_CONFIG}:${XDG_CONFIG_DIRS}"
+export XDG_CONFIG_DIRS
+
+# Qt et KWin ne cherchent leurs greffons que dans les chemins compilés dans
+# Qt. Installé ailleurs que dans /usr — par exemple /usr/local, le défaut de
+# l'installateur — notre style et notre décoration sont invisibles, et
+# Plasma retombe sur Breeze SANS RIEN DIRE. Vérifié le 2026-11-05 :
+# « plasma-apply-lookandfeel » n'écrit même pas widgetStyle quand il
+# n'arrive pas à charger le greffon.
+ANKH_DE_PLUGINDIR="@ANKH_DE_PLUGINDIR@"
+if [ -d "${ANKH_DE_PLUGINDIR}" ]; then
+    QT_PLUGIN_PATH="${ANKH_DE_PLUGINDIR}${QT_PLUGIN_PATH:+:${QT_PLUGIN_PATH}}"
+    export QT_PLUGIN_PATH
+fi
+
+# Repère pour nos propres scripts et pour le signalement de bogues. Il ne
+# remplace pas XDG_CURRENT_DESKTOP, qui reste « KDE » (voir ankh-de.desktop).
+ANKH_DE_SESSION=1
+export ANKH_DE_SESSION
+
+# Plasma démarre normalement à travers ce lanceur, qui lui donne un bus de
+# session s'il n'en a pas. Son chemin varie selon la distribution.
+for wrapper in \
+    /usr/libexec/plasma-dbus-run-session-if-needed \
+    /usr/lib/plasma-dbus-run-session-if-needed \
+    /usr/lib/x86_64-linux-gnu/libexec/plasma-dbus-run-session-if-needed \
+    /usr/lib64/libexec/plasma-dbus-run-session-if-needed
+do
+    if [ -x "${wrapper}" ]; then
+        exec "${wrapper}" startplasma-wayland "$@"
+    fi
+done
+
+# Sans lui, on lance directement : Plasma sait aussi se passer du lanceur.
+exec startplasma-wayland "$@"

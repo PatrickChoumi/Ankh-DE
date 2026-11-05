@@ -61,3 +61,31 @@ jobs:
             bench/sortie/*.json
             bench/sortie/rapport.md
           if-no-files-found: error
+
+  session:
+    name: Session et thème global (Fedora 44)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    defaults:
+      run:
+        shell: bash
+    steps:
+      # DE-010 : ce job relit CHAQUE clé qu'Ankh DE promet d'appliquer.
+      # C'est l'absence d'un tel test qui a laissé passer, le 2026-11-05, onze
+      # réglages silencieusement ignorés par le thème global — dont toutes les
+      # polices. Il ne demande ni VM ni session graphique.
+      - name: Paquets
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            cmake gcc-c++ extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtbase-gui \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
+            kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
+            kf6-frameworkintegration-devel kdecoration-devel \
+            plasma-workspace plasma-integration \
+            git findutils
+
+      - uses: actions/checkout@v5
+
+      - name: Relire chaque clé promise
+        run: ./tests/session-et-theme.sh

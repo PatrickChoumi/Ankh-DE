@@ -58,6 +58,14 @@ greffons="$(find "${prefixe}" -type d -name styles -printf '%h\n' | head -1)"
 export QT_PLUGIN_PATH="${greffons}"
 echo "   style : $(find "${prefixe}" -name 'ankh6.so')"
 
+# La couche de valeurs par défaut que la session installe (DE-010).
+config_livre="${prefixe}/share/ankh-de/config"
+if [[ ! -r "${config_livre}/kdeglobals" ]]; then
+    echo "${config_livre}/kdeglobals n'a pas été installé." >&2
+    exit 1
+fi
+echo "   valeurs par défaut : ${config_livre}/kdeglobals"
+
 # --- 2. Un environnement de session minimal ------------------------------
 # Le style lit les couleurs par KColorScheme, donc dans kdeglobals. Appliquer
 # un jeu de couleurs, c'est exactement recopier son fichier .colors dedans :
@@ -84,14 +92,21 @@ preparer_session() { # $1 : fichier .colors
         famille="$(fc-match -f '%{family[0]}' sans-serif 2>/dev/null || echo 'DejaVu Sans')"
         echo "   NOTE : Selawik absente (third_party/preparer.sh non lancé) ; police « ${famille} »" >&2
     fi
-    # 10,5 points = 14 px à 96 ppp (WinUI « Body »).
-    cat >> "${conf}/kdeglobals" << CONF
+    # Les polices ne sont PAS écrites ici : elles viennent de la couche que
+    # la session d'Ankh DE place dans XDG_CONFIG_DIRS, c'est-à-dire du
+    # fichier réellement installé (src/config/kdeglobals). Le banc mesure
+    # ainsi ce qu'on livre, et non une configuration écrite pour l'occasion.
+    # Quand Selawik manque, on retombe sur la police du système, et seule
+    # cette substitution est écrite ici.
+    if [[ "${famille}" != Selawik ]]; then
+        cat >> "${conf}/kdeglobals" << CONF
 
 [General]
 font=${famille},10.5,-1,5,50,0,0,0,0,0
 menuFont=${famille},10.5,-1,5,50,0,0,0,0,0
 smallestReadableFont=${famille},9,-1,5,50,0,0,0,0,0
 CONF
+    fi
     echo "${conf}"
 }
 
@@ -113,6 +128,9 @@ capturer() { # $1 : nom du thème, $2 : fichier .colors, $3 : style Qt, $4 : ét
     (
         export DISPLAY=":${ecran}"
         export XDG_CONFIG_HOME="${conf}"
+        # Exactement ce que fait ankh-de-session : nos valeurs par défaut
+        # après celles de l'utilisateur, avant celles de la distribution.
+        export XDG_CONFIG_DIRS="${config_livre}:/etc/xdg"
         export QT_QPA_PLATFORM=xcb
         # Comme dans une vraie session : le greffon de thème de plateforme de
         # Plasma, s'il est installé. La galerie applique de toute façon la

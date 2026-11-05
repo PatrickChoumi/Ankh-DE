@@ -1,0 +1,46 @@
+# Valeurs par défaut d'Ankh DE que le thème global ne sait pas porter (DE-010).
+#
+# Ce fichier n'est JAMAIS copié chez l'utilisateur. La session d'Ankh DE place
+# son dossier dans XDG_CONFIG_DIRS : KConfig le lit alors comme une couche de
+# valeurs par défaut, APRÈS ~/.config/kdeglobals — tout réglage de
+# l'utilisateur gagne donc — et AVANT /etc/xdg, les réglages de la
+# distribution. Quitter la session suffit à tout défaire.
+#
+# Pourquoi il existe : vérifié le 2026-11-05, « plasma-apply-lookandfeel -a »
+# ne recopie qu'un ensemble fixe de clés depuis contents/defaults. Les polices
+# n'en font pas partie — ni Breeze ni Fedora n'en mettent dans le leur.
+
+[General]
+# Selawik, le sosie libre de Segoe UI publié par Microsoft sous OFL 1.1.
+# 10,5 points = 14 px à 96 ppp, la taille « Body » de WinUI
+# (CommonStyles/TextBlock_themeresources.xaml, BodyTextBlockFontSize).
+font=Selawik,10.5,-1,5,50,0,0,0,0,0
+menuFont=Selawik,10.5,-1,5,50,0,0,0,0,0
+toolBarFont=Selawik,10.5,-1,5,50,0,0,0,0,0
+# 9 points = 12 px, la taille « Caption » de WinUI.
+smallestReadableFont=Selawik,9,-1,5,50,0,0,0,0,0
+# Le code et le terminal gardent JetBrains Mono (mon choix du 2026-10-15,
+# plutôt que Cascadia Mono).
+fixed=JetBrains Mono,10,-1,5,50,0,0,0,0,0
+
+# Rendu en niveaux de gris, contours légers : celui des applications WinUI et
+# celui d'AnduinOS. Ces trois clés ne valent que pour les applications Qt
+# lancées hors d'une session ; dans la session, c'est fontconfig qui décide
+# (src/fontconfig/29-ankh-rendu.conf).
+XftAntialias=true
+XftHintStyle=hintslight
+XftSubPixel=none
+
+# L'accent suit le fond d'écran, comme l'accent « Automatique » de
+# Windows 11 (DE-004). Les fonds d'Ankh gardent le violet d'Ankh.
+accentColorFromWallpaper=true
+
+[WM]
+# Le titre des fenêtres est en légende : 9 points = 12 px, graisse normale
+# (page basics/titlebar-design de Microsoft).
+activeFont=Selawik,9,-1,5,50,0,0,0,0,0
+
+[KDE]
+# 5/6 : les durées de Kirigami (50, 100, 200, 400 ms) deviennent 42, 83, 167
+# et 333 ms, celles de Windows 11 (page signature-experiences/motion).
+AnimationDurationFactor=0.8333333

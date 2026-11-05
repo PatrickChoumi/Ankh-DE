@@ -1,0 +1,27 @@
+# Valeurs par défaut de KWin pour Ankh DE que le thème global ne porte pas
+# (DE-010). Même mécanisme que kdeglobals : lues par XDG_CONFIG_DIRS, donc
+# après les réglages de l'utilisateur et avant ceux de la distribution.
+#
+# La décoration elle-même (library, BorderSize) est portée par le thème
+# global, qui sait le faire. Mais PAS la disposition des boutons : vérifié le
+# 2026-11-05, « plasma-apply-lookandfeel » n'écrit jamais ButtonsOnLeft ni
+# ButtonsOnRight. Sans ces deux lignes, les fenêtres n'auraient pas les
+# boutons de Windows 11.
+
+[org.kde.kdecoration2]
+# L'icône de l'application à gauche (M), puis réduire, agrandir et fermer à
+# droite (IAX) : la disposition de Windows 11
+# (pages basics/titlebar-design et develop/title-bar de Microsoft).
+ButtonsOnLeft=M
+ButtonsOnRight=IAX
+
+[Effect-blur]
+# Verre de Windows 11 : Acrylic, flou de rayon 30 et grain de 0,02
+# (AcrylicBrush.h de WinUI). Les échelles de KWin ne sont pas celles de
+# Windows : ces deux valeurs sont un point de départ, à mesurer au lot 4.
+BlurStrength=10
+NoiseStrength=2
+
+[TabBox]
+# Alt+Tab : celui de Breeze en attendant le lot 7, qui donnera le nôtre.
+LayoutName=org.kde.breeze.desktop
