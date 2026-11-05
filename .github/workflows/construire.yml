@@ -29,7 +29,7 @@ jobs:
           - nom: Arch
             image: archlinux:latest
             paquets: >-
-              cmake gcc extra-cmake-modules qt6-base qt6-declarative kconfig
+              cmake make gcc extra-cmake-modules qt6-base qt6-declarative kconfig
               kcoreaddons kguiaddons kiconthemes kwindowsystem kcolorscheme
               frameworkintegration kdecoration git
             installer: pacman -Syu --noconfirm
@@ -41,15 +41,27 @@ jobs:
               libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev
               libkf6frameworkintegration-dev libkdecorations3-dev git
             installer: >-
-              sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y'
+              apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y
     steps:
       - name: Paquets de construction
         run: ${{ matrix.installer }} ${{ matrix.paquets }}
 
       - uses: actions/checkout@v5
 
+      - name: Version de Plasma visée, et celle de la distribution
+        run: |
+          set -euo pipefail
+          echo "Ankh DE vise : $(grep '^plasma=' src/decoration/VERSION-BREEZE)"
+          echo "Distribution : kdecoration $(pkg-config --modversion KDecoration3 2>/dev/null || echo 'version inconnue')"
+
       - name: Configurer
-        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+        # DE-008 : cette version d'Ankh DE vise UNE version de Plasma. Ce job
+        # prouve que le code compile avec la chaîne d'outils de chaque
+        # distribution ; il ne leur demande pas d'avoir déjà cette version.
+        # Le test strict, c'est « Banc », sur la version visée.
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
+            -DANKH_DE_PLASMA_NON_TESTE=ON
 
       - name: Compiler
         run: cmake --build build -j"$(nproc)"
@@ -76,6 +88,21 @@ jobs:
             echo "::error::seulement ${trouve} greffon(s) construit(s) ; 2 attendus"
             exit 1
           fi
+
+      # DE-008 : le garde-fou doit refuser une version non visée. On le
+      # prouve en lui annonçant une version absurde.
+      - name: Le garde-fou refuse bien une version non visée
+        run: |
+          set -euo pipefail
+          sed -i 's/^plasma=.*/plasma=0.1/' src/decoration/VERSION-BREEZE
+          if cmake -S . -B /tmp/garde > /tmp/garde.log 2>&1; then
+            echo "::error::le garde-fou a laissé passer une version non visée"
+            exit 1
+          fi
+          grep -q "Ankh DE suit Plasma 0.1" /tmp/garde.log \
+            || { echo "::error::le refus ne vient pas du garde-fou"; cat /tmp/garde.log; exit 1; }
+          git checkout src/decoration/VERSION-BREEZE
+          echo "Le garde-fou refuse bien, et dit pourquoi."
 
       - name: Vérifier ce qui est installé
         run: |
