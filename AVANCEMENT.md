@@ -75,6 +75,82 @@ kdecoration 6.8.2), pas seulement été écrit.
   `python3-fontmake` sur Fedora : ces paquets n'existent pas sur Fedora 44. Ce sont `xcursorgen`
   et `fontmake`. Personne n'aurait pu suivre ces instructions.
 
+## 2026-11-05, fin de journée — la CI est verte, et la voie des VM est établie
+
+**Tous les jobs passent**, sur le dépôt, pas en local :
+
+| Job | Résultat |
+|---|---|
+| Construire — Fedora 44 | vert |
+| Construire — Arch | vert |
+| Construire — Ubuntu 26.04 | vert |
+| Construire — Documents et licences | vert |
+| Banc — mesures et captures | vert, **aucun écart** |
+| VM — ce que permet le runner | vert |
+
+Le banc tourne donc à chaque PR : il construit le style, ouvre la galerie
+sous Xvfb, relève ce que le style impose, le compare aux cibles de WinUI, et
+joint les captures « avant / après ». Les mesures relevées **par la CI** sont
+les mêmes qu'en local, Breeze en regard :
+
+| Mesure | Windows 11 | Ankh DE | Breeze |
+|---|---|---|---|
+| Bouton | 32 px | **32** | 34 |
+| Champ | 32 px | **32** | 31 |
+| Case à cocher avec texte | 32 px | **32** | 21 |
+| Élément de liste | 40 px | **40** | 23 |
+| Barre de défilement | 12 px | **12** | 21 |
+| Barre de progression | 3 px | **3** | 6 |
+| Poignée du curseur | 18 px | **18** | 20 |
+| Police | Selawik 14 px | **Selawik 14** | Selawik 14 |
+
+### Quatre bugs de CI, tous réels
+
+1. **Ubuntu** : la commande d'installation était `sh -c 'apt-get … -y'` suivie
+   des paquets, qui devenaient des arguments de `sh` et non de `apt-get` :
+   rien n'était installé.
+2. **Ubuntu** : le paquet des en-têtes de frameworkintegration n'existe pas
+   sous le nom `libkf6frameworkintegration-dev`. Sur Ubuntu 26.04 c'est
+   **`libkf6style-dev`**. Le mauvais nom était aussi dans `docs/INSTALL.md`
+   et dans `installer.sh`.
+3. **Arch** : `gcc` n'y tire pas `make`.
+4. **Ubuntu** : GitHub a exécuté les étapes avec `sh` (dash), qui ne connaît
+   pas `done < <(…)`. `bash` est pourtant dans l'image : le shell d'un
+   `run:` en conteneur n'est pas garanti, il faut le déclarer.
+
+Et un cinquième, propre au conteneur : l'étape qui prouve le garde-fou
+restaurait son fichier par `git checkout`, que git refuse dans un conteneur
+(« detected dubious ownership », code 128).
+
+### Les tests en VM sur GitHub : la réponse est oui
+
+Le job `VM` ne teste pas encore Ankh DE : il **établit ce que le runner
+permet**, parce qu'on ne bâtit pas un test sur une supposition. Relevé le
+2026-11-05 sur `ubuntu-latest` :
+
+- `/dev/kvm` **présent** (`crw-rw---- root:kvm`) ;
+- **pas accessible en écriture** par l'utilisateur du runner : il faudra
+  `sudo`, ou ajouter l'utilisateur au groupe `kvm` ;
+- extensions de virtualisation du processeur **présentes** ;
+- 4 cœurs, 15 Gio de mémoire, 86 Go de disque libre ;
+- QEMU 8.2.2, qui **propose l'accélération kvm** ;
+- **une VM accélérée démarre réellement** (SeaBIOS s'exécute sur le port
+  série).
+
+C'est donc la voie pour mesurer ce que le conteneur ne peut pas : la
+décoration des fenêtres (lot 2), la barre des tâches (lot 4) et Démarrer
+(lot 5).
+
+### Le test en session dans un conteneur : échoué, et consigné
+
+Avant la VM, j'ai essayé de faire tourner KWin dans le conteneur, ce qui
+aurait été bien plus rapide. Les constats sont dans l'en-tête de
+`bench/session.sh`, qui est gardé pour cela : `kwin_wayland --x11-display`
+sort avec le code 1 sans écrire une ligne sous KWin 6.8.2, et aucun greffon
+de backend n'est trouvable — Plasma 6.8 étant Wayland seul, le backend X11
+imbriqué ne semble plus livré par Fedora. `kwin_x11`, encore en 6.7.5 chez
+Fedora, n'apporte pas de binaire utilisable à côté de kwin 6.8.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 | Affirmation | État |
@@ -91,7 +167,10 @@ kdecoration 6.8.2), pas seulement été écrit.
 | Le garde-fou des licences refuse un actif non déclaré ou un nom interdit | **testé** ici, sur deux violations plantées |
 | Le CMake refuse une version de Plasma non suivie | **testé** ici, dans les trois cas (version suivie, autre version, autre version avec `-DANKH_DE_PLASMA_NON_TESTE=ON`) |
 | `docs/FIDELITE.md` reste à jour avec `bench/jetons.toml` | **testé** ici (`bench/fidelite.py --verifier`) |
-| Les workflows de CI font ce qu'ils annoncent | **non vérifié** — GitHub Actions ne tourne qu'une fois le dépôt poussé |
+| Les workflows de CI font ce qu'ils annoncent | **vérifié** le 2026-11-05 : les six jobs passent sur le dépôt |
+| Le code compile sur Arch et sur Ubuntu 26.04 | **vérifié** par la CI le 2026-11-05 |
+| Une VM accélérée est possible sur un runner GitHub | **vérifié** le 2026-11-05 (job `VM`) |
+| La décoration des fenêtres (lot 2) tient ses mesures | **non vérifié ici** — demande une session ; mesuré dans Ankh seulement |
 
 **Rien de ce dépôt n'a encore tourné sur une machine.** Tant que le lot 0 n'est pas fini, la
 seule preuve de fidélité est celle d'Ankh, sur Fedora.

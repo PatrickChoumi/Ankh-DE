@@ -38,8 +38,8 @@ sur Arch ni sur Ubuntu (DE-002).
 | 0.3 | `third_party/preparer.sh` : police, curseurs, thème GTK, sans rien de Fedora | fait — **exécuté de bout en bout** le 2026-11-05 (Selawik, 47 curseurs, thème GTK) |
 | 0.4 | `installer.sh` et `desinstaller.sh` : système ou dossier personnel, barre en option, retour arrière | fait |
 | 0.5 | Banc de mesure porté | **fait pour le style** : `bench/galerie` + `bench/captures.sh` + `bench/rapport.py` mesurent et photographient sans VM ni Plasma ; toutes les mesures du lot 3 conformes. **Reste le shell** (décoration, barre, Démarrer), qui demande une session |
-| 0.6 | CI : construction sur Fedora, Arch et Ubuntu, plus le banc | workflows écrits ; `banc.yml` rejoue les mesures et joint les captures |
-| 0.7 | Test en session : Plasma fraîche, thème appliqué, les 20 clés relues, décoration mesurée | **à faire** — c'est ce qui reste de plus lourd |
+| 0.6 | CI : construction sur Fedora, Arch et Ubuntu, plus le banc | **fait et vert** le 2026-11-05 : les six jobs passent, le banc rejoue les mesures à chaque PR et joint les captures |
+| 0.7 | Test en session : Plasma fraîche, thème appliqué, les 20 clés relues, décoration mesurée | **à faire** — la voie est tranchée : une VM sur un runner GitHub, dont le job `VM` a établi la faisabilité (`/dev/kvm`, qemu 8.2.2, VM accélérée qui démarre). Le conteneur ne suffit pas : voir l'en-tête de `bench/session.sh` |
 | 0.8 | Paquets : `.spec` Fedora, `PKGBUILD` Arch, `debian/` Ubuntu | squelettes écrits, non testés |
 | 0.9 | Garde-fou de licence : la CI refuse un fichier dont la provenance n'est pas dans `LICENSES/` | fait — `ci/verifier-licences.sh`, testé sur deux violations plantées |
 
