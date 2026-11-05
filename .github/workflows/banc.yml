@@ -19,6 +19,9 @@ jobs:
     name: Mesures et captures (Fedora 44)
     runs-on: ubuntu-latest
     container: fedora:44
+    defaults:
+      run:
+        shell: bash
     steps:
       - name: Paquets
         run: |
