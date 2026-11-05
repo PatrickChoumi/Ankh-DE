@@ -38,6 +38,7 @@
 #include <QToolButton>
 #include <QTimer>
 #include <QVBoxLayout>
+#include <QWindow>
 
 #include <KColorScheme>
 #include <KConfigGroup>
@@ -219,7 +220,7 @@ int main(int argc, char **argv)
 
         const int grooveProgression = progression->hauteurDeLaBarreDessinee();
 
-        QJsonObject m{
+        QJsonObject m = QJsonObject{
             {QStringLiteral("police.famille"), QFontInfo(police).family()},
             {QStringLiteral("police.corps.px"), QFontInfo(police).pixelSize()},
             {QStringLiteral("controle.bouton.hauteur"), bNormal->sizeHint().height()},
@@ -251,6 +252,21 @@ int main(int argc, char **argv)
             {QStringLiteral("diag.police_demandee"), police.family()},
             {QStringLiteral("diag.police_points"), police.pointSizeF()},
         };
+        // Géométrie du cadre, telle que le gestionnaire de fenêtres la donne.
+        // Hors session (pas de KWin), frameGeometry vaut geometry : les
+        // mesures sont alors nulles, et le banc les ignore.
+        if (const QWindow *handle = fenetre->windowHandle()) {
+            const QRect cadre = handle->frameGeometry();
+            const QRect client = handle->geometry();
+            const int hautBarre = client.top() - cadre.top();
+            if (hautBarre > 0) {
+                m.insert(QStringLiteral("fenetre.barre_de_titre.hauteur"), hautBarre);
+                m.insert(QStringLiteral("fenetre.bord.gauche"), client.left() - cadre.left());
+                m.insert(QStringLiteral("fenetre.bord.droit"), cadre.right() - client.right());
+                m.insert(QStringLiteral("fenetre.bord.bas"), cadre.bottom() - client.bottom());
+            }
+        }
+
         QFile f(fichierMesures);
         if (f.open(QIODevice::WriteOnly)) {
             f.write(QJsonDocument(m).toJson());

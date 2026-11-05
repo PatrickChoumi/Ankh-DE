@@ -1,0 +1,64 @@
+name: VM
+
+# Première étape avant d'écrire un test en VM : établir ce que les runners
+# de GitHub permettent réellement, au lieu de le supposer.
+#
+# Ce job ne teste pas encore Ankh DE. Il répond à une question : peut-on
+# faire tourner une machine virtuelle accélérée ici ? De sa réponse dépend
+# la façon dont la décoration des fenêtres, la barre des tâches et Démarrer
+# seront mesurées (bench/session.sh dit pourquoi le conteneur n'y suffit pas).
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 7 1 * *'   # une fois par mois : la réponse peut changer
+
+jobs:
+  capacites:
+    name: Que permet le runner ?
+    runs-on: ubuntu-latest
+    steps:
+      - name: Virtualisation
+        run: |
+          set -uo pipefail
+          echo "## Ce que permet le runner" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          if [[ -e /dev/kvm ]]; then
+            echo "- \`/dev/kvm\` : **présent** ($(stat -c '%A %U:%G' /dev/kvm))" >> "$GITHUB_STEP_SUMMARY"
+            echo "- accessible en écriture : $([[ -w /dev/kvm ]] && echo oui || echo non)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- \`/dev/kvm\` : **absent** — une VM tournerait en émulation pure, trop lente" >> "$GITHUB_STEP_SUMMARY"
+          fi
+          echo "- cpu : $(grep -c ^processor /proc/cpuinfo), mémoire : $(free -g | awk '/^Mem:/{print $2}') Gio" >> "$GITHUB_STEP_SUMMARY"
+          echo "- disque libre : $(df -h --output=avail / | tail -1 | tr -d ' ')" >> "$GITHUB_STEP_SUMMARY"
+          grep -qE '^flags.*\b(vmx|svm)\b' /proc/cpuinfo \
+            && echo "- extensions de virtualisation du processeur : présentes" >> "$GITHUB_STEP_SUMMARY" \
+            || echo "- extensions de virtualisation du processeur : absentes" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: QEMU
+        run: |
+          set -uo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq qemu-system-x86 > /dev/null
+          echo "- qemu : $(qemu-system-x86_64 --version | head -1)" >> "$GITHUB_STEP_SUMMARY"
+          if qemu-system-x86_64 -accel help 2>&1 | grep -qw kvm; then
+            echo "- accélération **kvm** proposée par qemu" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- qemu ne propose pas kvm" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Démarrage réel d'une VM
+        run: |
+          set -uo pipefail
+          # Le plus petit démarrage qui prouve quelque chose : le firmware
+          # SeaBIOS s'exécute et écrit sur le port série, sans disque.
+          timeout 60 qemu-system-x86_64 \
+            -accel kvm -m 512 -nographic -serial mon:stdio \
+            -display none -no-reboot -boot n 2>&1 | head -20 > /tmp/vm.log || true
+          if [[ -s /tmp/vm.log ]]; then
+            echo "- une VM accélérée **démarre** ici :" >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+            head -6 /tmp/vm.log >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "- la VM n'a rien écrit : à creuser" >> "$GITHUB_STEP_SUMMARY"
+          fi
