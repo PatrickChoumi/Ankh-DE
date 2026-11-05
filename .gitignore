@@ -1,0 +1,19 @@
+# Construction
+/build/
+/build-*/
+
+# Résultat de third_party/preparer.sh : jamais versionné (DE-005, LICENSES/)
+/third_party/sortie/
+
+# Captures et rapports du banc
+/bench/sortie/
+*.png
+!/docs/images/*.png
+
+# Divers
+*.swp
+.DS_Store
+
+# Python
+__pycache__/
+*.py[cod]

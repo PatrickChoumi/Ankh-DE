@@ -1,0 +1,130 @@
+name: Construire
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  # Le lot 0 tient à ce job : le code n'a jamais été construit ailleurs que
+  # sur Fedora 44, dans l'image d'Ankh (DE-001, ROADMAP lot 0.6).
+  compiler:
+    name: ${{ matrix.nom }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nom: Fedora 44
+            image: fedora:44
+            paquets: >-
+              cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel
+              kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel
+              kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel
+              kf6-frameworkintegration-devel kdecoration-devel
+              qt6-qtdeclarative-devel git
+            installer: dnf install -y
+          - nom: Arch
+            image: archlinux:latest
+            paquets: >-
+              cmake gcc extra-cmake-modules qt6-base qt6-declarative kconfig
+              kcoreaddons kguiaddons kiconthemes kwindowsystem kcolorscheme
+              frameworkintegration kdecoration git
+            installer: pacman -Syu --noconfirm
+          - nom: Ubuntu 26.04
+            image: ubuntu:26.04
+            paquets: >-
+              cmake g++ extra-cmake-modules qt6-base-dev qt6-declarative-dev
+              libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev
+              libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev
+              libkf6frameworkintegration-dev libkdecorations3-dev git
+            installer: >-
+              sh -c 'apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y'
+    steps:
+      - name: Paquets de construction
+        run: ${{ matrix.installer }} ${{ matrix.paquets }}
+
+      - uses: actions/checkout@v5
+
+      - name: Configurer
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
+
+      - name: Compiler
+        run: cmake --build build -j"$(nproc)"
+
+      - name: Installer dans un dossier d'essai
+        run: cmake --install build --prefix "${PWD}/essai"
+
+      # Un greffon à qui il manque un symbole se charge à moitié : pire qu'un
+      # greffon qui refuse de se charger (CLAUDE.md §3.14).
+      - name: Vérifier les bibliothèques et les symboles
+        run: |
+          set -euo pipefail
+          trouve=0
+          while read -r greffon; do
+            echo "== ${greffon}"
+            ldd -r "${greffon}" 2>&1 | tee /tmp/ldd.txt
+            if grep -qE 'not found|undefined symbol' /tmp/ldd.txt; then
+              echo "::error::${greffon} : bibliothèque ou symbole manquant"
+              exit 1
+            fi
+            trouve=$((trouve + 1))
+          done < <(find essai -name '*.so')
+          if (( trouve < 2 )); then
+            echo "::error::seulement ${trouve} greffon(s) construit(s) ; 2 attendus"
+            exit 1
+          fi
+
+      - name: Vérifier ce qui est installé
+        run: |
+          set -euo pipefail
+          for attendu in \
+            "share/plasma/look-and-feel/org.ankh.de.desktop/metadata.json" \
+            "share/plasma/look-and-feel/org.ankh.de.desktop/contents/defaults" \
+            "share/color-schemes/Ankh.colors" \
+            "share/color-schemes/AnkhClair.colors" \
+            "share/kstyle/themes/ankh.themerc"
+          do
+            if [[ ! -f "essai/${attendu}" ]]; then
+              echo "::error::manquant à l'installation : ${attendu}"
+              exit 1
+            fi
+            echo "ok  ${attendu}"
+          done
+
+  documents:
+    name: Documents et licences
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      # DE-005 : aucun actif dont la provenance n'est pas déclarée.
+      - name: Garde-fou des licences
+        run: ./ci/verifier-licences.sh
+
+      # DE-007 : le tableau de fidélité est généré, jamais écrit à la main.
+      - name: docs/FIDELITE.md est à jour avec bench/jetons.toml
+        run: python3 bench/fidelite.py --verifier
+
+      - name: Syntaxe des scripts
+        run: |
+          set -euo pipefail
+          while read -r script; do
+            bash -n "${script}" && echo "ok  ${script}"
+          done < <(git ls-files '*.sh')
+
+      - name: Syntaxe du Python
+        run: |
+          set -euo pipefail
+          while read -r module; do
+            python3 -m py_compile "${module}" && echo "ok  ${module}"
+          done < <(git ls-files '*.py')
+
+      - name: Syntaxe du JavaScript du thème global
+        run: |
+          set -euo pipefail
+          while read -r script; do
+            node --check "${script}" && echo "ok  ${script}"
+          done < <(git ls-files 'src/lookandfeel/*.js' 'src/kwin/*.js')

@@ -1,0 +1,81 @@
+# Réglages par défaut d'Ankh DE (DE-002).
+#
+# Plasma lit ce fichier quand le thème global est appliqué
+# (« plasma-apply-lookandfeel -a org.ankh.de.desktop », ou la page
+# « Thème global » de la configuration du système). C'est le seul endroit où
+# ces valeurs sont écrites : Ankh DE ne touche ni à /etc/xdg, ni aux thèmes
+# globaux de la distribution. C'est ce qui le rend installable sur Fedora,
+# Arch et Ubuntu sans différence, et réversible en un clic (il suffit de
+# réappliquer Breeze).
+#
+# Format : [<fichier de configuration>][<groupe>][<sous-groupe>]
+# Lu par klookandfeelmanager.cpp (libklookandfeel, plasma-workspace).
+
+[kdeglobals][General]
+# Jeu de couleurs : les gris de Windows 11 rendus en graphite bleuté d'Ankh,
+# rangés par couches (src/colors/Ankh.colors, lot 1).
+ColorScheme=Ankh
+# Selawik, le sosie libre de Segoe UI publié par Microsoft (OFL 1.1).
+# 10,5 points = 14 px à 96 ppp ; 9 points = 12 px (WinUI « Body » et
+# « Caption »).
+font=Selawik,10.5,-1,5,50,0,0,0,0,0
+menuFont=Selawik,10.5,-1,5,50,0,0,0,0,0
+toolBarFont=Selawik,10.5,-1,5,50,0,0,0,0,0
+smallestReadableFont=Selawik,9,-1,5,50,0,0,0,0,0
+fixed=JetBrains Mono,10,-1,5,50,0,0,0,0,0
+# Rendu en niveaux de gris, contours légers : celui des applications WinUI,
+# et celui d'AnduinOS. La valeur qui compte est celle de fontconfig
+# (src/fontconfig/29-ankh-rendu.conf) ; celles-ci ne servent qu'aux
+# applications Qt lancées hors session Plasma.
+XftAntialias=true
+XftHintStyle=hintslight
+XftSubPixel=none
+# L'accent suit le fond d'écran, comme l'accent « Automatique » de
+# Windows 11. Les fonds d'Ankh gardent le violet d'Ankh (DE-004).
+accentColorFromWallpaper=true
+
+[kdeglobals][WM]
+activeFont=Selawik,9,-1,5,50,0,0,0,0,0
+
+[kdeglobals][KDE]
+# Style des contrôles : le nôtre, aux mesures de WinUI (lot 3).
+widgetStyle=Ankh
+# 5/6 : les durées de Kirigami (50, 100, 200, 400 ms) deviennent
+# 42, 83, 167 et 333 ms, celles de Windows 11.
+AnimationDurationFactor=0.8333333
+
+[kdeglobals][Icons]
+Theme=Fluent-Ankh
+
+[kcminputrc][Mouse]
+# Curseurs Fluent blancs, anneau d'attente au violet d'Ankh.
+cursorTheme=Ankh-curseurs
+cursorSize=24
+
+[kwinrc][org.kde.kdecoration2]
+# KDecoration3 lit encore ce groupe sous Plasma 6.
+library=org.ankh.decoration
+ButtonsOnLeft=M
+ButtonsOnRight=IAX
+BorderSize=None
+BorderSizeAuto=false
+
+[kwinrc][Effect-blur]
+BlurStrength=10
+NoiseStrength=2
+
+[kwinrc][TabBox]
+LayoutName=org.kde.breeze.desktop
+
+[plasmarc][Theme]
+name=ankh
+
+[kscreenlockerrc][Greeter]
+Theme=org.ankh.de.desktop
+
+[ksplashrc][KSplash]
+Theme=org.ankh.de.desktop
+Engine=KSplashQML
+
+[Wallpaper]
+Image=org.kde.image

@@ -1,0 +1,167 @@
+# Jeu de couleurs d'Ankh (D-037), par défaut : graphite et violet, comme le
+# logo et les fonds d'écran. Validé sur les aperçus en VM le 2026-10-09. Dérivé de Breeze sombre
+# (colors/BreezeDark.colors de https://invent.kde.org/plasma/breeze,
+# LGPL-2.0-or-later) : mêmes rôles, couleurs d'Ankh.
+# D-052, lot 1 : fonds rangés par couches comme ceux de Windows 11, en
+# sombre (Common_themeresources_any.xaml de WinUI). Chaque gris de Windows,
+# de niveau L, devient le graphite bleuté d'Ankh (L-4, L, L+7) :
+#   fenêtre (Mica, #202020) : 28,32,39 ; barre de titre et en-têtes de même,
+#     comme la barre de titre de Windows 11, continue avec la fenêtre ;
+#   contenu (listes, champs : #1C1C1C) : 24,28,35 ;
+#   carte (#0DFFFFFF sur la fenêtre, #2B2B2B) : 39,43,50 ;
+#   contrôle (#0FFFFFFF sur la fenêtre, #2D2D2D) : 41,45,52 ;
+#   volet passager, infobulle (#2C2C2C) : 40,44,51.
+#   Texte : #e6edf3, celui du logo ; texte secondaire au niveau de Windows
+#   (#C5FFFFFF, 77 % du texte sur la fenêtre) : 184,190,196.
+#   Accent : violet #8455f0 pour les sélections (texte blanc lisible
+#   dessus, contraste 4,6), violet du logo #a78bfa pour les liens, le survol
+#   et le focus.
+#   Les dossiers des icônes Breeze prennent la couleur d'accent.
+
+[ColorEffects:Disabled]
+Color=56,56,56
+ColorAmount=0
+ColorEffect=0
+ContrastAmount=0.65
+ContrastEffect=1
+IntensityAmount=0.1
+IntensityEffect=2
+
+[ColorEffects:Inactive]
+ChangeSelectionColor=true
+Color=112,111,110
+ColorAmount=0.025
+ColorEffect=2
+ContrastAmount=0.1
+ContrastEffect=2
+Enable=false
+IntensityAmount=0
+IntensityEffect=0
+
+[Colors:Button]
+BackgroundAlternate=91,33,182
+BackgroundNormal=41,45,52
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:Complementary]
+BackgroundAlternate=91,33,182
+BackgroundNormal=13,17,23
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=139,148,158
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:Header]
+BackgroundAlternate=24,28,35
+BackgroundNormal=28,32,39
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:Header][Inactive]
+BackgroundAlternate=24,28,35
+BackgroundNormal=28,32,39
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:Selection]
+BackgroundAlternate=91,33,182
+BackgroundNormal=132,85,240
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=255,255,255
+ForegroundInactive=237,233,254
+ForegroundLink=253,188,75
+ForegroundNegative=176,55,69
+ForegroundNeutral=198,92,0
+ForegroundNormal=255,255,255
+ForegroundPositive=23,104,57
+ForegroundVisited=237,233,254
+
+[Colors:Tooltip]
+BackgroundAlternate=28,32,39
+BackgroundNormal=40,44,51
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:View]
+BackgroundAlternate=27,31,38
+BackgroundNormal=24,28,35
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[Colors:Window]
+BackgroundAlternate=39,43,50
+BackgroundNormal=28,32,39
+DecorationFocus=167,139,250
+DecorationHover=167,139,250
+ForegroundActive=167,139,250
+ForegroundInactive=184,190,196
+ForegroundLink=167,139,250
+ForegroundNegative=248,81,73
+ForegroundNeutral=210,153,34
+ForegroundNormal=230,237,243
+ForegroundPositive=63,185,80
+ForegroundVisited=196,181,253
+
+[General]
+ColorScheme=Ankh
+Name=Ankh
+shadeSortColumn=true
+
+[KDE]
+contrast=4
+
+[WM]
+activeBackground=28,32,39
+activeBlend=230,237,243
+activeForeground=230,237,243
+inactiveBackground=28,32,39
+inactiveBlend=184,190,196
+inactiveForeground=184,190,196

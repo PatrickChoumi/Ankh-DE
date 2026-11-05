@@ -1,0 +1,6 @@
+# Version de Breeze dont ce dossier est dérivé (DE-008).
+# Le report sur une nouvelle version de Plasma suit docs/REBASE.md.
+depot=https://invent.kde.org/plasma/breeze
+tag=v6.7.5
+commit=ca217f1
+plasma=6.7

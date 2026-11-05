@@ -1,0 +1,57 @@
+name: Suivre l'amont
+
+# DE-008 : prévenir AVANT qu'une nouvelle version de Plasma n'arrive chez les
+# utilisateurs. Rawhide et Arch la prennent avant tout le monde.
+# Ce test n'est pas bloquant : il prévient.
+on:
+  schedule:
+    - cron: '41 6 * * 1'   # chaque lundi
+  workflow_dispatch:
+
+jobs:
+  amont:
+    name: ${{ matrix.nom }}
+    runs-on: ubuntu-latest
+    container: ${{ matrix.image }}
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - nom: Fedora Rawhide
+            image: fedora:rawhide
+            installer: dnf install -y
+            paquets: >-
+              cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel
+              kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel
+              kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel
+              kf6-frameworkintegration-devel kdecoration-devel
+              qt6-qtdeclarative-devel git
+          - nom: Arch
+            image: archlinux:latest
+            installer: pacman -Syu --noconfirm
+            paquets: >-
+              cmake gcc extra-cmake-modules qt6-base qt6-declarative kconfig
+              kcoreaddons kguiaddons kiconthemes kwindowsystem kcolorscheme
+              frameworkintegration kdecoration git
+    steps:
+      - name: Paquets de construction
+        run: ${{ matrix.installer }} ${{ matrix.paquets }}
+
+      - uses: actions/checkout@v5
+
+      - name: Version de Breeze suivie
+        run: cat src/style/VERSION-BREEZE
+
+      - name: Construire contre l'amont
+        run: |
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DANKH_DE_PLASMA_NON_TESTE=ON
+          cmake --build build -j"$(nproc)"
+
+      - name: Si ce job échoue
+        if: failure()
+        run: |
+          echo "::warning::La construction échoue contre ${{ matrix.nom }}."
+          echo "Suivre docs/REBASE.md : lire le journal de Breeze depuis le commit"
+          echo "de src/style/VERSION-BREEZE, reporter, puis mettre les deux"
+          echo "VERSION-BREEZE à jour."

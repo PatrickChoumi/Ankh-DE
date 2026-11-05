@@ -1,0 +1,18 @@
+{
+    "KPackageStructure": "Plasma/LookAndFeel",
+    "X-Plasma-APIVersion": "6",
+    "KPlugin": {
+        "Id": "org.ankh.de.desktop",
+        "Name": "Ankh DE",
+        "Name[fr]": "Ankh DE",
+        "Description": "Windows 11 geometry, Ankh colours. Dark by default.",
+        "Description[fr]": "La géométrie de Windows 11, les couleurs d'Ankh. Sombre par défaut.",
+        "Category": "",
+        "License": "GPL-3.0-or-later",
+        "Version": "0.1.0",
+        "Website": "https://github.com/PatrickChoumi/Ankh-DE",
+        "Authors": [
+            { "Name": "Patrick Choumi" }
+        ]
+    }
+}

@@ -1,0 +1,9 @@
+#!/usr/bin/make -f
+# Squelette NON TESTÉ (../README.md).
+%:
+	dh $@ --buildsystem=cmake
+
+override_dh_auto_configure:
+	dh_auto_configure -- -DKDE_INSTALL_SYSCONFDIR=/etc
+
+# Le paquet n'applique PAS le thème (DE-002).

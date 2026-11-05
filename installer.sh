@@ -1,0 +1,157 @@
+#!/usr/bin/env bash
+# Ankh DE : installation sur n'importe quelle distribution avec KDE Plasma 6
+# (DE-001). Compile le style et la décoration, installe les thèmes, puis
+# applique le thème global « Ankh DE ».
+#
+#   ./installer.sh                 installation système (/usr/local), par sudo
+#   ./installer.sh --utilisateur   installation dans ~/.local, sans root
+#   ./installer.sh --barre         remplace AUSSI vos barres par celle de
+#                                  Windows 11 (efface vos barres actuelles)
+#   ./installer.sh --sans-tiers    sans la police, les curseurs ni le thème GTK
+#
+# Pour revenir en arrière : ./desinstaller.sh
+set -euo pipefail
+
+racine="$(cd "$(dirname "$(readlink -f "$0")")" && pwd)"
+mode=systeme
+barre=non
+tiers=oui
+
+while (( $# )); do
+    case "$1" in
+        --utilisateur|--user) mode=utilisateur ;;
+        --barre|--panel)      barre=oui ;;
+        --sans-tiers)         tiers=non ;;
+        -h|--help)            sed -n '2,13p' "$0" | sed 's/^# \?//'; exit 0 ;;
+        *) echo "Option inconnue : $1" >&2; exit 1 ;;
+    esac
+    shift
+done
+
+echo "== Ankh DE, installation (${mode})"
+
+# --- 1. Plasma 6 est-il là ? ---------------------------------------------
+if ! command -v plasma-apply-lookandfeel > /dev/null; then
+    echo "plasma-apply-lookandfeel est introuvable : Ankh DE demande KDE Plasma 6." >&2
+    exit 1
+fi
+version="$(plasmashell --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+' | head -1 || true)"
+if [[ -n "${version}" ]]; then
+    echo "Plasma ${version} détecté."
+    if [[ "${version%%.*}" != 6 ]]; then
+        echo "Ankh DE ne vise que Plasma 6 (voir docs/REBASE.md)." >&2
+        exit 1
+    fi
+fi
+
+# --- 2. Dépendances de compilation ---------------------------------------
+# Nommées par commande et par fichier CMake, jamais par paquet : chaque
+# distribution les range ailleurs.
+manquants=()
+command -v cmake > /dev/null || manquants+=(cmake)
+command -v g++ > /dev/null || command -v clang++ > /dev/null || manquants+=("g++")
+if (( ${#manquants[@]} )); then
+    cat >&2 << AIDE
+Outils de compilation manquants : ${manquants[*]}
+
+  Fedora  : sudo dnf install cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel \\
+              kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \\
+              kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \\
+              kf6-frameworkintegration-devel kdecoration-devel
+  Arch    : sudo pacman -S cmake gcc extra-cmake-modules qt6-base kconfig \\
+              kcoreaddons kguiaddons kiconthemes kwindowsystem kcolorscheme \\
+              frameworkintegration kdecoration
+  Ubuntu  : sudo apt install cmake g++ extra-cmake-modules qt6-base-dev \\
+              libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev \\
+              libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \\
+              libkf6frameworkintegration-dev libkdecorations3-dev
+AIDE
+    exit 1
+fi
+
+# --- 3. Pièces venues d'ailleurs -----------------------------------------
+if [[ "${tiers}" == oui ]]; then
+    echo "== Police, curseurs et thème GTK"
+    "${racine}/third_party/preparer.sh" || {
+        echo
+        echo "La préparation a échoué. Relancez avec --sans-tiers pour installer" >&2
+        echo "le reste : le DE marchera, avec la police et les curseurs de votre" >&2
+        echo "distribution." >&2
+        exit 1
+    }
+fi
+
+# --- 4. Compilation -------------------------------------------------------
+if [[ "${mode}" == utilisateur ]]; then
+    prefixe="${HOME}/.local"
+else
+    prefixe=/usr/local
+fi
+build="${racine}/build"
+cmake -S "${racine}" -B "${build}" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_INSTALL_PREFIX="${prefixe}" \
+    -DKDE_INSTALL_SYSCONFDIR="${prefixe}/etc"
+cmake --build "${build}" -j "$(nproc)"
+
+# --- 5. Installation ------------------------------------------------------
+if [[ "${mode}" == utilisateur ]]; then
+    cmake --install "${build}"
+    # Qt et KWin ne cherchent pas les greffons sous ~/.local : Plasma lit les
+    # scripts de ~/.config/plasma-workspace/env au début de chaque session
+    # (startplasma.cpp de plasma-workspace), on y ajoute le chemin.
+    greffons="$(cmake -L "${build}" 2>/dev/null | sed -n 's/^KDE_INSTALL_QTPLUGINDIR:PATH=//p')"
+    [[ -n "${greffons}" ]] || greffons="${prefixe}/lib64/qt6/plugins"
+    [[ "${greffons}" = /* ]] || greffons="${prefixe}/${greffons}"
+    env_dir="${HOME}/.config/plasma-workspace/env"
+    install -d -m 0755 "${env_dir}"
+    cat > "${env_dir}/ankh-de.sh" << ENV
+# Ajouté par l'installateur d'Ankh DE : sans cette ligne, Qt et KWin ne
+# trouvent pas le style ni la décoration installés dans votre dossier
+# personnel. Supprimez ce fichier pour revenir en arrière.
+export QT_PLUGIN_PATH="${greffons}\${QT_PLUGIN_PATH:+:\$QT_PLUGIN_PATH}"
+ENV
+    # fontconfig ne lit pas ~/.local/etc : on relie le fichier de rendu là
+    # où il le cherche.
+    install -d -m 0755 "${HOME}/.config/fontconfig/conf.d"
+    ln -sf "${prefixe}/etc/fonts/conf.d/29-ankh-rendu.conf" \
+        "${HOME}/.config/fontconfig/conf.d/29-ankh-rendu.conf"
+    echo
+    echo "Installé dans ${prefixe}."
+    echo "Le style et la décoration ne seront chargés qu'à votre PROCHAINE session :"
+    echo "déconnectez-vous et reconnectez-vous, puis relancez ce script pour"
+    echo "appliquer le thème global."
+else
+    echo "== Installation système (sudo)"
+    sudo cmake --install "${build}"
+fi
+
+command -v fc-cache > /dev/null && fc-cache -f > /dev/null 2>&1 || true
+
+# --- 6. Application du thème global ---------------------------------------
+# C'est le seul geste qui change votre session : il écrit les réglages du
+# fichier contents/defaults du thème. Réversible par ./desinstaller.sh.
+echo "== Application du thème global « Ankh DE »"
+if [[ "${barre}" == oui ]]; then
+    cat << 'AVERTIR'
+
+  ATTENTION : --barre efface vos barres actuelles et les remplace par celle
+  de Windows 11 (collée en bas, 48 px, Démarrer et applications au centre).
+  Vos applets et vos épingles actuels seront perdus.
+
+AVERTIR
+    read -r -p "  Continuer ? [o/N] " reponse
+    [[ "${reponse}" =~ ^[oOyY]$ ]] || { echo "  Barres gardées."; barre=non; }
+fi
+
+if [[ "${barre}" == oui ]]; then
+    plasma-apply-lookandfeel -a org.ankh.de.desktop --resetLayout
+else
+    # Sans --resetLayout, vos barres ne sont pas touchées.
+    plasma-apply-lookandfeel -a org.ankh.de.desktop
+fi
+
+echo
+echo "Fait. Ankh DE est appliqué."
+echo "Pour la barre des tâches de Windows 11 : ./installer.sh --barre"
+echo "Pour tout défaire                      : ./desinstaller.sh"

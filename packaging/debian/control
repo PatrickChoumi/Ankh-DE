@@ -1,0 +1,38 @@
+Source: ankh-de
+Section: kde
+Priority: optional
+Maintainer: Patrick Choumi <REMPLACER@example.invalid>
+Build-Depends: debhelper-compat (= 13),
+               cmake,
+               extra-cmake-modules,
+               qt6-base-dev,
+               qt6-declarative-dev,
+               libkf6config-dev,
+               libkf6coreaddons-dev,
+               libkf6guiaddons-dev,
+               libkf6iconthemes-dev,
+               libkf6windowsystem-dev,
+               libkf6colorscheme-dev,
+               libkf6frameworkintegration-dev,
+               libkdecorations3-dev
+Standards-Version: 4.7.0
+Homepage: https://github.com/PatrickChoumi/Ankh-DE
+Rules-Requires-Root: no
+
+Package: ankh-de
+Architecture: any
+# DE-008 : le greffon dérive du code d'une version précise de Plasma.
+Depends: ${shlibs:Depends}, ${misc:Depends},
+         plasma-workspace (>= 4:6.7),
+         plasma-workspace (<< 4:6.8),
+         breeze
+Recommends: ankh-de-fonts, ankh-de-cursors, ankh-de-gtk
+Description: Windows 11 geometry, Ankh colours, on KDE Plasma 6
+ Ankh DE gives KDE Plasma 6 the metrics, typography, materials, motion and
+ shell layout of Windows 11, checked by a measurement bench, in the graphite
+ and violet identity of Ankh.
+ .
+ It is not a desktop environment written from scratch, not a Windows 11 clone,
+ and not affiliated with Microsoft: no Windows file is shipped. Only the
+ measurements are reused, from sources Microsoft publishes under the MIT
+ licence.

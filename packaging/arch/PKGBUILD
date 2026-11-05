@@ -1,0 +1,43 @@
+# Squelette NON TESTÉ (../README.md).
+# Maintainer: Patrick Choumi
+pkgname=ankh-de
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Windows 11 geometry, Ankh colours, on KDE Plasma 6"
+arch=('x86_64')
+url="https://github.com/PatrickChoumi/Ankh-DE"
+# GPL-3.0-or-later : imposée par Breeze (GPL-2.0-or-later) et Fluent (GPL-3.0).
+license=('GPL-3.0-or-later')
+
+# DE-008 : le greffon dérive du code d'une version précise de Plasma.
+depends=('plasma-workspace>=6.7' 'plasma-workspace<6.8' 'qt6-base' 'qt6-declarative'
+         'kconfig' 'kcoreaddons' 'kguiaddons' 'kiconthemes' 'kwindowsystem'
+         'kcolorscheme' 'frameworkintegration' 'kdecoration' 'breeze')
+makedepends=('cmake' 'extra-cmake-modules')
+# Les pièces tierces demandent un téléchargement : paquets séparés (../README.md).
+optdepends=('ankh-de-fonts: la police Selawik'
+            'ankh-de-cursors: les curseurs Fluent au violet d'"'"'Ankh'
+            'ankh-de-gtk: le thème GTK pour les applications GTK')
+
+source=("$pkgname-$pkgver.tar.gz::$url/archive/v$pkgver.tar.gz")
+sha256sums=('SKIP')  # à remplir à la première vraie version
+
+build() {
+    cmake -S "Ankh-DE-$pkgver" -B build \
+        -DCMAKE_BUILD_TYPE=None \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DKDE_INSTALL_SYSCONFDIR=/etc \
+        -Wno-dev
+    cmake --build build
+}
+
+package() {
+    DESTDIR="$pkgdir" cmake --install build
+    install -Dm644 "Ankh-DE-$pkgver/LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+    install -Dm644 "Ankh-DE-$pkgver/LICENSES/README.md" \
+        "$pkgdir/usr/share/licenses/$pkgname/PROVENANCE.md"
+}
+
+# Le paquet n'applique PAS le thème (DE-002) : l'utilisateur le choisit dans la
+# page « Thème global » de la configuration du système, ou par
+# « plasma-apply-lookandfeel -a org.ankh.de.desktop ».
