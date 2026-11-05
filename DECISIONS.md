@@ -24,6 +24,7 @@
 | DE-007 | Le banc de mesure est le critère d'acceptation de chaque lot | DÉCIDÉ |
 | DE-008 | La version de Plasma visée est un choix de release, pas une contrainte subie | DÉCIDÉ (réécrite le 2026-11-05 ; montée vers Plasma 6.8 faite le même jour) |
 | DE-009 | Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard | DÉCIDÉ |
+| DE-010 | Ankh DE livre sa propre session, qui porte ce que le thème global ne sait pas porter (corrige DE-002) | DÉCIDÉ |
 
 ---
 
@@ -63,7 +64,7 @@
 
 ## DE-002 — Tous les réglages vivent dans notre thème global, jamais dans `/etc/xdg` ni dans les thèmes de la distribution
 
-- **Statut** : DÉCIDÉ (2026-11-05).
+- **Statut** : DÉCIDÉ (2026-11-05) — **son affirmation centrale s'est révélée fausse le jour même ; corrigée par [DE-010](#de-010--ankh-de-livre-sa-propre-session-qui-porte-ce-que-le-thème-global-ne-sait-pas-porter-corrige-de-002)**. La règle « ne rien écraser » reste entière ; c'est le « tous les réglages » qui est faux.
 - **Contexte** : dans Ankh, l'interface est appliquée en écrivant dans `/etc/xdg/kdeglobals`,
   `/etc/xdg/kwinrc`, `/etc/xdg/kcminputrc`, et en **modifiant sur place** les thèmes globaux de
   Fedora (`org.fedoraproject.fedoradark.desktop`) — voir `build_files/build.sh` d'Ankh, lignes
@@ -243,3 +244,49 @@
 - **Risque pendant la double vie** : toute correction doit être portée des deux côtés. C'est
   voulu, mais c'est un coût réel : la bascule ne doit pas traîner.
 - **Vérification** : `docs/ARCHITECTURE.md`, section « Rapport avec Ankh ».
+
+## DE-010 — Ankh DE livre sa propre session, qui porte ce que le thème global ne sait pas porter (corrige DE-002)
+
+- **Statut** : DÉCIDÉ (2026-11-05), après vérification.
+- **Contexte** : DE-002 affirmait que `contents/defaults` portait « la totalité des réglages ».
+  **C'est faux, et je l'ai vérifié le jour même** : après
+  `plasma-apply-lookandfeel -a org.ankh.de.desktop`, `kreadconfig6 --group General --key font`
+  rend une chaîne vide. L'outil ne recopie qu'un ensemble fixe de clés — couleurs, style des
+  contrôles, icônes, curseur, décoration, style Plasma, écrans de chargement et de verrouillage,
+  fond d'écran. Les paquets de référence le confirment : ni `org.kde.breezedark.desktop` ni
+  `org.fedoraproject.fedoradark.desktop` ne contiennent de police.
+  Onze de nos réglages étaient donc **silencieusement ignorés** : les cinq polices, la police
+  des fenêtres inactives, les trois clés de rendu, l'accent qui suit le fond d'écran, et le
+  facteur d'animation. C'est-à-dire tout le lot 1 hors couleurs et curseurs.
+  Dans le même temps, une autre question restait ouverte : Ankh DE n'apparaît pas à l'écran de
+  connexion, donc ce n'est pas « un environnement de bureau qu'on choisit ».
+- **Décision** : **Ankh DE livre sa propre session**, et c'est elle qui porte le reste.
+  - `/usr/share/wayland-sessions/ankh-de.desktop`, pour qu'Ankh DE se choisisse à l'écran de
+    connexion comme n'importe quel environnement de bureau ;
+  - un script `ankh-de-session` qui pose
+    `XDG_CONFIG_DIRS=<nos valeurs par défaut>:$XDG_CONFIG_DIRS`, puis lance
+    `startplasma-wayland`. Rien d'autre : on ne remplace ni le compositeur ni le shell (DE-001) ;
+  - nos valeurs par défaut (polices, tailles, rendu, animations, accent) vivent dans un
+    `kdeglobals` **à nous**, installé dans notre propre dossier. Elles passent **sous** les
+    réglages de l'utilisateur, qui gardent la priorité, et **au-dessus** de ceux de la
+    distribution. Aucun fichier d'autrui n'est touché : DE-002 reste donc respectée dans son
+    esprit, qui était « ne rien écraser » ;
+  - le thème global continue de porter ce qu'il sait porter. Les deux mécanismes se complètent.
+- **Raisons** : c'est le seul moyen d'appliquer des polices sans écrire chez l'utilisateur ni
+  dans `/etc/xdg` ; `XDG_CONFIG_DIRS` est le mécanisme standard de KConfig, pas un détour ; et
+  il règle du même coup l'absence de session, qui était le reproche le plus concret qu'on
+  pouvait faire au projet.
+- **Alternatives rejetées** :
+  - écrire les polices dans `~/.config/kdeglobals` à l'installation : écrase les réglages de
+    l'utilisateur, et rien ne dit comment les lui rendre ;
+  - livrer un `/etc/xdg/kdeglobals` : écrase ceux de la distribution, demande root, et casse
+    les autres sessions de la machine ;
+  - renoncer aux polices : c'est le lot 1, donc le socle de la fidélité.
+- **Limite connue** : hors de la session d'Ankh DE — si l'utilisateur applique seulement le
+  thème global depuis une session Plasma ordinaire — les polices et les animations ne
+  s'appliquent pas. L'installateur doit le dire, et proposer de se connecter à la session
+  d'Ankh DE.
+- **Vérification** : `plasma-apply-lookandfeel -a` puis `kreadconfig6` avec la couche
+  `kdedefaults` active, le 2026-11-05, conteneur Fedora 44 : `widgetStyle=Ankh`,
+  `ColorScheme=Ankh`, `library=org.ankh.decoration`, `cursorTheme=Ankh-curseurs` relus ;
+  `font` **vide**. La session elle-même est `À VALIDER` : elle se teste en VM (job `VM`).

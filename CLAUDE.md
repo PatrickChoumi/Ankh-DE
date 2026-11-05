@@ -9,6 +9,7 @@
 > | Chaque choix, ses raisons, ses sources et ses tests (`DE-xxx`) | [DECISIONS.md](DECISIONS.md) |
 > | L'ordre des travaux, lot par lot | [ROADMAP.md](ROADMAP.md) |
 > | Ce qui est fait, et ce qui n'est pas vérifié | [AVANCEMENT.md](AVANCEMENT.md) |
+> | **Tout ce qui manque, et le plan d'une semaine** | [AUDIT.md](AUDIT.md) |
 > | Comment reporter sur une nouvelle version de Plasma | [docs/REBASE.md](docs/REBASE.md) |
 > | Comment c'est agencé, et le rapport avec Ankh | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 >

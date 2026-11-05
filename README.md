@@ -141,6 +141,7 @@ pas corrigés** tant que KDE ne les ouvrira pas, et ils sont détaillés dans
 | [DECISIONS.md](DECISIONS.md) | Chaque choix, ses raisons, ses alternatives rejetées, sa vérification |
 | [ROADMAP.md](ROADMAP.md) | Les onze lots, et le critère de fin de chacun |
 | [AVANCEMENT.md](AVANCEMENT.md) | Ce qui est fait, et surtout ce qui n'est pas vérifié |
+| [AUDIT.md](AUDIT.md) | **Tout ce qui manque**, établi en exécutant, et ce qu'une semaine peut donner |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Comment c'est agencé, et le rapport avec Ankh |
 | [docs/REBASE.md](docs/REBASE.md) | Reporter le code sur une nouvelle version de Plasma |
 | [CONTRIBUTING.md](CONTRIBUTING.md) | Comment contribuer, et la règle du banc |
