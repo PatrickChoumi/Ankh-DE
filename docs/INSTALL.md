@@ -34,7 +34,7 @@ sudo pacman -S cmake gcc extra-cmake-modules qt6-base kconfig kcoreaddons \
 sudo apt install cmake g++ extra-cmake-modules qt6-base-dev \
   libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev \
   libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \
-  libkf6frameworkintegration-dev libkdecorations3-dev \
+  libkf6style-dev libkdecorations3-dev \
   git fontmake librsvg2-bin x11-apps sassc fontconfig
 ```
 

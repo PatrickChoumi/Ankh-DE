@@ -64,7 +64,7 @@ Outils de compilation manquants : ${manquants[*]}
   Ubuntu  : sudo apt install cmake g++ extra-cmake-modules qt6-base-dev \\
               libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev \\
               libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \\
-              libkf6frameworkintegration-dev libkdecorations3-dev
+              libkf6style-dev libkdecorations3-dev
 AIDE
     exit 1
 fi

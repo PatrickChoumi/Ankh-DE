@@ -39,7 +39,7 @@ jobs:
               cmake g++ extra-cmake-modules qt6-base-dev qt6-declarative-dev
               libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev
               libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev
-              libkf6frameworkintegration-dev libkdecorations3-dev git
+              libkf6style-dev libkdecorations3-dev git
             installer: >-
               apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y
     steps:
@@ -94,6 +94,7 @@ jobs:
       - name: Le garde-fou refuse bien une version non visée
         run: |
           set -euo pipefail
+          cp src/decoration/VERSION-BREEZE /tmp/VERSION-BREEZE.bak
           sed -i 's/^plasma=.*/plasma=0.1/' src/decoration/VERSION-BREEZE
           if cmake -S . -B /tmp/garde > /tmp/garde.log 2>&1; then
             echo "::error::le garde-fou a laissé passer une version non visée"
@@ -101,7 +102,7 @@ jobs:
           fi
           grep -q "Ankh DE suit Plasma 0.1" /tmp/garde.log \
             || { echo "::error::le refus ne vient pas du garde-fou"; cat /tmp/garde.log; exit 1; }
-          git checkout src/decoration/VERSION-BREEZE
+          cp /tmp/VERSION-BREEZE.bak src/decoration/VERSION-BREEZE
           echo "Le garde-fou refuse bien, et dit pourquoi."
 
       - name: Vérifier ce qui est installé
