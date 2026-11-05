@@ -47,6 +47,10 @@
 | `desinstaller.sh` ramène à l'état de départ | **non vérifié** |
 | `panel.lengthMode = "fill"` existe en Plasma 6.7 | `À VALIDER` — SPEC §7 question 2 |
 | Les paquets (`.spec`, `PKGBUILD`, `debian/`) construisent | **non vérifié** — squelettes |
+| Le garde-fou des licences refuse un actif non déclaré ou un nom interdit | **testé** ici, sur deux violations plantées |
+| Le CMake refuse une version de Plasma non suivie | **testé** ici, dans les trois cas (version suivie, autre version, autre version avec `-DANKH_DE_PLASMA_NON_TESTE=ON`) |
+| `docs/FIDELITE.md` reste à jour avec `bench/jetons.toml` | **testé** ici (`bench/fidelite.py --verifier`) |
+| Les workflows de CI font ce qu'ils annoncent | **non vérifié** — GitHub Actions ne tourne qu'une fois le dépôt poussé |
 
 **Rien de ce dépôt n'a encore tourné sur une machine.** Tant que le lot 0 n'est pas fini, la
 seule preuve de fidélité est celle d'Ankh, sur Fedora.
