@@ -56,7 +56,7 @@ if (( ${#manquants[@]} )); then
     cat >&2 << AIDE
 Outils manquants : ${manquants[*]}
 
-  Fedora  : sudo dnf install git python3-fontmake librsvg2-tools xorg-x11-apps sassc fontconfig
+  Fedora  : sudo dnf install git fontmake librsvg2-tools xcursorgen sassc fontconfig
   Arch    : sudo pacman -S git python-fontmake librsvg xorg-xcursorgen sassc fontconfig
   Ubuntu  : sudo apt install git fontmake librsvg2-bin x11-apps sassc fontconfig
 AIDE

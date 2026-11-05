@@ -20,6 +20,33 @@ sans modifier un seul fichier de la distribution, et se retire d'un geste.
 > ([ROADMAP.md](ROADMAP.md#lot-0--autonomie)).
 > Ce qui est vérifié et ce qui ne l'est pas : [AVANCEMENT.md](AVANCEMENT.md).
 
+## À quoi ça ressemble
+
+Le même contenu, les mêmes couleurs d'Ankh, la même police, la même échelle. **Seul le style
+change** : à gauche Breeze, à droite Ankh DE.
+
+![Breeze et Ankh DE, thème sombre](docs/images/comparaison-sombre.png)
+
+![Breeze et Ankh DE, thème clair](docs/images/comparaison-clair.png)
+
+Ces planches sont **produites par la CI à chaque changement**, pas prises à la main
+(`bench/captures.sh`). Ce qu'on y voit, mesuré au même moment :
+
+| Mesure | Windows 11 | Ankh DE | Breeze |
+|---|---|---|---|
+| Hauteur d'un bouton | 32 px | **32** | 34 |
+| Hauteur d'un champ | 32 px | **32** | 31 |
+| Case à cocher avec son texte | 32 px | **32** | 21 |
+| Élément de liste | 40 px | **40** | 23 |
+| Barre de défilement | 12 px | **12** | 21 |
+| Barre de progression | 3 px | **3** | 6 |
+| Poignée du curseur | 18 px | **18** | 20 |
+| Police, corps | 14 px | **Selawik 14** | Selawik 14 |
+
+> La décoration des fenêtres n'apparaît pas : la galerie tourne sans gestionnaire de fenêtres.
+> La barre de titre de 32 px, les boutons de 46×32 et le Fermer `#C42B1C` se mesurent en session,
+> avec KWin.
+
 ## Ce que c'est
 
 | | |

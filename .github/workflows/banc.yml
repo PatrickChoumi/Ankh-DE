@@ -1,0 +1,60 @@
+name: Banc
+
+# DE-007 : « au pixel près » n'est une promesse tenable que si un programme la
+# vérifie à chaque changement. Ce test construit le style, ouvre la galerie des
+# contrôles sous Xvfb, relève ce que le style impose, le compare aux cibles de
+# Windows 11, et joint les captures « avant / après ».
+#
+# Il ne demande ni VM ni Plasma : la galerie ne dépend que de Qt Widgets. Ce
+# qui touche au shell (décoration, barre des tâches, Démarrer) se mesure
+# ailleurs — voir le test de session.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  banc:
+    name: Mesures et captures (Fedora 44)
+    runs-on: ubuntu-latest
+    container: fedora:44
+    steps:
+      - name: Paquets
+        run: |
+          dnf install -y --setopt=install_weak_deps=False \
+            cmake gcc-c++ extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel qt6-qtbase-gui \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
+            kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
+            kf6-frameworkintegration-devel kdecoration-devel \
+            plasma-integration plasma-breeze-qt6 \
+            xorg-x11-server-Xvfb ImageMagick \
+            fontmake librsvg2-tools xcursorgen sassc fontconfig \
+            git findutils
+
+      - uses: actions/checkout@v5
+
+      # Selawik, les curseurs et le thème GTK, depuis leurs sources, à des
+      # commits figés. Sans eux, le banc tombe sur la police du système et le
+      # dit — mais « police.famille » ne peut alors pas être conforme.
+      - name: Pièces venues d'ailleurs
+        run: ./third_party/preparer.sh
+
+      - name: Banc
+        run: ./bench/captures.sh
+
+      - name: Rapport
+        if: always()
+        run: cat bench/sortie/rapport.md >> "$GITHUB_STEP_SUMMARY" || true
+
+      - name: Captures et mesures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: banc-fedora44
+          path: |
+            bench/sortie/*.png
+            bench/sortie/*.json
+            bench/sortie/rapport.md
+          if-no-files-found: error

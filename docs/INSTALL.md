@@ -19,7 +19,7 @@ sudo dnf install cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel \
   kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
   kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
   kf6-frameworkintegration-devel kdecoration-devel \
-  git python3-fontmake librsvg2-tools xorg-x11-apps sassc fontconfig
+  git fontmake librsvg2-tools xcursorgen sassc fontconfig
 ```
 
 **Arch**

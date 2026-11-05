@@ -30,16 +30,17 @@
 
 ## 2. État actuel
 
-- **Lot en cours : 0 — Autonomie.** Son tableau de tâches est dans
-  [ROADMAP.md](ROADMAP.md#lot-0--autonomie). Fait : CMake, thème global, préparation des pièces
-  tierces, installateur. Reste : banc porté (0.5), CI trois distributions (0.6), test en VM (0.7),
-  paquets (0.8), garde-fou de licence (0.9).
-- **Lots 1 à 3 repris d'Ankh**, mesurés en VM sur Fedora 44 — **jamais hors de l'image d'Ankh**.
-  Les prouver ici fait partie du lot 0.
-- **Rien de ce dépôt n'a encore tourné sur une machine.** Ne jamais présenter une mesure d'Ankh
-  comme une mesure d'Ankh DE.
-- **Version de Plasma suivie** : 6.7.x, Breeze 6.7.5 (commit `ca217f1`). Plasma 6.8 supprime X11 :
-  le portage est à prévoir (DE-008).
+- **Lot en cours : 0 — Autonomie.** Son tableau est dans
+  [ROADMAP.md](ROADMAP.md#lot-0--autonomie). Fait et **éprouvé en conteneur Fedora 44** :
+  CMake, thème global, `preparer.sh`, garde-fous, et le banc du style (`bench/captures.sh`),
+  dont toutes les mesures du lot 3 sont conformes. Reste : le test en session (0.7, décoration,
+  barre, Démarrer) et les paquets (0.8).
+- **Lots 1 et 3 mesurés ici**, dans ce dépôt, par `bench/captures.sh`. Le **lot 2** (décoration
+  des fenêtres) ne l'est pas : il demande une session avec KWin.
+- Ne jamais présenter une mesure d'Ankh comme une mesure d'Ankh DE : citer le dépôt et le run.
+- **Version de Plasma visée : 6.8** (`src/*/VERSION-BREEZE`). La source reste Breeze 6.7.5, qui
+  compile tel quel contre 6.8. Monter de version est **notre** décision de release, pas une
+  contrainte de KDE (DE-008).
 - **Langue du projet** : français (documents, commits, échanges). `README.en.md` est la seule
   pièce en anglais, parce que le public visé ne lit pas forcément le français.
 

@@ -21,6 +21,16 @@
 Tous ces fichiers gardent l'en-tête de licence de KDE. L'ensemble du dépôt est distribué sous
 **GPL-3.0-or-later**, la seule licence compatible avec GPL-2.0-or-later et GPL-3.0 réunies.
 
+## Images produites par le projet
+
+| Fichier | Origine | Licence |
+|---|---|---|
+| `docs/images/comparaison-sombre.png` | Produit par `bench/captures.sh` : la galerie d'Ankh DE, photographiée par Qt sous Xvfb. Aucun contenu tiers | GPL-3.0-or-later, comme le reste |
+| `docs/images/comparaison-clair.png` | idem | GPL-3.0-or-later |
+
+Le texte des captures est celui de la galerie (`bench/galerie/galerie.cpp`). La police visible
+est Selawik (OFL 1.1), déclarée plus bas.
+
 ## Pièces téléchargées à la construction
 
 Aucune n'est versionnée ici : `third_party/preparer.sh` les récupère à un commit **figé et

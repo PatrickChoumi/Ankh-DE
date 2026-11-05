@@ -192,6 +192,12 @@ struct Metrics {
     static constexpr int ItemView_ItemMarginBottom = 1;
     static constexpr int ItemView_ItemPaddingWidth = 2;
     static constexpr int ItemView_ItemPaddingHeight = 2;
+    // Ankh : 40 comme Windows 11 (ListViewItemMinHeight,
+    // CommonStyles/ListViewItem_themeresources.xaml de WinUI). Breeze n'impose
+    // aucune hauteur minimale : un élément y vaut la police plus 6 px, soit
+    // 23 px avec un texte de 14 px. Relevé par le banc le 2026-11-05.
+    // Ne s'applique pas à un QTableView : ses lignes suivent l'en-tête.
+    static constexpr int ItemView_ItemMinHeight = 40;
     static constexpr int SidePanel_ItemMarginWidth = 4;
 
     // splitter

@@ -3964,9 +3964,14 @@ QSize Style::itemViewItemSizeFromContents(const QStyleOption *option, const QSiz
     if (!qobject_cast<const QTableView *>(widget)) {
         const QMargins margins = _helper->itemViewItemMargins(qstyleoption_cast<const QStyleOptionViewItem *>(option));
 
-        return size
+        QSize itemSize = size
             + QSize(margins.left() + margins.right() + Metrics::ItemView_ItemPaddingWidth * 2,
                     margins.top() + margins.bottom() + Metrics::ItemView_ItemPaddingHeight * 2);
+        // Ankh : hauteur minimale de Windows 11 (Metrics::ItemView_ItemMinHeight).
+        // Un élément plus grand que ce minimum (icône, texte sur deux lignes)
+        // garde sa taille : c'est un plancher, pas une hauteur fixe.
+        itemSize.setHeight(qMax(itemSize.height(), int(Metrics::ItemView_ItemMinHeight)));
+        return itemSize;
     }
     return expandSize(size,
                       Metrics::ItemView_ItemMarginLeft + Metrics::ItemView_ItemMarginRight,

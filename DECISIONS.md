@@ -22,7 +22,7 @@
 | DE-005 | Rien de Microsoft dans le dépôt : seules les mesures, publiées sous licence MIT | DÉCIDÉ |
 | DE-006 | Dépôt public, sous GPL-3.0-or-later | DÉCIDÉ |
 | DE-007 | Le banc de mesure est le critère d'acceptation de chaque lot | DÉCIDÉ |
-| DE-008 | Le code dérivé de KDE est reporté à chaque version de Plasma, et la construction échoue tant que ce n'est pas fait | DÉCIDÉ |
+| DE-008 | La version de Plasma visée est un choix de release, pas une contrainte subie | DÉCIDÉ (réécrite le 2026-11-05 ; montée vers Plasma 6.8 faite le même jour) |
 | DE-009 | Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard | DÉCIDÉ |
 
 ---
@@ -188,27 +188,47 @@
 - **Vérification** : le banc tourne dans Ankh depuis le 2026-10-15 ; au premier passage, il a
   relevé 7 mesures conformes, 27 écarts et 12 relevés, et les écarts se sont refermés lot par lot.
 
-## DE-008 — Le code dérivé de KDE est reporté à chaque version de Plasma, et la construction échoue tant que ce n'est pas fait
+## DE-008 — La version de Plasma visée est un choix de release, pas une contrainte subie
 
-- **Statut** : DÉCIDÉ (2026-11-05).
-- **Contexte** : `src/style` et `src/decoration` sont des copies de Breeze 6.7.5 (commit
-  `ca217f1`), renommées et modifiées. Plasma sort environ deux fois par an — 6.7 en juin 2026,
-  6.8 le 14 octobre 2026 (dates du calendrier encore à l'état de brouillon sur la liste
-  `plasma-devel`), et **6.8 supprime X11**. Chaque version peut changer l'API que ce code appelle :
-  le passage de KDecoration2 à KDecoration3 a cassé les réglages de Klassy en 6.3.
+- **Statut** : DÉCIDÉ (2026-11-05). **Remplace la rédaction initiale de DE-008** (2026-11-05),
+  qui présentait le report sur une nouvelle version de Plasma comme une taxe imposée par KDE.
+- **Contexte** : ma remarque du 2026-11-05 : « en ce qui concerne les mises à jour, il suffit de
+  refaire le taff quand on veut sortir une nouvelle mise à jour. C'est nous qui faisons les mises
+  à jour d'Ankh DE, pas KDE. »
+  C'est exact, et ça change le cadre. KDE ne nous impose rien : une version d'Ankh DE vise **une**
+  version de Plasma, et y reste bonne indéfiniment. Quand nous voulons sortir une version qui
+  vise la suivante, nous refaisons le travail — au moment que nous choisissons.
+  C'est d'ailleurs le modèle de KDE lui-même : Plasma 6.8 ne « suit » pas Qt, il vise une version
+  de Qt, la déclare, et change quand il le décide.
 - **Décision** :
-  - la version de Breeze suivie est écrite dans `src/style/VERSION-BREEZE` et
-    `src/decoration/VERSION-BREEZE`, avec son commit ;
-  - la construction **échoue** si la version de Plasma installée n'est pas celle suivie, sauf
-    `-DANKH_DE_PLASMA_NON_TESTE=ON`, qui l'autorise en l'affichant ;
-  - `docs/REBASE.md` donne la procédure de report, à faire à chaque version ;
-  - un test de CI hebdomadaire construit contre la version de Plasma de Fedora Rawhide et de
-    Arch, pour prévenir avant la sortie.
-- **Raisons** : un thème qui se charge à moitié est pire qu'un thème qui refuse de se charger.
-  C'est déjà la règle d'Ankh (`ldd -r` sur le greffon, construction en échec si un symbole manque).
-- **Vérification** : calendrier de Plasma relevé le 2026-11-05 sur la liste `plasma-devel`
-  (6.7.0 le 2026-06-16, 6.8.0 le 14 ou le 20 octobre 2026, dates non définitives) — `À VALIDER`
-  sur la page officielle du calendrier de KDE avant de s'y fier.
+  - chaque version d'Ankh DE **déclare** la version de Plasma qu'elle vise, dans
+    `src/style/VERSION-BREEZE` et `src/decoration/VERSION-BREEZE` ;
+  - la construction **échoue** contre une autre version, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON`.
+    Ce n'est pas un aveu de fragilité : c'est le même contrat qu'un paquet qui déclare ses
+    dépendances. Un greffon à moitié chargé est pire qu'un greffon qui refuse de se charger ;
+  - **monter de version est un travail planifié**, décrit dans [docs/REBASE.md](docs/REBASE.md),
+    fait quand nous décidons de sortir une version. Entre deux, rien ne nous presse ;
+  - un test hebdomadaire construit contre l'amont (Fedora Rawhide, Arch) pour que la montée ne
+    soit jamais une surprise. **Il n'est pas bloquant** : il informe.
+- **Première application, le 2026-11-05 — la montée vers Plasma 6.8**
+  - Fedora 44 livre désormais **kdecoration 6.8.2**, c'est-à-dire Plasma 6.8, alors que le code
+    vient de Breeze 6.7.5. Le garde-fou a refusé de construire, exactement comme prévu ;
+  - le travail de montée s'est révélé **nul au niveau de l'API** : le code de Breeze 6.7.5
+    compile tel quel contre Plasma 6.8.2, Qt 6.11.2 et KF6 6.31.0, sans erreur, avec un seul
+    avertissement (`corners` inutilisé dans `ankhhelper.cpp`). `ldd -r` ne relève aucune
+    bibliothèque ni aucun symbole manquant sur les deux greffons ;
+  - les deux `VERSION-BREEZE` déclarent donc `plasma=6.8`, en gardant `tag=v6.7.5` : la source
+    reste Breeze 6.7.5, c'est la **cible** qui change.
+  - **Ce qui est vérifié, et ce qui ne l'est pas** : la compilation, l'édition de liens, le
+    chargement du style par Qt et ses mesures le sont (banc, conteneur Fedora 44). La décoration
+    des fenêtres n'est pas vérifiée contre 6.8 : elle demande une session avec KWin.
+- **Alternatives rejetées** :
+  - suivre l'amont en continu : impose son rythme, pour un bénéfice nul tant que personne ne
+    tourne sur la nouvelle version ;
+  - ne rien déclarer et espérer : c'est le greffon à moitié chargé.
+- **Vérification** : garde-fou éprouvé dans les trois cas le 2026-11-05 (version visée : passe ;
+  autre version : échec ; autre version avec l'option : avertit et continue). Montée vers 6.8
+  faite et compilée le même jour.
 
 ## DE-009 — Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard
 
