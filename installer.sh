@@ -153,5 +153,21 @@ fi
 
 echo
 echo "Fait. Ankh DE est appliqué."
+echo
+# DE-010 : le thème global ne sait pas porter les polices, le rendu, les
+# animations ni l'accent qui suit le fond d'écran. C'est la session qui les
+# porte. Le taire laisserait l'utilisateur devant un Ankh DE à moitié
+# appliqué, sans savoir pourquoi.
+cat << 'SUITE'
+  IMPORTANT — déconnectez-vous, puis choisissez « Ankh DE » à l'écran
+  de connexion, dans la liste des sessions.
+
+  C'est la session d'Ankh DE qui applique la police Selawik, le rendu des
+  textes, les durées d'animation de Windows 11, l'accent qui suit le fond
+  d'écran et la disposition des boutons de fenêtre. Le thème global, seul,
+  ne sait pas les porter : vous auriez les couleurs, le style des contrôles
+  et la décoration, mais pas le reste.
+
+SUITE
 echo "Pour la barre des tâches de Windows 11 : ./installer.sh --barre"
 echo "Pour tout défaire                      : ./desinstaller.sh"

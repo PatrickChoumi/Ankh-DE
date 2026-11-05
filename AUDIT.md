@@ -30,7 +30,14 @@ Pour que la liste des manques soit lisible, voici d'abord le socle, tout entier 
 
 ## 1. Ce que j'ai affirmé à tort — à corriger en premier
 
-### 1.1 Le thème global ignore onze de mes réglages `BLOQUANT`
+### 1.1 Le thème global ignore onze de mes réglages ~~`BLOQUANT`~~ — **RÉGLÉ le 2026-11-05 (jour 1)**
+
+> Réglé par la session (DE-010), qui place nos valeurs par défaut dans `XDG_CONFIG_DIRS`.
+> `tests/session-et-theme.sh` relit chaque réglage un par un : **33 vérifications, toutes
+> passées**, rejouées par la CI à chaque PR. **Deux pièges de plus ont été trouvés en écrivant ce
+> test** : `ButtonsOnLeft`/`ButtonsOnRight` ne sont *jamais* écrits par l'outil, et `widgetStyle`
+> ne l'est que si Qt arrive à **charger** le greffon — une installation hors de `/usr` perdait
+> donc le style en silence. Les deux sont corrigés par la session.
 
 **Ce que DE-002 affirme** : « son fichier `contents/defaults` porte la totalité des réglages ».
 **C'est faux.** Vérifié le 2026-11-05 : après `plasma-apply-lookandfeel -a org.ankh.de.desktop`,
@@ -64,7 +71,12 @@ hors couleurs et curseurs** — ne s'appliquent pas aujourd'hui sur une vraie se
 de l'utilisateur (qui gardent la priorité) et **au-dessus** de ceux de la distribution, sans
 écraser aucun fichier. C'est le seul mécanisme qui respecte DE-002 tout en marchant.
 
-### 1.2 Le thème global désigne quatre choses qui n'existent pas `BLOQUANT`
+### 1.2 Le thème global désigne quatre choses qui n'existent pas — **NEUTRALISÉ le 2026-11-05**
+
+> Les quatre lignes sont **commentées** dans `contents/defaults` : le thème ne désigne plus
+> aucune pièce absente, et le test le vérifie. Elles reviendront le jour où la pièce existe
+> (thème d'icônes au jour 2, style Plasma au jour 4, écrans au lot 7). Le `if(EXISTS)` muet du
+> CMake dit désormais ce qui manque. **Les pièces elles-mêmes restent à faire.**
 
 | Le thème demande | Ce qui existe | Effet |
 |---|---|---|
@@ -86,7 +98,17 @@ l'air cassé avant même d'être essayé.
 
 ## 2. Ce qu'il manque pour être « un environnement de bureau, installable partout »
 
-### 2.1 Ankh DE n'est pas une session `BLOQUANT`
+### 2.1 Ankh DE n'est pas une session ~~`BLOQUANT`~~ — **RÉGLÉ le 2026-11-05 (jour 1)**
+
+> `src/session/` livre `ankh-de.desktop` (installé dans `share/wayland-sessions/`) et le lanceur
+> `ankh-de-session`. Ankh DE se choisit donc à l'écran de connexion comme n'importe quel
+> environnement de bureau. Le lanceur pose `XDG_CONFIG_DIRS` et `QT_PLUGIN_PATH`, puis lance la
+> session de Plasma par `plasma-dbus-run-session-if-needed` quand ce lanceur existe.
+> `DesktopNames=KDE` et non `Ankh-DE;KDE` : un premier nom inconnu ferait retomber le portail XDG
+> sur un défaut, au risque de casser les dialogues de fichiers des applications Flatpak. À
+> reprendre quand le comportement des portails aura été vérifié en VM.
+> **Reste `À VALIDER`** : que la session démarre réellement. Elle n'a jamais été ouverte — cela
+> demande une VM (jour 3).
 
 **Aucun fichier `.desktop` de session n'existe dans le dépôt.** Ankh DE n'apparaît donc pas à
 l'écran de connexion : ce n'est pas « un environnement de bureau qu'on choisit », c'est un

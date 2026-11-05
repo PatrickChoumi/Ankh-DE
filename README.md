@@ -89,8 +89,19 @@ L'installateur dit quels paquets manquent, pour Fedora, Arch et Ubuntu. Il :
 
 1. compile le style et la décoration ;
 2. fabrique la police, les curseurs et le thème GTK depuis leurs sources, à des commits figés ;
-3. installe tout dans `/usr/local` ;
+3. installe tout dans `/usr/local`, **y compris la session** ;
 4. applique le thème global `org.ankh.de.desktop`.
+
+Ensuite, **déconnectez-vous et choisissez « Ankh DE » à l'écran de connexion**, comme vous
+choisiriez Plasma ou GNOME. C'est la session qui applique la police Selawik, le rendu des textes,
+les durées d'animation de Windows 11, l'accent qui suit le fond d'écran et la disposition des
+boutons de fenêtre : le thème global, seul, ne sait pas les porter
+([DE-010](DECISIONS.md)).
+
+La session ne remplace ni le compositeur, ni le gestionnaire de session, ni `plasmashell` : elle
+lance celle de Plasma après avoir placé nos valeurs par défaut dans `XDG_CONFIG_DIRS`. Vos propres
+réglages gardent donc la priorité sur les nôtres, et aucun fichier de votre distribution n'est
+touché. **33 vérifications** relisent chaque réglage promis, à chaque PR.
 
 **Vos barres ne sont pas touchées.** Pour avoir aussi la barre des tâches de Windows 11 (collée
 en bas, 48 px, Démarrer et applications au centre), il faut le demander — et répondre « oui » à

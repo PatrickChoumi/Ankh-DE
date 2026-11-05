@@ -9,7 +9,7 @@
 
 | Lot | Objectif | État |
 |---|---|---|
-| **0** | **Autonomie** : le DE se compile, s'installe et se retire seul, sur trois distributions | **en cours** |
+| **0** | **Autonomie** : le DE se compile, s'installe et se retire seul, sur trois distributions | **en cours** — la session est faite (jour 1) |
 | **1** | Fondations : police, tailles, couleurs par couches, rendu, animations, curseurs | repris d'Ankh — `MESURÉ` en VM le 2026-10-20 |
 | **2** | Fenêtres : la décoration « Ankh » | repris d'Ankh — `MESURÉ` en VM le 2026-10-22 |
 | **3** | Contrôles : style Qt, QtQuick de KDE, thème GTK | repris d'Ankh — `MESURÉ` en VM le 2026-10-22 |

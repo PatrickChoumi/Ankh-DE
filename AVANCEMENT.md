@@ -151,6 +151,36 @@ de backend n'est trouvable — Plasma 6.8 étant Wayland seul, le backend X11
 imbriqué ne semble plus livré par Fedora. `kwin_x11`, encore en 6.7.5 chez
 Fedora, n'apporte pas de binaire utilisable à côté de kwin 6.8.
 
+## 2026-11-05, jour 1 du plan — la session et les polices
+
+**Fait et vérifié** (job `Session et thème global` de la CI, vert) :
+
+- **Ankh DE est une session.** `src/session/` livre `ankh-de.desktop` et le lanceur
+  `ankh-de-session`. Il se choisit à l'écran de connexion comme Plasma ou GNOME. Il lance la
+  session de Plasma — on ne remplace ni le compositeur, ni le gestionnaire de session, ni
+  `plasmashell` (DE-001) — après avoir placé nos valeurs par défaut dans `XDG_CONFIG_DIRS` ;
+- **les polices s'appliquent enfin.** Les cinq polices, celle des fenêtres inactives, les trois
+  clés de rendu, l'accent qui suit le fond d'écran et le facteur d'animation sont relus un par
+  un par `tests/session-et-theme.sh` ;
+- **le réglage de l'utilisateur gagne** sur le nôtre : vérifié en posant une police dans
+  `~/.config/kdeglobals` et en relisant.
+
+**Deux pièges de plus, trouvés en écrivant le test** — et c'est bien pour cela qu'on l'écrit :
+
+1. `ButtonsOnLeft` et `ButtonsOnRight` ne sont **jamais** écrits par `plasma-apply-lookandfeel`.
+   La disposition des boutons de Windows 11 n'était donc pas appliquée. Elle passe dans la
+   couche de la session ;
+2. `widgetStyle` n'est écrit **que si Qt arrive à charger le greffon**. Installé ailleurs que
+   dans `/usr` — par exemple `/usr/local`, le défaut de l'installateur — le style était perdu
+   **en silence**. La session pose donc `QT_PLUGIN_PATH` sur son propre préfixe.
+
+**Assaini** : le thème global ne garde que les clés dont on a vérifié qu'elles s'appliquent, et
+ne désigne plus aucune pièce absente. Le banc mesure désormais la configuration **réellement
+livrée**, au lieu d'une qu'il écrivait pour l'occasion.
+
+**Reste `À VALIDER`** : que la session **démarre** vraiment. Elle n'a jamais été ouverte — cela
+demande une VM, et c'est le jour 3 du plan.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 | Affirmation | État |
