@@ -181,6 +181,45 @@ livrée**, au lieu d'une qu'il écrivait pour l'occasion.
 **Reste `À VALIDER`** : que la session **démarre** vraiment. Elle n'a jamais été ouverte — cela
 demande une VM, et c'est le jour 3 du plan.
 
+## 2026-11-06, jours 3 et 4 — la décoration se mesure, et le style Plasma arrive
+
+**Jour 3.** `bench/session-virtuelle.sh` ouvre un vrai KWin avec son backend `--virtual`, y
+connecte la galerie en client Wayland, et demande la géométrie au **compositeur** — car sous
+Wayland un client ignore la taille de sa décoration. Mesuré, sans VM :
+
+| Jeton | Cible Windows 11 | Relevé |
+|---|---|---|
+| `fenetre.barre_de_titre.hauteur` | 32 px | **32** ✓ |
+| `fenetre.bord.gauche` / `.droit` / `.bas` | aucun bord | **0** ✓ |
+| `fenetre.boutons.gauche` / `.droite` | `M` / `IAX` | **conformes** ✓ |
+
+Six des onze jetons du lot 2. La capture de l'écran virtuel, elle, **ne marche pas** :
+`ScreenShot2` répond `NoReply` et KWin meurt sur un défaut de segmentation — rendu llvmpipe,
+sans contexte graphique réel. Elle est donc derrière `ANKH_DE_CAPTURE=1`, et les cinq jetons
+restants (rayon des coins, bouton Fermer, alignement du titre) attendent une VM.
+
+**Jour 4, et le changement de méthode.** Sur ton cahier des charges, j'ai examiné les projets
+qu'il cite. Trois constats :
+
+- **KDE-Windows-Modern** est sous **GPL-3.0**, actif (2026-07), et son `ATTRIBUTION.md` est
+  exemplaire. Il livre le thème Plasma, le menu Démarrer, les tâches, la zone système et
+  l'horloge ;
+- **Tidewater** est sous GPL-3.0 et très actif (2026-10) : référence pour le lot 6 ;
+- **menu-11-next** déclare `GPL-2.0+` dans son `metadata.json` mais **n'a aucun fichier
+  `LICENSE`** : gardé en référence, rien n'en est copié.
+
+Le **style Plasma d'Ankh** (`ankh`, `ankh-clair`) est donc repris de KDE-Windows-Modern, à son
+commit `7ef6bfe`, avec les accents de Windows 11 et les bleus de Breeze remplacés par les
+violets d'Ankh. **Aucune règle n'a été contournée** : SPEC §5.6 interdit le **code** tiers mais
+autorise les **images** et les **feuilles de style**, et un thème Plasma est fait de SVG.
+`docs/UPSTREAMS.md` trace chaque reprise, sa nature et ses modifications.
+
+Le thème global désigne maintenant `name=ankh`, et le test le vérifie.
+
+**Ce que cela change pour la suite** : le menu Démarrer de KDE-Windows-Modern est du **QML**,
+donc du code. Le reprendre demande une décision qui modifie SPEC §5.6 — elle est à prendre
+avant le lot 5.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 | Affirmation | État |

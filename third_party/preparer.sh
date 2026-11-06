@@ -32,6 +32,8 @@ readonly SELAWIK_DEPOT=https://github.com/microsoft/Selawik
 readonly SELAWIK_COMMIT=89362e84731d1f5777fa078fd4d5ebbd339e4378 # 2023-06-05, sources de la version 1.01
 readonly FLUENT_DEPOT=https://github.com/vinceliuice/Fluent-icon-theme
 readonly FLUENT_COMMIT=c8a244f571ef8fb47812bdc9dbce76546cedce69 # 2026-08-31
+readonly WM_DEPOT=https://github.com/Jeysef/KDE-Windows-Modern
+readonly WM_COMMIT=7ef6bfe99a472f2fc7fa473383eda50f411a8840 # 2026-07-19
 readonly FLUENT_GTK_DEPOT=https://github.com/vinceliuice/Fluent-gtk-theme
 readonly FLUENT_GTK_COMMIT=7a49a464b0188c340101c52965c18190b1c694cf # 2026-08-18
 
@@ -46,6 +48,18 @@ readonly COULEURS=('0078d4:8455f0' '23e6fa:a78bfa')
 # de la teinte principale à la plus claire. Relevé le 2026-11-05 dans ses
 # sources : 39 occurrences de #dc63ee, une de #e275f0, une de #ff85de.
 readonly VIOLETS_ICONES=('dc63ee:8455f0' 'e275f0:a78bfa' 'ff85de:c4b5fd')
+# Thème Plasma de KDE-Windows-Modern : il mêle les accents de Windows 11
+# (#4CC2FF et #60CDFF en sombre, #0078D4 en clair) et les bleus de Breeze
+# restés dans sa base (#3DAEE9, #3DAEE6, #93CEE9). Tous deviennent les
+# violets d'Ankh. Relevé le 2026-11-06 dans le commit figé.
+readonly VIOLETS_PLASMA_SOMBRE=(
+    '4CC2FF:a78bfa' '60CDFF:c4b5fd'
+    '3DAEE9:8455f0' '3DAEE6:8455f0' '93CEE9:c4b5fd'
+)
+readonly VIOLETS_PLASMA_CLAIR=(
+    '0078D4:7c3aed' '4CC2FF:a78bfa'
+    '3DAEE9:7c3aed' '3DAEE6:7c3aed' '93CEE9:c4b5fd'
+)
 # Tailles de chaque curseur, comme le build.sh des curseurs Fluent.
 readonly TAILLES=('x1:32' 'x1_25:40' 'x1_5:48' 'x2:64')
 
@@ -331,6 +345,70 @@ if (( morts_chez_nous > morts_amont )); then
 fi
 echo "liens : ${morts_chez_nous} morts, autant qu'en amont (icônes d'applications disparues)"
 echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
+
+echo "== Style Plasma d'Ankh (lot 4)"
+# SPEC §5.6 interdit d'embarquer un projet tiers comme CODE, mais autorise
+# les IMAGES et les FEUILLES DE STYLE à un commit figé : un thème Plasma est
+# fait de SVG, il entre donc dans ce qui est permis.
+# Source : KDE-Windows-Modern (GPL-3.0), lui-même dérivé de Win11OS-kde et
+# de Breeze. Son ATTRIBUTION.md est repris dans docs/UPSTREAMS.md.
+recuperer "${WM_DEPOT}" "${WM_COMMIT}" "${travail}/wm" \
+    plasma/desktoptheme/Windows-modern-dark plasma/desktoptheme/Windows-modern-light
+wm="${travail}/wm/plasma/desktoptheme"
+
+habiller_plasma() { # $1 : dossier amont, $2 : notre nom, $3 : libellé, puis les couples
+    local amont="${wm}/$1" nom="$2" libelle="$3"
+    shift 3
+    local cible="${sortie}/desktoptheme/${nom}"
+    [[ -d "${amont}" ]] || { echo "Style Plasma : ${amont} absent des sources" >&2; exit 1; }
+    rm -rf "${cible}"
+    install -d -m 0755 "$(dirname "${cible}")"
+    cp -a "${amont}" "${cible}"
+
+    local couple avant apres
+    for couple in "$@"; do
+        avant="${couple%%:*}"; apres="${couple##*:}"
+        # La couleur doit encore exister : sinon leur thème a changé et
+        # l'accent d'Ankh ne serait pas appliqué partout.
+        if ! grep -qril "#${avant}" "${cible}"; then
+            echo "Style Plasma ${nom} : la couleur #${avant} n'existe plus en amont" >&2
+            exit 1
+        fi
+        grep -rlZi "#${avant}" "${cible}" | xargs -0 sed -i "s/#${avant}/#${apres}/gI"
+    done
+    for couple in "$@"; do
+        if grep -qril "#${couple%%:*}" "${cible}"; then
+            echo "Style Plasma ${nom} : #${couple%%:*} est resté" >&2
+            exit 1
+        fi
+    done
+
+    # Le thème se nomme chez nous, et retombe sur Breeze pour ce qu'il
+    # ne dessine pas.
+    cat > "${cible}/metadata.json" << META
+{
+    "KPackageStructure": "Plasma/Theme",
+    "KPlugin": {
+        "Id": "${nom}",
+        "Name": "${libelle}",
+        "Description": "Style Plasma d'Ankh, dérivé de KDE-Windows-Modern (GPL-3.0)",
+        "License": "GPL-3.0-or-later",
+        "Website": "https://github.com/PatrickChoumi/Ankh-DE"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
+META
+    echo "${nom} : $(find "${cible}" -type f | wc -l) fichiers, $(du -sh "${cible}" | cut -f1)"
+}
+
+habiller_plasma Windows-modern-dark  ankh        "Ankh"         "${VIOLETS_PLASMA_SOMBRE[@]}"
+habiller_plasma Windows-modern-light ankh-clair  "Ankh (clair)" "${VIOLETS_PLASMA_CLAIR[@]}"
+# Les deux pièces que le lot 4 vise vraiment doivent exister.
+for piece in widgets/panel-background.svg widgets/tasks.svg; do
+    [[ -f "${sortie}/desktoptheme/ankh/${piece}" ]] \
+        || { echo "Style Plasma : ${piece} manque" >&2; exit 1; }
+done
+echo "panel-background.svg et tasks.svg présents"
 
 echo
 echo "Prêt dans ${sortie}. Le CMake de la racine l'installera."

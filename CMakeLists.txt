@@ -131,14 +131,27 @@ if(ANKH_DE_DATA)
         DESTINATION ${KDE_INSTALL_SYSCONFDIR}/fonts/conf.d
     )
 
+    set(ANKH_DE_PREPARE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sortie")
+
     # Style Plasma (lot 4), applets (lots 5 et 6) et scripts KWin (lot 7) :
     # installés dès qu'ils existent, pour que les lots arrivent sans toucher
     # à ce fichier.
+    # Styles Plasma : ceux que src/desktoptheme/ porte en propre, et ceux
+    # que third_party/preparer.sh fabrique (lot 4, dérivés de
+    # KDE-Windows-Modern — des SVG, pas du code : SPEC §5.6 les autorise).
     file(GLOB ANKH_DE_DESKTOPTHEME "${CMAKE_CURRENT_SOURCE_DIR}/src/desktoptheme/*")
     if(ANKH_DE_DESKTOPTHEME)
         install(DIRECTORY src/desktoptheme/
             DESTINATION ${KDE_INSTALL_DATADIR}/plasma/desktoptheme
+            PATTERN "README.md" EXCLUDE
         )
+    endif()
+    if(EXISTS "${ANKH_DE_PREPARE}/desktoptheme")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/desktoptheme/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/plasma/desktoptheme
+        )
+    else()
+        message(STATUS "Ankh DE : style Plasma absent ; lancer third_party/preparer.sh")
     endif()
     file(GLOB ANKH_DE_APPLETS "${CMAKE_CURRENT_SOURCE_DIR}/src/applets/*")
     if(ANKH_DE_APPLETS)
@@ -157,7 +170,6 @@ if(ANKH_DE_DATA)
     # curseurs, icônes et thème GTK. Absents, l'installation reste valable,
     # mais le DE retombe sur les polices, curseurs et icônes de la
     # distribution — et le banc le signalera.
-    set(ANKH_DE_PREPARE "${CMAKE_CURRENT_SOURCE_DIR}/third_party/sortie")
     if(EXISTS "${ANKH_DE_PREPARE}/polices/selawik")
         install(DIRECTORY "${ANKH_DE_PREPARE}/polices/selawik"
             DESTINATION ${KDE_INSTALL_DATADIR}/fonts

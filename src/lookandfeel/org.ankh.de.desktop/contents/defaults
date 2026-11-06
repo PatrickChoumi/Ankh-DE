@@ -51,6 +51,12 @@ library=org.ankh.decoration
 BorderSize=None
 BorderSizeAuto=false
 
+[plasmarc][Theme]
+# Style Plasma d'Ankh (lot 4, fait le 2026-11-06) : dérivé des SVG de
+# KDE-Windows-Modern (GPL-3.0), accents de Windows remplacés par ceux
+# d'Ankh. Fabriqué par third_party/preparer.sh.
+name=ankh
+
 [ksplashrc][KSplash]
 # Écran de chargement d'Ankh (contents/splash/Splash.qml), fait le 2026-11-05.
 Theme=org.ankh.de.desktop
@@ -63,9 +69,6 @@ Image=org.kde.image
 # Un thème qui désigne une pièce absente n'est pas neutre : Plasma retombe en
 # silence sur la sienne, et on croit que le réglage est appliqué. Chacune de
 # ces lignes revient le jour où sa pièce est livrée (AUDIT.md §1.2).
-#
-# [plasmarc][Theme]
-# name=ankh                    <- style Plasma, lot 4 (src/desktoptheme/ est vide)
 #
 # --- L'écran de VERROUILLAGE reste celui de Plasma, et c'est délibéré -----
 # Ce n'est pas une pièce décorative : c'est elle qui déverrouille la machine.

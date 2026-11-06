@@ -16,6 +16,7 @@
 | `src/decoration/` | [KDE Breeze](https://invent.kde.org/plasma/breeze), dossiers `kdecoration/` et `libbreezecommon/` | 6.7.5, commit `ca217f1` | GPL-2.0-or-later |
 | `src/colors/` | dérivé de `colors/BreezeDark.colors` de Breeze — mêmes rôles, couleurs d'Ankh | 6.7.5 | LGPL-2.0-or-later |
 | `src/qqc2/` | adaptations de `org.kde.desktop` de [qqc2-desktop-style](https://invent.kde.org/frameworks/qqc2-desktop-style) | 6.31 | LGPL-2.0-or-later |
+| `third_party/sortie/desktoptheme/ankh*` | [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern), `plasma/desktoptheme/` — commit `7ef6bfe` | 2026-07-19 | GPL-3.0 | Images SVG, jamais versionnées : fabriquées par `third_party/preparer.sh`. Accents de Windows et bleus de Breeze remplacés par les violets d'Ankh. Provenance détaillée : [docs/UPSTREAMS.md](../docs/UPSTREAMS.md) |
 | `src/lookandfeel/.../layouts/` | dérivé de `layout-templates/org.kde.plasma.desktop.defaultPanel` de [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop) | 6.7 | LGPL-2.0-or-later |
 
 Tous ces fichiers gardent l'en-tête de licence de KDE. L'ensemble du dépôt est distribué sous
