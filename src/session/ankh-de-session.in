@@ -44,6 +44,21 @@ if [ -d "${ANKH_DE_PLUGINDIR}" ]; then
     export QT_PLUGIN_PATH
 fi
 
+# Et où sont nos DONNÉES : applets, thèmes, styles Plasma, icônes, polices.
+# Sans cela, une installation ailleurs que dans /usr est invisible pour la
+# session — Plasma ne cherche que dans XDG_DATA_DIRS. Constaté le
+# 2026-11-06 dans la VM : « org.ankh.demarrer » n'apparaissait même pas dans
+# le journal, et la barre retombait sur Kickoff sans un mot.
+ANKH_DE_DATADIR="@ANKH_DE_DATADIR@"
+if [ -d "${ANKH_DE_DATADIR}" ]; then
+    XDG_DATA_DIRS="${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+    case ":${XDG_DATA_DIRS}:" in
+        *":${ANKH_DE_DATADIR}:"*) ;;
+        *) XDG_DATA_DIRS="${ANKH_DE_DATADIR}:${XDG_DATA_DIRS}" ;;
+    esac
+    export XDG_DATA_DIRS
+fi
+
 # Repère pour nos propres scripts et pour le signalement de bogues. Il ne
 # remplace pas XDG_CURRENT_DESKTOP, qui reste « KDE » (voir ankh-de.desktop).
 ANKH_DE_SESSION=1

@@ -236,6 +236,7 @@ dans_session() {
     echo "- Plasma : $(ssh_vm 'rpm -q --qf "%{VERSION}" plasma-workspace')"
     echo "- c'est bien notre session : ANKH_DE_SESSION=$(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^ANKH_DE_SESSION=//p'")"
     echo "- XDG_CONFIG_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_CONFIG_DIRS=//p'")"
+    echo "- XDG_DATA_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_DATA_DIRS=//p'")"
     echo "- style : $(dans_session 'kreadconfig6 --group KDE --key widgetStyle')"
     echo "- couleurs : $(dans_session 'kreadconfig6 --group General --key ColorScheme')"
     echo "- police : $(dans_session 'kreadconfig6 --group General --key font')"
@@ -288,6 +289,10 @@ etape "10. Le menu Démarrer"
 applets="$(dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
     'var n=[]; panels().forEach(function(p){p.widgetIds.forEach(function(i){n.push(p.widgetById(i).type)})}); print(n.join(\",\"))'" 2>/dev/null || true)"
 echo "   applets de la barre : ${applets:-inconnus}"
+# Ce que la disposition a dit en construisant la barre : c'est là qu'un
+# repli silencieux se voit.
+ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-LAYOUT.*' | head -6" \
+    | sed 's/^/   /' || true
 
 demarrer_present=non
 case "${applets}" in *org.ankh.demarrer*) demarrer_present=oui ;; esac
@@ -326,6 +331,79 @@ fi
     echo "- notre applet est dans la barre : ${demarrer_present}"
     echo "- erreurs QML signalées : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
+
+etape "11. Mesurer la barre des tâches (lot 4)"
+# Cinq mesures viennent de la configuration, quatre de l'image. Les
+# premières d'abord : elles disent ce que Plasma a RETENU, l'image dira ce
+# qu'il a dessiné.
+lire_panneau() { # $1 : expression JavaScript sur le premier panneau
+    dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+        'var p=panels()[0]; print($1)'" 2>/dev/null | tr -d '\r' || true
+}
+barre_hauteur="$(lire_panneau 'p.height')"
+barre_position="$(lire_panneau 'p.location')"
+barre_flottante="$(lire_panneau 'p.floating')"
+echo "   hauteur=${barre_hauteur} position=${barre_position} flottante=${barre_flottante}"
+
+horloge_date="$(dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+    'var p=panels()[0]; p.widgetIds.forEach(function(i){var w=p.widgetById(i);
+     if (w.type.indexOf(\"horloge\")>=0 || w.type.indexOf(\"digitalclock\")>=0) {
+       w.currentConfigGroup=[\"Appearance\"]; print(w.readConfig(\"dateDisplayFormat\")); }})'" \
+    2>/dev/null | tr -d '\r' || true)"
+notif_position="$(dans_session 'kreadconfig6 --file plasmanotifyrc --group Notifications --key PopupPosition' || true)"
+echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
+
+# Fond uni avant de mesurer l'image : la barre est en verre, et un papier
+# peint coloré se lirait à travers elle.
+dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+    'desktopsForActivity(currentActivity()).forEach(function(d){
+       d.wallpaperPlugin=\"org.kde.color\";
+       d.currentConfigGroup=[\"Wallpaper\",\"org.kde.color\",\"General\"];
+       d.writeConfig(\"Color\",\"0,0,0\"); })'" > /dev/null 2>&1 || true
+sleep 3
+printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+    "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+
+mesure_barre="?"
+if [[ -s "${travail}/barre.ppm" ]]; then
+    # mesurer.py rend « espace_sous hauteur couleur » à l'abscisse donnée.
+    mesure_barre="$(python3 "${racine}/bench/mesurer.py" barre "${travail}/barre.ppm" 200 2>/dev/null || echo '? ? ?')"
+    echo "   sur l'image (espace sous, hauteur, couleur) : ${mesure_barre}"
+    python3 -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/barre.ppm" "${sortie}/vm-barre.png" 2>/dev/null || true
+fi
+
+python3 - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
+    "${barre_flottante}" "${horloge_date}" "${notif_position}" "${mesure_barre}" << 'PYEOF'
+import json, sys
+sortie, hauteur, position, flottante, horloge, notif, image = sys.argv[1:8]
+m = {}
+def entier(v):
+    try:
+        return int(float(v))
+    except (TypeError, ValueError):
+        return None
+if entier(hauteur) is not None:
+    m["barre.hauteur"] = entier(hauteur)
+if position:
+    m["barre.position"] = position.strip()
+if flottante:
+    m["barre.flottante"] = "oui" if flottante.strip().lower() in ("true", "1") else "non"
+if entier(horloge) is not None:
+    m["barre.horloge.date"] = entier(horloge)
+if notif:
+    m["notifications.position"] = notif.strip()
+parts = image.split()
+if len(parts) == 3 and parts[0] != "?":
+    m["barre.marge_bas"] = entier(parts[0])
+    m["barre.hauteur_visible"] = entier(parts[1])
+    m["couleur.barre"] = parts[2]
+json.dump({k: v for k, v in m.items() if v is not None}, open(sortie, "w"),
+          indent=2, ensure_ascii=False)
+print(f"   {sortie} : {len(m)} mesure(s)")
+PYEOF
 
 # Journaux, quoi qu'il arrive.
 ssh_vm 'sudo journalctl --no-pager -b' > "${sortie}/vm-journal.log" 2>/dev/null || true

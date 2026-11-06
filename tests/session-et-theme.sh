@@ -149,6 +149,15 @@ else
     echo "  ECHEC le lanceur ne pose pas QT_PLUGIN_PATH sur ${greffons}" >&2
     echecs=$((echecs + 1))
 fi
+# Même piège pour les DONNÉES : sans XDG_DATA_DIRS, Plasma ne trouve ni nos
+# applets, ni nos thèmes, et retombe sur les siens sans un mot.
+verifies=$((verifies + 1))
+if grep -q 'XDG_DATA_DIRS' "${lanceur}" && grep -q "${prefixe}/share" "${lanceur}"; then
+    printf '  ok    %s\n' "le lanceur pose XDG_DATA_DIRS sur ${prefixe}/share"
+else
+    echo "  ECHEC le lanceur ne pose pas XDG_DATA_DIRS sur ${prefixe}/share" >&2
+    echecs=$((echecs + 1))
+fi
 
 verifies=$((verifies + 1))
 if plasma-apply-lookandfeel --list 2>/dev/null | grep -qx org.ankh.de.desktop; then

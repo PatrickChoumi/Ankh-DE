@@ -37,12 +37,30 @@ panel.addWidget("org.kde.plasma.panelspacer")
 
 // Nos applets quand ils sont installés, ceux de Plasma sinon : le fichier
 // doit marcher même sur une installation partielle.
+// Ajoute notre applet, ou celui de Plasma s'il n'est pas installé — et le
+// DIT. Au premier passage en VM, le repli était muet : la barre portait
+// Kickoff, la capture montrait notre icône (venue du thème), et on a cru
+// que notre menu était là. Un repli silencieux est un mensonge.
 function ajouter(notre, celuiDePlasma) {
+    var w = null
     try {
-        return panel.addWidget(notre)
+        w = panel.addWidget(notre)
     } catch (e) {
-        return panel.addWidget(celuiDePlasma)
+        w = null
     }
+    // addWidget ne lève pas toujours : il peut rendre un applet de
+    // remplacement. On vérifie ce qu'on a réellement obtenu.
+    if (w && w.type === notre) {
+        print("ANKH-LAYOUT " + notre + " : installé")
+        return w
+    }
+    if (w) {
+        print("ANKH-LAYOUT " + notre + " : absent (obtenu « " + w.type + " »), repli sur " + celuiDePlasma)
+        w.remove()
+    } else {
+        print("ANKH-LAYOUT " + notre + " : absent, repli sur " + celuiDePlasma)
+    }
+    return panel.addWidget(celuiDePlasma)
 }
 
 // Démarrer : le nôtre (DE-011, repris de KDE-Windows-Modern), sinon Kickoff.
