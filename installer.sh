@@ -151,13 +151,22 @@ fi
 # installé correctement.
 # Hors session, on lui donne la plateforme « offscreen » : elle écrit alors
 # ses réglages sans rien afficher. Vérifié en conteneur et en VM.
+# Second piège, celui-là trouvé dans la VM le 2026-11-06 : l'outil n'écrit
+# « widgetStyle » que s'il arrive à CHARGER le greffon du style. Lancé par
+# l'installateur, il ne connaît pas notre préfixe — le style n'était donc
+# pas appliqué, EN SILENCE, et le rapport de la session le montrait vide.
+greffons_installes="$(find "${prefixe}" -type d -name styles -printf '%h\n' 2>/dev/null | head -1)"
 appliquer() {
-    if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
-        plasma-apply-lookandfeel "$@"
-    else
-        echo "  (hors session graphique : application sans affichage)"
-        QT_QPA_PLATFORM=offscreen plasma-apply-lookandfeel "$@"
+    local env=()
+    if [[ -n "${greffons_installes}" ]]; then
+        env+=("QT_PLUGIN_PATH=${greffons_installes}${QT_PLUGIN_PATH:+:${QT_PLUGIN_PATH}}")
     fi
+    if [[ -z "${WAYLAND_DISPLAY:-}" && -z "${DISPLAY:-}" ]]; then
+        # Sans session graphique, l'outil s'arrête sur un défaut.
+        echo "  (hors session graphique : application sans affichage)"
+        env+=("QT_QPA_PLATFORM=offscreen")
+    fi
+    env "${env[@]}" plasma-apply-lookandfeel "$@"
 }
 
 if [[ "${barre}" == oui ]]; then

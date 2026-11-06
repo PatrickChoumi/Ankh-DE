@@ -237,6 +237,22 @@ dans_session() {
     echo "- Selawik vue par fontconfig : $(ssh_vm 'fc-match -f "%{family[0]}" Selawik')"
 } | tee "${sortie}/vm-rapport.md"
 
+# Un rapport qui affiche une ligne vide n'est pas un succès : c'est un
+# réglage non appliqué. Au premier passage, « style » était vide et rien ne
+# le signalait (le greffon n'était pas trouvé par l'installateur).
+manquants=()
+while IFS= read -r ligne; do
+    case "${ligne}" in
+        "- "*": ") manquants+=("${ligne#- }") ;;
+    esac
+done < "${sortie}/vm-rapport.md"
+if (( ${#manquants[@]} )); then
+    echo "Réglages NON appliqués dans la session :" >&2
+    printf '  %s\n' "${manquants[@]}" >&2
+    exit 1
+fi
+echo "   tous les réglages du rapport sont renseignés"
+
 etape "8. Les 46 vérifications, dans la VM"
 dans_session 'cd ~/ankh-de && ANKH_DE_CMAKE_EXTRA=-DANKH_DE_PLASMA_NON_TESTE=ON ./tests/session-et-theme.sh' \
     > "${sortie}/vm-tests.log" 2>&1 \
