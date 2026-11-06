@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bouton Démarrer d'Ankh DE, dessiné pour 16 px.
+  Même motif que la version redimensionnable, mais posé sur des pixels
+  entiers : à cette taille, un trait à cheval sur deux pixels se délave.
+  Voir le commentaire de ../../scalable/places/start-here.svg.
+-->
+<svg width="16" height="16" viewBox="0 0 16 16" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#e6edf3; }</style>
+  </defs>
+  <path d="M3 13.5 8 2.5 13 13.5" fill="none"
+        class="ColorScheme-Text" stroke="currentColor" stroke-width="2"
+        stroke-linejoin="miter" stroke-miterlimit="6" stroke-linecap="butt"/>
+  <rect x="5" y="9" width="6" height="2" fill="#a78bfa"/>
+</svg>

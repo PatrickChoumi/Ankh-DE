@@ -26,7 +26,8 @@
 | DE-009 | Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard | DÉCIDÉ |
 | DE-010 | Ankh DE livre sa propre session, qui porte ce que le thème global ne sait pas porter (corrige DE-002) | DÉCIDÉ |
 | DE-011 | Reprendre le code libre existant plutôt que le réécrire (modifie ANKH-DE-SPEC §5.6) | DÉCIDÉ |
-| DE-012 | Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005) | DÉCIDÉ |
+| DE-012 | Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005) | REMPLACÉE par DE-013 |
+| DE-013 | Aucun motif qui ressemble à un logo de Windows : le bouton Démarrer porte le logo d'Ankh (remplace DE-012) | DÉCIDÉ |
 
 ---
 
@@ -362,3 +363,31 @@
   [AUDIT.md §5](../AUDIT.md). Cette décision ne l'augmente pas : elle le rend explicite.
 - **Vérification** : l'icône livrée est celle de Fluent, à son commit figé `c8a244f`, déclarée
   dans `LICENSES/README.md` comme le reste du thème.
+
+## DE-013 — Aucun motif qui ressemble à un logo de Windows : le bouton Démarrer porte le logo d'Ankh (remplace DE-012)
+
+- **Statut** : DÉCIDÉ (2026-11-06), ton choix, qui **remplace DE-012** du même jour.
+- **Contexte** : DE-012 acceptait les redessins libres des motifs de Windows, au motif qu'un
+  dessin de vinceliuice sous GPL-3.0 n'est pas un fichier de Microsoft. Tu as tranché autrement :
+  « pas de logo Windows par exemple, ou qui y ressemble, mais tu peux utiliser des logos qui ne
+  ressemblent pas à ceux de Windows, peut-être un original ou bien celui d'Ankh ».
+- **Décision** : la règle ne porte plus seulement sur la **provenance** du fichier, mais sur
+  **ce que le dessin montre**. Aucun motif reconnaissable comme un logo de Microsoft n'est
+  livré, quelle que soit sa licence et quel qu'en soit l'auteur.
+  Le bouton Démarrer porte **le logo d'Ankh** : le A au trait barré de violet, repris du dépôt
+  [Ankh](https://github.com/PatrickChoumi/Ankh)
+  (`build_files/files/usr/share/icons/hicolor/scalable/apps/ankh-logo.svg`). Les proportions
+  d'origine sont conservées — sommet en pointe nette, pieds plats, traverse pleine — et le
+  dessin est recalé pour une barre des tâches, avec **une version par taille** (16, 22,
+  redimensionnable) : à 16 px, un trait à cheval sur deux pixels se délave.
+- **Ce qui ne change pas** : le reste du thème Fluent, qui ne montre aucun logo mais une
+  *grammaire* visuelle — formes, épaisseurs, arrondis. C'est la typographie de l'interface, pas
+  une marque. Selawik reste également en place : c'est une police publiée par Microsoft sous
+  OFL, pas un logo.
+- **Comment c'est tenu** : `third_party/preparer.sh` remplace **toutes** les variantes de
+  `start-here` du thème — `-kde`, `-kde-plasma`, `-symbolic`, à toutes les tailles — et **la
+  construction échoue** si une seule n'est pas la nôtre. Le défaut d'origine n'avait été vu que
+  sur la capture d'une vraie session : le contrôle automatique existe pour qu'il ne revienne pas.
+- **Pourquoi DE-012 était quand même utile** : elle a nommé la distinction entre un fichier de
+  Microsoft et un redessin libre, qui reste vraie et qui justifie Selawik et Fluent. Elle se
+  trompait seulement sur l'endroit où tracer la limite.

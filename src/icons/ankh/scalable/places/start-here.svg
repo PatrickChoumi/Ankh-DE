@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Bouton Démarrer d'Ankh DE.
+
+  Repris du logo d'Ankh (build_files/files/usr/share/icons/hicolor/scalable/
+  apps/ankh-logo.svg du dépôt PatrickChoumi/Ankh) : le A au trait, barré de
+  violet. Les proportions d'origine sont conservées — sommet en pointe
+  nette, pieds plats, traverse pleine — et le dessin est recalé pour une
+  barre des tâches : traits plus francs, mesures posées sur la grille des
+  pixels.
+
+  Il remplace le « start-here » du thème Fluent, qui est le quadrillage à
+  quatre carreaux de Windows (DE-005, DE-013).
+
+  Le A suit le jeu de couleurs par « ColorScheme-Text » ; la traverse garde
+  le violet d'Ankh, qui est l'identité.
+-->
+<svg width="24" height="24" viewBox="0 0 24 24" version="1.1"
+     xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#e6edf3; }</style>
+  </defs>
+  <path d="M4.8 19.6 12 4.4 19.2 19.6" fill="none"
+        class="ColorScheme-Text" stroke="currentColor" stroke-width="2.6"
+        stroke-linejoin="miter" stroke-miterlimit="6" stroke-linecap="butt"/>
+  <rect x="7.6" y="13.9" width="8.8" height="2.6" fill="#a78bfa"/>
+</svg>

@@ -344,6 +344,36 @@ if (( morts_chez_nous > morts_amont )); then
     exit 1
 fi
 echo "liens : ${morts_chez_nous} morts, autant qu'en amont (icônes d'applications disparues)"
+# DE-013 : « start-here » de Fluent EST le quadrillage à quatre carreaux de
+# Windows. Repéré le 2026-11-06 sur la capture d'une VRAIE session — aucun
+# contrôle de licence ne pouvait le voir, le fichier n'étant pas versionné
+# chez nous mais fabriqué ici. On le remplace par le logo d'Ankh.
+# Toutes les variantes y passent (« -kde », « -kde-plasma », « -symbolic ») :
+# n'importe laquelle peut atterrir sur un bouton Démarrer.
+nos_icones="${racine}/src/icons/ankh"
+[[ -d "${nos_icones}" ]] || { echo "src/icons/ankh manque" >&2; exit 1; }
+remplaces=0
+while read -r icone; do
+    # On prend le dessin calé pour la taille du dossier, sinon le
+    # redimensionnable : à 16 px, un trait à cheval sur deux pixels se délave.
+    case "${icone}" in
+        */16/*|*/16@*) source_icone="${nos_icones}/16/places/start-here.svg" ;;
+        */22/*|*/22@*) source_icone="${nos_icones}/22/places/start-here.svg" ;;
+        *)             source_icone="${nos_icones}/scalable/places/start-here.svg" ;;
+    esac
+    # Un lien est retiré, jamais écrasé : écraser un lien réécrirait sa cible.
+    [[ -L "${icone}" ]] && rm -f "${icone}"
+    install -m 0644 "${source_icone}" "${icone}"
+    remplaces=$((remplaces + 1))
+done < <(find "${sortie}/icones" -name 'start-here*.svg')
+(( remplaces > 0 )) || { echo "Aucun start-here à remplacer : le thème a changé en amont" >&2; exit 1; }
+restants=0
+while read -r icone; do
+    grep -q "Ankh DE" "${icone}" 2>/dev/null || { restants=$((restants + 1)); echo "  resté : ${icone#${sortie}/icones/}" >&2; }
+done < <(find "${sortie}/icones" -name 'start-here*.svg')
+(( restants == 0 )) || { echo "DE-013 : ${restants} icône(s) « start-here » ne sont pas les nôtres" >&2; exit 1; }
+echo "bouton Démarrer : ${remplaces} icône(s) au logo d'Ankh"
+
 echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
 
 echo "== Style Plasma d'Ankh (lot 4)"
