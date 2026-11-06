@@ -24,7 +24,7 @@
 - `src/qqc2/` — les adaptations des contrôles QtQuick de KDE ;
 - `src/colors/` — `Ankh.colors` et `AnkhClair.colors` ;
 - `src/fontconfig/29-ankh-rendu.conf` — niveaux de gris, contours légers ;
-- `bench/` — le banc de mesure et ses 47 jetons.
+- `bench/` — le banc de mesure et ses 53 jetons.
 
 **Écrit pour l'autonomie** (ce qu'Ankh faisait dans son `Containerfile` et son `build.sh`) :
 - `CMakeLists.txt` à la racine : compile et installe tout, avec les en-têtes de KDE de n'importe
@@ -220,6 +220,52 @@ Le thème global désigne maintenant `name=ankh`, et le test le vérifie.
 donc du code. Le reprendre demande une décision qui modifie SPEC §5.6 — elle est à prendre
 avant le lot 5.
 
+## 2026-11-06, le soir — la barre n'était pas la nôtre, et le harnais le taisait
+
+Le menu Démarrer n'était pas « livré mais pas encore ouvert ». Il n'était **pas dans la barre**,
+et la barre visible portait nos couleurs, nos icônes et notre thème Plasma par-dessus la
+disposition de **Breeze**. C'est ce déguisement qui a tenu le défaut caché.
+
+`kdeglobals [KDE] LookAndFeelPackage` n'était écrit nulle part dans le dépôt. Sans cette clé,
+`shellcorona.cpp:1813` retombe sur `org.kde.breeze.desktop` et `shellcorona.cpp:1117` évalue la
+disposition de Breeze. La clé vit maintenant dans `src/config/kdeglobals`, que la session place
+dans `XDG_CONFIG_DIRS` : une session doit être juste par elle-même, sans dépendre d'une étape
+d'installation ([DE-014](DECISIONS.md)).
+
+**Ce que le passage en VM répond maintenant**, et chaque ligne vient d'une source différente :
+
+| Question | Réponse | D'où elle vient |
+|---|---|---|
+| Quelle disposition a été évaluée ? | `…/org.ankh.de.desktop/…/-layout.js` | le journal de `plasmashell` |
+| Qu'a dit notre disposition ? | `org.ankh.demarrer : installé`, idem horloge et bureau | ses propres `print()` |
+| Qu'y a-t-il dans la barre ? | nos trois applets, plus `icontasks` et la zone système de Plasma | `evaluateScript` sur `plasmashell` |
+| L'écran a-t-il changé à l'ouverture ? | 9,33 %, boîte 662×694 à x=314 sur 1280 | deux captures QEMU comparées |
+
+**J'ai annoncé deux causes avant la bonne, et le mécanisme de l'erreur vaut mieux que la
+correction.** `XDG_DATA_DIRS` ne manquait pas — le rapport affichait déjà
+`/usr/local/share:/usr/share`. Et « le script n'a rien dit » ne voulait pas dire « le script n'a
+pas tourné » : `print()` part dans `qCDebug(PLASMASHELL)`, catégorie `kde.plasmashell`, de
+sévérité `Info` par défaut, donc **muette**. J'ai pris ce silence pour une preuve. S'y ajoutait
+`qdbus6`, qui n'existe pas sur Fedora — c'est `qdbus-qt6` : toutes les requêtes échouaient en
+silence et le rapport écrivait « non » à une question jamais posée.
+
+**Trois constats du harnais s'affichaient sans faire échouer le passage** : les vérifications
+clé par clé, la présence de l'applet et l'ouverture du menu. Un passage pouvait écrire
+« ÉCHEC » à l'écran et se conclure en réussite. Les griefs sont maintenant rassemblés, et c'est
+la fin du script qui décide du code de sortie — après avoir ramassé captures, rapport et
+journaux, parce que c'est quand ça rate qu'ils servent.
+
+**Deux assertions du harnais avaient elles-mêmes tort**, et ont échoué à leur premier passage
+réel : `XDG_SESSION_DESKTOP` ne porte pas le nom du fichier de session (c'est `DESKTOP_SESSION`,
+SDDM `Display.cpp:453` ; les deux autres reçoivent `DesktopNames`, donc `KDE`, que nous posons
+exprès pour les portails), et la preuve de composition jugeait sur un cliché pris deux secondes
+après le démarrage, tombant sur l'écran de chargement.
+
+**Reconnaissance pour la suite**, les deux candidats clonés et inventoriés : Tidewater
+(`4484377`) est **entièrement en QML**, sans C++ ni CMake, avec des identifiants préfixés
+`tidewater.*` — rien à compiler, aucune collision. C'est la base retenue pour les lots 4, 6 et
+7. Le détail, et ce que leur README ne dit pas, est dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 > **Relu le 2026-11-06.** Ce tableau se lit au présent : trois de ses lignes étaient devenues
@@ -233,11 +279,12 @@ avant le lot 5.
 | Les mesures des lots 1 à 3 atteignent les cibles de Windows 11 | `MESURÉ` dans Ankh, en VM, sur **Fedora 44 seulement** ([run 39753444882](https://github.com/PatrickChoumi/Ankh/actions/runs/39753444882)) |
 | Le code compile tel quel hors de l'image d'Ankh | **vérifié** le 2026-11-05, conteneur Fedora 44, contre Plasma 6.8 |
 | Le thème global applique bien ses clés | **vérifié** le 2026-11-05 : il n'en recopie qu'un ensemble FIXE, onze des nôtres étaient ignorées en silence. Les polices, le rendu, l'accent et les boutons de titre sont passés dans la session ([DE-010](DECISIONS.md)) |
-| `kdeglobals [KDE] LookAndFeelPackage` désigne notre thème | **corrigé le 2026-11-06** — la clé n'existait nulle part, donc plasmashell construisait la barre de **Breeze** ([DE-014](DECISIONS.md)). Vérifiée par `tests/session-et-theme.sh` ; le passage en VM qui le confirme est en cours |
+| `kdeglobals [KDE] LookAndFeelPackage` désigne notre thème | **vérifié en VM** le 2026-11-06 : le rapport lit `org.ankh.de.desktop`, et `plasmashell` journalise avoir évalué **notre** disposition ([DE-014](DECISIONS.md)) |
 | `installer.sh` fonctionne sur Fedora | **vérifié** le 2026-11-06 : il installe dans une VM Fedora 44 neuve, et la session s'ouvre depuis l'écran de connexion (workflow `VM — session réelle`) |
 | `installer.sh` fonctionne sur Arch et Ubuntu | **non vérifié** — la construction passe en conteneur, l'installation et la session non |
 | `desinstaller.sh` ramène à l'état de départ | **non vérifié en VM** — il tourne sans erreur en conteneur ; personne n'a encore comparé l'avant et l'après dans une vraie session |
-| La barre des tâches est celle d'Ankh | **NON** au 2026-11-06 : notre applet n'est pas dans la barre, et la cause est trouvée ([DE-014](DECISIONS.md)). C'est le prochain passage en VM qui dira si le correctif suffit |
+| La barre des tâches est celle d'Ankh | **oui**, vérifié en VM le 2026-11-06 : `org.ankh.demarrer`, `org.ankh.horloge` et `org.ankh.bureau` sont installés par notre disposition, qui le dit dans le journal. `icontasks` et la zone système restent ceux de Plasma, par repli assumé — c'est le lot 4 qui les reprendra |
+| Le menu Démarrer **s'ouvre** | **oui**, vérifié en VM le 2026-11-06 : 9,33 % de l'écran change à l'ouverture, en une boîte de 662×694 centrée (x=314 sur 1280), donc pas Kickoff qui serait collé à gauche |
 | Le paquet RPM construit | **vérifié** le 2026-11-06 : `rpmbuild` passe, et il a révélé deux défauts du `CMakeLists.txt` (un README installé dans `/usr/share/kwin/scripts`, un autre listé deux fois) |
 | Les paquets Arch et Debian construisent | **non vérifié** — squelettes |
 | `third_party/preparer.sh` fabrique police, curseurs et thème GTK | **vérifié** le 2026-11-05, de bout en bout |

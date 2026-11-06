@@ -413,6 +413,59 @@ cible = "2"
 lot = 4
 source = "Windows 11 : heure et date sur deux lignes (D-052)"
 
+# Six propriétés de la barre que « shell/scripting/panel.h » expose et que
+# nous ne demandions pas (reconnaissance du 2026-11-06). Les valeurs
+# acceptées sont relevées dans « shell/scripting/panel.cpp » de Plasma 6.8,
+# pas devinées :
+#   alignment   left | center | right
+#   lengthMode  fill | fit | custom
+#   hiding      none | autohide | dodgewindows
+#   opacity     opaque | translucent | adaptive
+# Ensemble, les trois premières disent ce qui fait une barre de Windows 11 :
+# centrée, pleine largeur, jamais masquée.
+
+[[mesure]]
+id = "barre.alignement"
+libelle = "Alignement des icônes de la barre"
+cible = "center"
+lot = 4
+source = "Barre des tâches de Windows 11 : icônes centrées par défaut (Paramètres > Personnalisation > Barre des tâches > Comportements > Alignement)"
+
+[[mesure]]
+id = "barre.mode_longueur"
+libelle = "Mode de longueur de la barre"
+cible = "fill"
+lot = 4
+source = "La barre de Windows 11 occupe toute la largeur de l'écran ; seul le groupe d'icônes est centré"
+
+[[mesure]]
+id = "barre.masquage"
+libelle = "Masquage automatique de la barre"
+cible = "none"
+lot = 4
+source = "Windows 11 ne masque pas la barre par défaut (« Masquer automatiquement la barre des tâches » est décoché)"
+
+[[mesure]]
+id = "barre.decalage"
+libelle = "Décalage de la barre"
+cible = 0
+unite = "px"
+lot = 4
+source = "Une barre pleine largeur n'a pas de décalage ; la valeur dit si la disposition a bien été appliquée"
+
+[[mesure]]
+id = "barre.opacite"
+libelle = "Opacité de la barre"
+lot = 4
+source = "Relevé seulement : la barre de Windows 11 est en acrylique, et « translucent » n'en est pas l'équivalent exact. On suit la valeur sans l'imposer"
+
+[[mesure]]
+id = "barre.longueur"
+libelle = "Longueur de la barre"
+unite = "px"
+lot = 4
+source = "Relevé seulement : dépend de la largeur de l'écran. Sert à vérifier que « fill » a bien pris"
+
 [[mesure]]
 id = "volet.rayon"
 libelle = "Rayon des coins du menu de Plasma (volet)"

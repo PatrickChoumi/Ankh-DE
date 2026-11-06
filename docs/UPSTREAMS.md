@@ -41,13 +41,74 @@
 | [Klassy](https://github.com/paulmcauley/klassy), Lightly, KDE-Rounded-Corners | diverses | SPEC §5.6 : un seul mainteneur chacun, à recompiler à chaque version de Plasma — le même problème que le nôtre, en double |
 | [PlasmaZones](https://github.com/fuddlesworth/PlasmaZones) | GPL-3.0-or-later | Exige **Qt 6.10+**, au-dessus de notre plancher (Qt 6.6+) : exclurait des distributions visées. À citer comme extension facultative |
 
-## À examiner pour les lots suivants
+## Choisi pour les lots 4, 6 et 7 — reconnaissance du 2026-11-06
 
-| Projet | Licence | Pour quoi |
-|---|---|---|
-| KDE-Windows-Modern, applet `icontasks` | GPL-3.0 | Lot 4 avancé. **Pas repris pour l'instant, pour deux raisons** : son identifiant est `org.kde.plasma.icontasks`, celui de l'applet standard de Plasma — le reprendre tel quel l'écraserait (DE-011 l'interdit) ; et il embarque du C++ (`floatingtooltiparea.cpp`, `smartlauncherbackend.cpp`), donc du code à compiler et à reporter |
-| KDE-Windows-Modern, zone système | GPL-3.0 | Lot 6. 101 fichiers, du C++, et c'est un **conteneur** remplacé : le risque de casse est réel, à traiter avec une session de test |
-| [Tidewater](https://github.com/addition-official/tidewater) | GPL-3.0, actif (2026-10) | Lot 6 (paramètres rapides), lot 7 (Alt+Tab, aperçus) |
+Les deux candidats ont été **clonés et inventoriés**, pas lus de loin. Ce qui suit est relevé
+dans les dépôts, aux commits indiqués.
+
+### [Tidewater](https://github.com/addition-official/tidewater) — `4484377`, 2026-10-11, GPL-3.0
+
+**C'est la base retenue**, et la raison est nette : **aucune ligne de C++, aucun `CMakeLists.txt`**
+dans tout le dépôt. Tout est QML et données. Donc rien à compiler, rien à reporter à chaque
+version de Plasma, et le risque d'ABI qui nous coûte si cher sur le style et la décoration
+n'existe pas ici. Ses onze identifiants sont tous préfixés `tidewater.*` : **aucune collision**
+avec un applet de Plasma — l'inverse exact du problème d'`icontasks`.
+
+| Pièce | Lignes QML | Lot | Ce qu'elle apporte |
+|---|---|---|---|
+| `plasmoids/status` | 870 (+ 276 de shell) | 6 | Le volet unique : Wi-Fi, Bluetooth, volume, luminosité |
+| `plasmoids/notifications` | — | 6 et 10 | Centre de notifications |
+| `switcher/tidewater-switcher` | 1 fichier | 7 | Alt+Tab en rangées. `KPackageStructure: KWin/WindowSwitcher` |
+| `plasmoids/{tasks,clock,taskview,power,divider,workspaces,search}` | — | 4 | Les pièces de la barre |
+
+**Ce qu'il faut savoir avant de reprendre, et qui n'est pas dans leur README :**
+
+- le volet d'état **n'utilise aucun module QML de réseau** — il appelle `wpctl` (8 fois),
+  `nmcli` (7), `rfkill` (6), `bluetoothctl` (5) et `busctl` (4) depuis
+  `contents/code/helper.sh`. C'est pourquoi il ne dépend pas de
+  `org.kde.plasma.networkmanagement`, **absent de notre VM Fedora** (relevé dans le journal du
+  2026-11-06 : `plasma-welcome` s'en plaint). Avantage : aucune dépendance de module. Coût : ces
+  cinq outils doivent exister, et l'installateur devra le vérifier par distribution ;
+- **KWin garde le code d'un sélecteur Alt+Tab en mémoire, par nom de paquet, jusqu'à la
+  déconnexion.** Leur `install.sh` contourne la chose en renommant le paquet avec une empreinte
+  de son contenu (`tidewater-switcher-<sha1 court>`) et en pointant KWin dessus. Nous aurions
+  buté exactement là, en croyant notre sélecteur non chargé ;
+- ils développent et testent sur **Plasma 6.6**, nous visons 6.8. Comme tout est QML, le risque
+  n'est pas l'ABI mais une API retirée : `org.kde.plasma.plasma5support` et
+  `org.kde.plasma.private.volume` sont à vérifier en session avant toute reprise.
+
+### [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern) — `7ef6bfe`, 2026-07-19
+
+Déjà la source de notre thème Plasma et de trois applets. Les deux pièces que l'on nous
+conseille d'en tirer sont, mesure faite, les plus coûteuses du lot :
+
+| Pièce | Identifiant déclaré | Volume | Décision |
+|---|---|---|---|
+| `icontasks` | **`org.kde.plasma.icontasks`** | 11 fichiers C++, 20 QML, 4 429 lignes | **Non.** L'identifiant est celui de l'applet standard de Plasma : le reprendre tel quel l'écraserait, ce que DE-011 interdit. Et il faut compiler |
+| `systemtray` | *aucun* `Id` dans `metadata.json` (relevé le 2026-11-06) | 40 fichiers C++, 60 QML, 6 585 lignes | **Non pour l'instant.** C'est un fork du conteneur système de Plasma : du C++ couplé à l'ABI, et un conteneur **remplacé**. `tidewater.status` rend le même service en QML |
+
+Les licences déclarées par leurs `metadata.json` ne sont pas uniformes : `startmenu` est en
+`GPL-3.0-or-later`, mais `digitalclock`, `icontasks`, `showdesktop` et `systemtray` sont en
+`GPL-2.0-or-later`. À reporter dans `LICENSES/` pièce par pièce, et non en bloc.
+
+### Et plasma-workspace lui-même
+
+Pour un comportement système, la source officielle a tranché deux questions que ni l'un ni
+l'autre de ces projets n'aurait réglées, et elle l'a fait en quelques minutes de lecture :
+
+- `shell/shellcorona.cpp` a donné la cause de la barre qui n'était pas la nôtre
+  ([DE-014](../DECISIONS.md)) ;
+- `shell/scripting/panel.h` expose `alignment`, `lengthMode`, `length`, `offset`, `hiding` et
+  `opacity` en plus de `height`, `location` et `floating` que nous lisions déjà. Ces six-là
+  n'étaient **pas** des jetons : elles le deviennent, et elles disent précisément ce qui fait une
+  barre de Windows 11 — **centrée**, **pleine largeur**, **jamais masquée**. Attention à ne pas
+  surestimer l'apport : les huit autres jetons du lot 4 étaient déjà lus ; ils revenaient vides à
+  cause de la sonde cassée, pas faute d'être demandés ;
+- `shell/scripting/containment.h` confirme `widgetIds` et `widgetById`, sur quoi repose notre
+  sonde d'applets.
+
+C'est la source à lire **avant** un projet tiers quand la question est « comment Plasma
+fait-il ? ».
 
 ## Rappel de licence
 

@@ -41,7 +41,7 @@ chacun des points d'extension que Plasma expose, et rien d'autre.
 │ Niveaux de gris, contours légers. C'est fontconfig qui décide, pas KDE.  │
 ├──────────────────────────────────────────────────────────────────────────┤
 │ BANC DE MESURE  bench/                                                   │
-│ 47 jetons, leurs cibles et leurs sources. Mesure la session réelle en VM.│
+│ 53 jetons, leurs cibles et leurs sources. Mesure la session réelle en VM.│
 │ docs/FIDELITE.md en est généré. Un écart sur un lot terminé = CI rouge.  │
 └──────────────────────────────────────────────────────────────────────────┘
 ```

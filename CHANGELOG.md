@@ -25,7 +25,7 @@ de connexion (workflow `VM — session réelle`).
 
 | | |
 |---|---|
-| Jetons mesurés | **18 sur 47** |
+| Jetons mesurés | **18 sur 53** |
 | Contrôles (lot 3) | 12, tous conformes, rejoués à chaque PR |
 | Fenêtres (lot 2) | 6, dont la **barre de titre de 32 px** et les bords à 0 |
 

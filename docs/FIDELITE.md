@@ -12,7 +12,7 @@
 > mesurés. Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose
 > pas.
 
-**47 mesures.** Mesures obligatoires, lots : 1, 2, 3. Lots complets : 1, 3.
+**53 mesures.** Mesures obligatoires, lots : 1, 2, 3. Lots complets : 1, 3.
 
 ## Lot 1 — fondations — **complet**, mesures obligatoires
 
@@ -78,6 +78,12 @@
 | Espace sous la barre des tâches (`barre.marge_bas`) | 0 px | ± 0 px | Barre collée au bord (D-052) |
 | Place de la barre des tâches (`barre.position`) | `bottom` | — | Windows 11 : en bas |
 | Date de l'horloge (0 : selon la place, 1 : à côté, 2 : sous l'heure) (`barre.horloge.date`) | `2` | — | Windows 11 : heure et date sur deux lignes (D-052) |
+| Alignement des icônes de la barre (`barre.alignement`) | `center` | — | Barre des tâches de Windows 11 : icônes centrées par défaut (Paramètres > Personnalisation > Barre des tâches > Comportements > Alignement) |
+| Mode de longueur de la barre (`barre.mode_longueur`) | `fill` | — | La barre de Windows 11 occupe toute la largeur de l'écran ; seul le groupe d'icônes est centré |
+| Masquage automatique de la barre (`barre.masquage`) | `none` | — | Windows 11 ne masque pas la barre par défaut (« Masquer automatiquement la barre des tâches » est décoché) |
+| Décalage de la barre (`barre.decalage`) | 0 px | — | Une barre pleine largeur n'a pas de décalage ; la valeur dit si la disposition a bien été appliquée |
+| Opacité de la barre (`barre.opacite`) | *relevé* | — | Relevé seulement : la barre de Windows 11 est en acrylique, et « translucent » n'en est pas l'équivalent exact. On suit la valeur sans l'imposer |
+| Longueur de la barre (`barre.longueur`) | *relevé* | — | Relevé seulement : dépend de la largeur de l'écran. Sert à vérifier que « fill » a bien pris |
 | Rayon des coins du menu de Plasma (volet) (`volet.rayon`) | 8 px | ± 0.75 px | WinUI CommonStyles/CornerRadius_themeresources.xaml, OverlayCornerRadius |
 | Place des notifications (`notifications.position`) | `BottomRight` | — | Windows 11 : en bas à droite (D-052) |
 

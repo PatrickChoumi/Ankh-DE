@@ -625,7 +625,19 @@ lire_panneau() { # $1 : expression JavaScript sur le premier panneau
 barre_hauteur="$(lire_panneau 'p.height')"
 barre_position="$(lire_panneau 'p.location')"
 barre_flottante="$(lire_panneau 'p.floating')"
+# Six propriétés de plus, que « shell/scripting/panel.h » expose et que nous
+# ne demandions pas. Les trois premières disent ce qui fait une barre de
+# Windows 11 : centrée, pleine largeur, jamais masquée. Elles viennent de la
+# CONFIGURATION, donc elles sont exactes — contrairement à une mesure sur
+# l'image, qui dépend de ce que le compositeur a eu le temps de dessiner.
+barre_alignement="$(lire_panneau 'p.alignment')"
+barre_mode_longueur="$(lire_panneau 'p.lengthMode')"
+barre_masquage="$(lire_panneau 'p.hiding')"
+barre_decalage="$(lire_panneau 'p.offset')"
+barre_opacite="$(lire_panneau 'p.opacity')"
+barre_longueur="$(lire_panneau 'p.length')"
 echo "   hauteur=${barre_hauteur} position=${barre_position} flottante=${barre_flottante}"
+echo "   alignement=${barre_alignement:-?} longueur=${barre_mode_longueur:-?}/${barre_longueur:-?} masquage=${barre_masquage:-?} décalage=${barre_decalage:-?} opacité=${barre_opacite:-?}"
 
 horloge_date="$(plasma_script 'var p=panels()[0]; p.widgetIds.forEach(function(i){var w=p.widgetById(i); if (w.type.indexOf("horloge")>=0 || w.type.indexOf("digitalclock")>=0) { w.currentConfigGroup=["Appearance"]; print(w.readConfig("dateDisplayFormat")); }})' || true)"
 notif_position="$(dans_session 'kreadconfig6 --file plasmanotifyrc --group Notifications --key PopupPosition' || true)"
@@ -658,10 +670,13 @@ print('   vm-barre.png : les %d px du bas, à l\'échelle 3' % bande.height)
 " "${travail}/barre.ppm" "${sortie}/vm-barre.png" 2>/dev/null || true
 fi
 
-python3 - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
-    "${barre_flottante}" "${horloge_date}" "${notif_position}" "${mesure_barre}" << 'PYEOF'
+python3 -I - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
+    "${barre_flottante}" "${horloge_date}" "${notif_position}" "${mesure_barre}" \
+    "${barre_alignement}" "${barre_mode_longueur}" "${barre_masquage}" \
+    "${barre_decalage}" "${barre_opacite}" "${barre_longueur}" << 'PYEOF'
 import json, sys
-sortie, hauteur, position, flottante, horloge, notif, image = sys.argv[1:8]
+(sortie, hauteur, position, flottante, horloge, notif, image,
+ alignement, mode_longueur, masquage, decalage, opacite, longueur) = sys.argv[1:14]
 m = {}
 def entier(v):
     try:
@@ -678,6 +693,13 @@ if entier(horloge) is not None:
     m["barre.horloge.date"] = entier(horloge)
 if notif:
     m["notifications.position"] = notif.strip()
+for cle, valeur in (("barre.alignement", alignement), ("barre.mode_longueur", mode_longueur),
+                    ("barre.masquage", masquage), ("barre.opacite", opacite)):
+    if valeur.strip():
+        m[cle] = valeur.strip()
+for cle, valeur in (("barre.decalage", decalage), ("barre.longueur", longueur)):
+    if entier(valeur) is not None:
+        m[cle] = entier(valeur)
 parts = image.split()
 if len(parts) == 3 and parts[0] != "?":
     m["barre.marge_bas"] = entier(parts[0])

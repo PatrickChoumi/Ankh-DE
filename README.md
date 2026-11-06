@@ -9,39 +9,51 @@ de Windows 11 — au pixel près, et **vérifiées par un programme** — sous l
 violet d'[Ankh](https://github.com/PatrickChoumi/Ankh). Il s'installe sur Fedora, Arch ou Ubuntu
 sans modifier un seul fichier de la distribution, et se retire d'un geste.
 
-> ### État : **pré-version** — et la barre des tâches n'est pas encore la nôtre.
+> ### État : **pré-version** — la barre et le menu Démarrer sont à nous, et c'est prouvé.
 >
-> **Établi dans une vraie machine.** Ankh DE a été **installé par son propre installateur dans
-> une VM** (Fedora 44, Plasma 6.8.2), et la session ouverte **depuis l'écran de connexion**.
-> Dans cette session : `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police
-> `Selawik 10.5`, décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`,
-> Selawik trouvée par fontconfig, et toutes les vérifications clé par clé passées *dans la
-> session*. Le nombre exact est imprimé par le test et repris dans le rapport du passage : il
-> dépend des outils présents dans l'invité, et un chiffre figé ici devient faux en silence —
-> celui-ci annonçait 46 quand le test en passait 47.
+> Ankh DE a été **installé par son propre installateur dans une VM neuve** (Fedora 44,
+> Plasma 6.8.2) et la session ouverte **depuis l'écran de connexion**. Dans cette session :
+> `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
+> `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
+> fontconfig, et **48 vérifications clé par clé** passées *dans la session* — le compte est
+> imprimé par le test et repris dans le rapport, car il dépend des outils de l'invité.
 >
-> **Pas établi, et c'est le point qui compte.** Le **menu Démarrer n'est pas dans la barre**, et
-> la barre de la capture ci-dessous est celle de **Breeze** portant nos couleurs et nos icônes.
-> La cause a été trouvée le 2026-11-06 : `kdeglobals [KDE] LookAndFeelPackage` n'était écrit
-> nulle part, donc `plasmashell` évaluait la disposition de Breeze ([DE-014](DECISIONS.md)). Le
-> correctif est poussé ; le passage en VM qui doit le confirmer n'a pas rendu son verdict, et ce
-> paragraphe ne changera pas avant.
+> **Le menu Démarrer s'ouvre.** Trois preuves indépendantes, parce qu'une seule ne suffit pas :
 >
-> **18 jetons sur 47 mesurés.** Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
+> | Ce qu'on demande | Ce que le passage répond |
+> |---|---|
+> | Quelle disposition `plasmashell` a-t-il évaluée ? | `…/org.ankh.de.desktop/contents/layouts/org.kde.plasma.desktop-layout.js` — **la nôtre**, d'après son propre journal |
+> | Qu'y a-t-il dans la barre ? | `org.ankh.demarrer`, `org.ankh.horloge`, `org.ankh.bureau` installés ; `icontasks` et la zone système restent ceux de Plasma, par repli assumé |
+> | L'écran a-t-il changé à l'ouverture ? | **9,33 %** de l'écran, boîte de 662×694 à x=314 sur 1280 — donc **centrée**, et non collée à gauche comme Kickoff |
+>
+> Jusqu'au 2026-11-06 la barre visible était celle de **Breeze**, portant nos couleurs, nos
+> icônes et notre thème Plasma : `kdeglobals [KDE] LookAndFeelPackage` n'était écrit nulle part
+> ([DE-014](DECISIONS.md)). Ce déguisement a tenu le défaut caché plusieurs jours, et trois
+> constats du harnais s'affichaient en « ÉCHEC » dans un passage vert. Les deux sont corrigés.
+>
+> **18 jetons sur 53 mesurés.** Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
 > [ROADMAP.md](ROADMAP.md), [DECISIONS.md](DECISIONS.md).
 
-## Le bureau, dans une vraie session
+## Le menu Démarrer, ouvert dans une vraie session
+
+![Le menu Démarrer d'Ankh DE, ouvert dans une VM](docs/images/demarrer-vm.png)
+
+Capture prise par le moniteur de QEMU pendant le test `VM — session réelle`, après une demande
+d'ouverture envoyée par le chemin que Plasma emploie lui-même pour la touche Windows
+(`activateLauncherMenu`). Le nom du fichier est choisi d'après ce que l'image **montre** : s'il
+ne s'était rien ouvert, il s'appellerait `vm-demarrer-rien-ne-sest-ouvert.png`.
+
+## La barre des tâches
+
+![La barre des tâches d'Ankh DE dans une VM](docs/images/barre-vm.png)
+
+Les 120 px du bas de l'écran, à l'échelle 3. Le bouton Démarrer porte **le logo d'Ankh** —
+aucun motif qui ressemble à un logo de Microsoft ([DE-013](DECISIONS.md)). L'application ouverte
+est soulignée, et l'horloge est sur deux lignes, comme dans Windows 11.
+
+## Le bureau
 
 ![Le bureau d'Ankh DE dans une VM](docs/images/bureau-vm.png)
-
-Capture prise par le moniteur de QEMU, dans le test `VM — session réelle`, à chaque exécution.
-Le bouton Démarrer porte **le logo d'Ankh** — aucun motif qui ressemble à un logo de Microsoft
-([DE-013](DECISIONS.md)).
-
-**Ce que cette capture ne montre pas.** La barre est celle de **Breeze**, avec notre thème
-Plasma, nos couleurs et nos icônes : c'est exactement ce qui a rendu le défaut invisible
-pendant plusieurs jours. Elle a l'allure attendue et ce n'est pas la nôtre. L'image sera
-reprise quand le passage en VM dira que notre disposition a été évaluée.
 
 ## À quoi ça ressemble
 
@@ -81,7 +93,7 @@ Ces planches sont **produites par la CI à chaque changement**, pas prises à la
 | **Police** | [Selawik](https://github.com/microsoft/Selawik), le sosie libre de Segoe UI publié par Microsoft sous OFL 1.1, compilée depuis ses sources |
 | **Curseurs et icônes** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), recolorés au violet d'Ankh |
 | **Applications GTK** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), au violet d'Ankh |
-| **Banc de mesure** | 47 mesures, chacune avec sa cible Windows 11, sa tolérance et sa source. Un écart fait échouer la CI |
+| **Banc de mesure** | 53 mesures, chacune avec sa cible Windows 11, sa tolérance et sa source. Un écart fait échouer la CI |
 
 ## Ce que ce n'est pas
 

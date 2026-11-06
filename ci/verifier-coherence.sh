@@ -83,6 +83,59 @@ for regle in "${ABROGEES[@]}"; do
     fi
 done
 
+# --- 4. Le compte des jetons, cité en prose -------------------------------
+# Le 2026-11-06, README.md et CHANGELOG.md annonçaient 46 vérifications quand
+# le test en passait 47, et douze documents citaient « 47 mesures » de
+# mémoire. Un nombre répété à la main dérive sans que rien ne le dise.
+#
+# Deux essais trop gourmands avant celui-ci, et ils apprennent la forme du
+# problème :
+#   — « 18 jetons sur 53 » porte DEUX nombres, et seul le second est un
+#     dénominateur ;
+#   — « 6 jetons sur 11 » est un compte DU LOT 2, parfaitement juste ;
+#   — « 7 mesures conformes » est un relevé d'un passage, pas un total.
+#
+# D'où deux règles, étroites exprès :
+#   a) un dénominateur (« sur N », « of N ») doit être le total OU le compte
+#      d'un lot — les deux sont calculés depuis jetons.toml, donc un total
+#      périmé reste attrapé ;
+#   b) « N mesures » n'est lu comme un total que sur une ligne qui parle de
+#      l'ENSEMBLE : elle nomme jetons.toml, le banc, ou décrit chaque mesure.
+#
+# AUDIT.md est exclu (instantané daté) et docs/FIDELITE.md aussi (engendré).
+comptes="$(python3 -I -c "
+import tomllib, collections
+d = tomllib.loads(open('bench/jetons.toml','rb').read().decode())
+c = collections.Counter(m['lot'] for m in d['mesure'])
+print(len(d['mesure']))
+print(' '.join(str(n) for n in sorted(set(c.values()) | {len(d['mesure'])})))
+" 2>/dev/null)"
+total_jetons="$(head -1 <<< "${comptes}")"
+acceptables=" $(tail -1 <<< "${comptes}") "
+if [[ -z "${total_jetons}" || "${total_jetons}" == 0 ]]; then
+    signaler "impossible de compter les jetons de bench/jetons.toml"
+else
+    MARQUEURS='jetons\.toml|Banc de mesure|Measurement bench|La référence|chacune avec|each with|leurs cibles'
+    while IFS= read -r f; do
+        [[ -n "${f}" ]] || continue
+        while IFS=: read -r ligne texte; do
+            [[ -n "${ligne}" ]] || continue
+            grep -qE "${MARQUEURS}" <<< "${texte}" || continue
+            cite="$(grep -oE '[0-9]+ (mesures|jetons|measurements)' <<< "${texte}" | grep -oE '^[0-9]+' | head -1)"
+            [[ -n "${cite}" && "${cite}" != "${total_jetons}" ]] \
+                && signaler "${f}:${ligne} annonce « ${cite} » pour l'ensemble, bench/jetons.toml en porte ${total_jetons}"
+        done < <(grep -nE '[0-9]+ (mesures|jetons|measurements)' "${f}" 2>/dev/null)
+
+        while IFS=: read -r ligne cite; do
+            [[ -n "${cite}" ]] || continue
+            [[ "${acceptables}" == *" ${cite} "* ]] \
+                || signaler "${f}:${ligne} compte « sur ${cite} », qui n'est ni le total (${total_jetons}) ni le compte d'un lot"
+        done < <(grep -noE '(jetons|tokens) (sur|of) [0-9]+' "${f}" 2>/dev/null \
+                 | sed -E 's/^([0-9]+):.* (sur|of) ([0-9]+)$/\1:\3/')
+    done < <(grep -rl '' --include='*.md' . 2>/dev/null \
+             | grep -v '^\./\.git' | grep -v '^\./AUDIT\.md' | grep -v '^\./docs/FIDELITE\.md')
+fi
+
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then
     echo >&2

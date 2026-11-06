@@ -21,7 +21,17 @@
 | **9** | Icônes et curseurs au violet d'Ankh | **FINI** — curseurs au lot 1 ; thème d'icônes `Fluent-Ankh` recoloré, et bouton Démarrer au logo d'Ankh (DE-013) |
 | **10** | Finitions : 125 et 150 %, thème clair, accessibilité, mesures obligatoires | à faire |
 
-**Compte des mesures : 18 jetons sur 47.** Le détail est dans
+**Prochains lots : la base est choisie, et elle est en QML.** Tidewater (`4484377`, GPL-3.0)
+ne contient **aucune ligne de C++ ni de CMake**, et ses onze identifiants sont préfixés
+`tidewater.*` : rien à compiler, rien à reporter à chaque version de Plasma, aucune collision
+avec un applet de Plasma. Il couvre le lot 6 (`status`, `notifications`), le lot 7
+(`tidewater-switcher`, `KWin/WindowSwitcher`) et le reste du lot 4. Les deux pièces conseillées
+de KDE-Windows-Modern sont écartées, mesure faite : `icontasks` porte l'identifiant de l'applet
+standard de Plasma et 11 fichiers C++ ; sa zone système est un fork du conteneur système, 40
+fichiers C++ et 6 585 lignes de QML. Le relevé complet, avec ce que leur README ne dit pas, est
+dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
+
+**Compte des mesures : 18 jetons sur 53.** Le détail est dans
 [docs/FIDELITE.md](docs/FIDELITE.md), généré depuis `bench/jetons.toml`.
 
 **Ce qui livre quoi** : `bench/captures.sh` mesure le style sans VM, à chaque PR ;

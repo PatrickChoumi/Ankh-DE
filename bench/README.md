@@ -5,7 +5,7 @@
 
 | Fichier | Rôle |
 |---|---|
-| `jetons.toml` | **La référence** : 47 mesures, chacune avec sa cible Windows 11, sa tolérance, son unité, sa source et son lot. `lots_mesures_obligatoires` dit lesquelles font échouer le test ; `lots_complets` dit quels lots n'ont plus de jeton à mesurer — les deux ne se confondent pas |
+| `jetons.toml` | **La référence** : 53 mesures, chacune avec sa cible Windows 11, sa tolérance, son unité, sa source et son lot. `lots_mesures_obligatoires` dit lesquelles font échouer le test ; `lots_complets` dit quels lots n'ont plus de jeton à mesurer — les deux ne se confondent pas |
 | `fidelite.py` | Génère [`../docs/FIDELITE.md`](../docs/FIDELITE.md) depuis `jetons.toml`. La CI refuse la PR si le fichier versionné diffère : le tableau de fidélité ne peut donc pas mentir |
 | `mesurer.py` | Mesure sur les captures : rayon des coins (aire manquante à l'angle, r²(1 − π/4) pour un quart de cercle), taille et couleur du bouton Fermer survolé, hauteur et couleur de la barre des tâches. Sans module tiers |
 | `banc.sh` | Pilote la session dans la VM : lit les réglages, place les fenêtres, ouvre la galerie, prend les captures, écrit `ui-rapport.md` |

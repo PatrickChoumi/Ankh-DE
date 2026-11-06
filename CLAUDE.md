@@ -38,7 +38,7 @@
   s'ouvre, `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
   `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
   fontconfig, et les vérifications de `tests/session-et-theme.sh` passent *dans la session*.
-- **18 jetons sur 47 mesurés** : 12 pour les contrôles (lot 3, sans VM, à chaque PR) et 6 pour
+- **18 jetons sur 53 mesurés** : 12 pour les contrôles (lot 3, sans VM, à chaque PR) et 6 pour
   les fenêtres (lot 2, par un vrai KWin en backend `--virtual`).
 - **Le menu Démarrer est livré mais n'a pas encore été ouvert.** Au passage du 2026-11-06 il
   n'était même pas chargé : la session n'annonçait pas `XDG_DATA_DIRS`. Corrigé ; la preuve

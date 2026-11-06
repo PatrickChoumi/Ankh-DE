@@ -119,7 +119,7 @@
   - les deux au choix, par un réglage : faisable (les couleurs sont isolées dans
     `src/colors/`), mais double les captures et les mesures du banc à chaque lot. À reconsidérer
     quand les lots 4 à 10 seront faits.
-- **Vérification** : `bench/jetons.toml`, 47 mesures, chacune avec sa cible, sa tolérance, sa
+- **Vérification** : `bench/jetons.toml`, 53 mesures, chacune avec sa cible, sa tolérance, sa
   source et son lot.
 
 ## DE-004 — La couleur d'accent suit le fond d'écran (reprend D-054)
@@ -181,7 +181,7 @@
 ## DE-007 — Le banc de mesure est le critère d'acceptation de chaque lot
 
 - **Statut** : DÉCIDÉ (2026-11-05), reprise du lot 0 de D-052.
-- **Décision** : `bench/jetons.toml` porte la référence : 47 mesures, chacune avec sa cible
+- **Décision** : `bench/jetons.toml` porte la référence : 53 mesures, chacune avec sa cible
   Windows 11, sa tolérance, son unité, sa source et son lot. `lots_mesures_obligatoires` liste les lots
   fusionnés. Une mesure dont le lot est terminé **fait échouer le test** si elle s'écarte de sa
   cible. Aucune PR de lot ne fusionne sans :

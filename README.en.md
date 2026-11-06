@@ -10,28 +10,34 @@ to the pixel, and **checked by a program** — in the graphite-and-violet identi
 [Ankh](https://github.com/PatrickChoumi/Ankh). It installs on Fedora, Arch or Ubuntu without
 modifying a single file belonging to your distribution, and it uninstalls in one command.
 
-> ### Status: pre-release — and the taskbar is not ours yet.
+> ### Status: pre-release — the taskbar and Start menu are ours, and it is proven.
 >
-> **Established on a real machine.** Ankh DE has been **installed by its own installer in a VM**
-> (Fedora 44, Plasma 6.8.2) and the session opened **from the login screen**. Inside it:
-> `ANKH_DE_SESSION=1`, style `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration
-> `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh`, Selawik found by fontconfig,
-> and every key-by-key check passing *inside the session*. The exact count is printed by the test
-> and carried in the run's report: it depends on which tools the guest has, and a number frozen
-> in prose goes stale silently.
+> Ankh DE has been **installed by its own installer in a fresh VM** (Fedora 44, Plasma 6.8.2)
+> and the session opened **from the login screen**. Inside it: `ANKH_DE_SESSION=1`, style
+> `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration `org.ankh.decoration`, icons
+> `Fluent-Ankh`, Plasma style `ankh`, Selawik found by fontconfig, and **48 key-by-key checks**
+> passing *inside the session*.
 >
-> **Not established, and this is the part that matters.** The **Start menu is not in the
-> taskbar**, and the bar you see in the screenshots is **Breeze's**, wearing our colours and
-> icons. The cause was found on 2026-11-06: `kdeglobals [KDE] LookAndFeelPackage` was written
-> nowhere, so `plasmashell` evaluated Breeze's layout ([DE-014](DECISIONS.md), French). The fix
-> is pushed; the VM run that must confirm it has not returned a verdict, and this paragraph will
-> not change before it does.
+> **The Start menu opens.** Three independent proofs, because one is not enough:
+>
+> | Question | What the run answers |
+> |---|---|
+> | Which layout did `plasmashell` evaluate? | `…/org.ankh.de.desktop/…/org.kde.plasma.desktop-layout.js` — **ours**, from its own log |
+> | What is in the bar? | `org.ankh.demarrer`, `org.ankh.horloge`, `org.ankh.bureau` installed; `icontasks` and the system tray stay Plasma's, by deliberate fallback |
+> | Did the screen change on open? | **9.33 %** of it, a 662×694 box at x=314 of 1280 — **centred**, not pinned left like Kickoff |
+>
+> Until 2026-11-06 the visible bar was **Breeze's**, wearing our colours, icons and Plasma
+> theme: `kdeglobals [KDE] LookAndFeelPackage` was written nowhere ([DE-014](DECISIONS.md),
+> French). That disguise kept the fault hidden for days, and three of the harness's own checks
+> printed "FAILED" inside a green run. Both are fixed.
 >
 > Metrics for batches 1–3 are **measured in a VM on Fedora 44**: 32 px title bar, `#C42B1C`
 > close button at 46×32, 8.2 px corners, 32 px controls, 40×20 toggle, 12 px scrollbar, Selawik
-> at 14 px. **18 of 47 tokens measured.**
+> at 14 px. **18 of 53 tokens measured.**
 > Still unproven: the installer on Arch and Ubuntu, and the Arch and Debian packages.
 > What is verified and what is not: [AVANCEMENT.md](AVANCEMENT.md) (French).
+
+![Ankh DE's Start menu, open in a VM](docs/images/demarrer-vm.png)
 
 ## What it is
 
@@ -44,7 +50,7 @@ modifying a single file belonging to your distribution, and it uninstalls in one
 | **Font** | [Selawik](https://github.com/microsoft/Selawik), the free Segoe UI lookalike Microsoft published under OFL 1.1, built from source |
 | **Cursors and icons** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), recoloured to Ankh's violet |
 | **GTK apps** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), in Ankh's violet |
-| **Measurement bench** | 47 measurements, each with its Windows 11 target, tolerance and source. A deviation fails CI |
+| **Measurement bench** | 53 measurements, each with its Windows 11 target, tolerance and source. A deviation fails CI |
 
 ## What it is not
 
