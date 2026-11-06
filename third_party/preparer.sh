@@ -410,5 +410,105 @@ for piece in widgets/panel-background.svg widgets/tasks.svg; do
 done
 echo "panel-background.svg et tasks.svg présents"
 
+echo "== Applets d'Ankh (lot 5 et lot 4 partiel)"
+# DE-011 : reprendre le code libre plutôt que le réécrire. Source :
+# KDE-Windows-Modern (GPL-3.0), commit figé ; provenance dans
+# docs/UPSTREAMS.md. Trois applets seulement, et pour des raisons nommées :
+#   - ils sont en QML PUR : rien à compiler, donc rien à reporter en C++ ;
+#   - aucun n'écrase une pièce de la distribution. L'applet « icontasks » de
+#     ce même dépôt porte l'identifiant « org.kde.plasma.icontasks », celui
+#     de l'applet standard de Plasma : il n'est PAS repris (DE-011) ;
+#   - la zone système du même dépôt embarque du C++ et remplace un
+#     conteneur : remise à plus tard, pour la même raison de prudence.
+recuperer "${WM_DEPOT}" "${WM_COMMIT}" "${travail}/wm-applets" \
+    plasma/applets/org.kde.windowsmodern.startmenu \
+    plasma/applets/org.kde.windowsmodern.digitalclock \
+    plasma/applets/org.kde.windowsmodern.showdesktop
+wma="${travail}/wm-applets/plasma/applets"
+
+# grep rend 1 quand il ne trouve rien, et 2 ou plus sur une vraie erreur.
+# Avec « set -e » et « pipefail », un « rien trouvé » tuait le script en
+# silence (vu le 2026-11-06). On distingue les deux, plutôt que de masquer
+# l'échec par « || true », que CLAUDE.md §3.12 interdit.
+remplacer_partout() { # $1 : motif grep, $2… : expressions sed
+    local motif=$1 dossier=$2
+    shift 2
+    # Pas de « -Z » ici : la substitution de commande de bash supprime les
+    # octets nuls, ce qui rendait la liste inutilisable. Les chemins d'un
+    # applet ne contiennent pas de retour à la ligne : une liste par lignes
+    # suffit, et reste lisible.
+    local liste code
+    liste="$(grep -rli -- "${motif}" "${dossier}")" && code=0 || code=$?
+    case "${code}" in
+        0) printf '%s\n' "${liste}" | xargs -r -d '\n' sed -i "$@" ;;
+        1) ;;  # aucune correspondance : rien à faire
+        *) echo "grep a échoué (code ${code}) sur « ${motif} »" >&2; exit 1 ;;
+    esac
+}
+
+reprendre_applet() { # $1 : nom amont, $2 : notre identifiant, $3 : libellé
+    local amont="${wma}/org.kde.windowsmodern.$1" cible="${sortie}/applets/$2"
+    [[ -d "${amont}" ]] || { echo "Applet : ${amont} absent des sources" >&2; exit 1; }
+    rm -rf "${cible}"
+    install -d -m 0755 "$(dirname "${cible}")"
+    cp -a "${amont}" "${cible}"
+    # Scripts de développement de l'amont : ils n'ont rien à faire chez nous.
+    rm -f "${cible}/dev.sh"
+
+    # L'identifiant est dans metadata.json ET cité dans le QML (chemins de
+    # configuration, i18n). On le remplace partout, et on vérifie.
+    local ancien="org.kde.windowsmodern.$1"
+    remplacer_partout "${ancien}" "${cible}" "s/${ancien}/$2/g"
+    # Leur propre domaine, employé pour les chemins de configuration.
+    remplacer_partout "com.jeysef.windowsmodern" "${cible}" \
+        "s/com\.jeysef\.windowsmodern[a-z]*/$2/g"
+    # Tout reste de « windowsmodern » devient « ankh ». Le NOM DE L'AUTEUR,
+    # lui, est conservé : c'est l'attribution (docs/UPSTREAMS.md).
+    remplacer_partout "windowsmodern" "${cible}" \
+        -e "s/WindowsModern/Ankh/g" -e "s/windowsmodern/ankh/g"
+    # Et le nom affiché qui cite leur projet, avec son espace.
+    remplacer_partout "Windows Modern" "${cible}" "s/ *(\?Windows Modern)\?//g"
+    if grep -rqi 'windowsmodern' "${cible}"; then
+        echo "Applet $2 : « windowsmodern » est resté" >&2
+        grep -ril 'windowsmodern' "${cible}" | head -3 >&2
+        exit 1
+    fi
+
+    # Nom affiché et licence, à notre nom ; le reste du metadata est gardé.
+    python3 -I - "${cible}/metadata.json" "$2" "$3" << 'META'
+import json, sys
+chemin, ident, libelle = sys.argv[1:4]
+with open(chemin, encoding="utf-8") as f:
+    d = json.load(f)
+k = d.setdefault("KPlugin", {})
+k["Id"] = ident
+k["Name"] = libelle
+# Les traductions du nom d'origine ne valent plus pour le nôtre.
+for cle in [c for c in k if c.startswith("Name[")]:
+    del k[cle]
+k["License"] = "GPL-3.0-or-later"
+k["Website"] = "https://github.com/PatrickChoumi/Ankh-DE"
+with open(chemin, "w", encoding="utf-8") as f:
+    json.dump(d, f, indent=4, ensure_ascii=False)
+    f.write("\n")
+META
+    echo "$2 : $(find "${cible}" -type f | wc -l) fichiers"
+}
+
+reprendre_applet startmenu    org.ankh.demarrer "Démarrer"
+reprendre_applet digitalclock org.ankh.horloge  "Horloge"
+reprendre_applet showdesktop  org.ankh.bureau   "Afficher le bureau"
+
+# Aucun de nos applets ne doit porter un identifiant de Plasma : ce serait
+# écraser une pièce de la distribution (DE-011).
+for m in "${sortie}"/applets/*/metadata.json; do
+    ident="$(python3 -I -c 'import json,sys;print(json.load(open(sys.argv[1]))["KPlugin"]["Id"])' "${m}")"
+    case "${ident}" in
+        org.ankh.*) ;;
+        *) echo "Applet : identifiant « ${ident} » hors de org.ankh.* " >&2; exit 1 ;;
+    esac
+done
+echo "identifiants vérifiés : tous en org.ankh.*"
+
 echo
 echo "Prêt dans ${sortie}. Le CMake de la racine l'installera."

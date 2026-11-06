@@ -35,13 +35,18 @@ panel.hiding = "none"
 // (optimalSize de applets/panelspacer/main.qml, plasma-workspace).
 panel.addWidget("org.kde.plasma.panelspacer")
 
-// Démarrer. Au lot 5, « org.ankh.demarrer » prend la place ; tant qu'il
-// n'est pas écrit, Kickoff la tient, pour que ce fichier marche seul.
-try {
-    panel.addWidget("org.ankh.demarrer")
-} catch (e) {
-    panel.addWidget("org.kde.plasma.kickoff")
+// Nos applets quand ils sont installés, ceux de Plasma sinon : le fichier
+// doit marcher même sur une installation partielle.
+function ajouter(notre, celuiDePlasma) {
+    try {
+        return panel.addWidget(notre)
+    } catch (e) {
+        return panel.addWidget(celuiDePlasma)
+    }
 }
+
+// Démarrer : le nôtre (DE-011, repris de KDE-Windows-Modern), sinon Kickoff.
+ajouter("org.ankh.demarrer", "org.kde.plasma.kickoff")
 
 // Applications épinglées : seulement celles que toute installation de KDE
 // possède, et les applications par défaut du système (preferred://,
@@ -83,14 +88,19 @@ if (langIds.indexOf(languageId) != -1) {
 // Zone de notification : icônes à 16 px, comme Windows 11.
 panel.addWidget("org.kde.plasma.systemtray")
 
-// Horloge sur deux lignes (heure puis date), comme Windows 11.
-var horloge = panel.addWidget("org.kde.plasma.digitalclock")
-horloge.currentConfigGroup = ["Appearance"]
-horloge.writeConfig("dateDisplayFormat", "BesideTime")
-horloge.writeConfig("showSeconds", "Never")
+// Horloge : la nôtre dispose déjà l'heure au-dessus de la date, comme
+// Windows 11. Avec celle de Plasma, on s'en approche par ses réglages —
+// « BesideTime » met la date À CÔTÉ de l'heure, et c'est le mieux que son
+// schéma propose (à revérifier dans applets/digitalclock/…/main.xml).
+var horloge = ajouter("org.ankh.horloge", "org.kde.plasma.digitalclock")
+if (horloge.type === "org.kde.plasma.digitalclock") {
+    horloge.currentConfigGroup = ["Appearance"]
+    horloge.writeConfig("dateDisplayFormat", "BesideTime")
+    horloge.writeConfig("showSeconds", "Never")
+}
 
 // Bande « Afficher le bureau » au coin droit, comme Windows 11.
-panel.addWidget("org.kde.plasma.showdesktop")
+ajouter("org.ankh.bureau", "org.kde.plasma.showdesktop")
 
 // Fond d'écran : le module d'images, pour que l'accent suive le fond
 // (DE-004).

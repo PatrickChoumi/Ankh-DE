@@ -250,10 +250,14 @@ C'est précisément la raison d'être de `src/style` et `src/decoration`.
 4. **Pas de `curl | bash`** comme méthode d'installation.
 5. **Pas de dépendance à un dépôt tiers** à l'exécution : tout ce qui vient d'ailleurs est pris à
    un commit figé, vérifié, à la construction.
-6. **Pas de projet tiers embarqué comme code** : Klassy, Lightly, Menu11 et
-   KDE-Rounded-Corners restent écartés (chacun un seul mainteneur, à recompiler à chaque version
-   de Plasma — le même problème que le nôtre, en double). Les **images** et **feuilles de style**
-   tierces sont acceptées : curseurs et thème GTK Fluent.
+6. **Reprendre le code libre existant est permis, et préféré à le réécrire** — à cinq
+   conditions, toutes vérifiables (**DE-011**, qui remplace l'interdiction d'origine) : licence
+   compatible GPL-3.0-or-later **portée par un fichier de licence** ; commit figé ; provenance
+   tracée dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md) avec sa nature et ses modifications ; rien
+   de Microsoft ; et **aucune pièce qui en écrase une de la distribution**.
+   Ce qui reste écarté l'est pour une raison nommée, pas par principe : `menu-11-next` (licence
+   déclarée en métadonnées, sans fichier de licence), l'applet `icontasks` de KDE-Windows-Modern
+   (il porte l'identifiant de l'applet standard de Plasma), PlasmaZones (exige Qt 6.10+).
 7. **Pas de « au pixel près » sans mesure** : toute affirmation de fidélité qui n'est pas relevée
    par le banc est marquée `À VALIDER` (DE-007).
 8. **Pas de X11 comme cible** : Plasma 6.8 le supprime. Ankh DE vise Wayland. X11 peut marcher,

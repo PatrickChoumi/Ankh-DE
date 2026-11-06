@@ -18,6 +18,9 @@
 | Gabarit de barre | [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop), `layout-templates/…defaultPanel` | 6.7 | LGPL-2.0-or-later | code, dérivé | Barre collée de 48 px, centrée |
 | Écran de chargement | Breeze, `lookandfeel/contents/splash/` | 6.7 | LGPL-2.0-or-later | code, dérivé | Couleurs d'Ankh, barre de 3 px sur les six étapes |
 | **Style Plasma `ankh` / `ankh-clair`** | **[KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern)**, `plasma/desktoptheme/` | **`7ef6bfe`** (2026-07-19) | **GPL-3.0** | **images (SVG)** | **Repris le 2026-11-06.** Les accents de Windows 11 (`#4CC2FF`, `#60CDFF` en sombre ; `#0078D4` en clair) et les bleus de Breeze restés dans leur base (`#3DAEE9`, `#3DAEE6`, `#93CEE9`) sont remplacés par les violets d'Ankh. `metadata.json` réécrit à notre nom. 168 fichiers par thème |
+| **Menu Démarrer `org.ankh.demarrer`** | **KDE-Windows-Modern**, `plasma/applets/…startmenu/` | **`7ef6bfe`** | **GPL-3.0** | **code (QML)** | **Repris le 2026-11-06 (DE-011).** 19 fichiers, QML pur, rien à compiler. Identifiant, domaine de configuration et nom affiché passés aux noms d'Ankh ; **l'auteur amont (Jeysef) est conservé** dans les métadonnées, et le test le vérifie. Dépend de `org.kde.plasma.private.kicker` et `…private.sessions` : modules **privés**, surveillés par le test hebdomadaire |
+| **Horloge `org.ankh.horloge`** | KDE-Windows-Modern, `…digitalclock/` | `7ef6bfe` | GPL-3.0 | code (QML) | Idem. Dispose l'heure au-dessus de la date, ce que l'horloge de Plasma ne sait pas faire |
+| **« Afficher le bureau » `org.ankh.bureau`** | KDE-Windows-Modern, `…showdesktop/` | `7ef6bfe` | GPL-3.0 | code (QML) | Idem. Aucun module privé |
 | Police Selawik | [microsoft/Selawik](https://github.com/microsoft/Selawik) | `89362e8` | OFL 1.1 | données | Compilée depuis ses sources UFO, **sans modification** (nom réservé) |
 | Curseurs | [Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), `cursors/` | `c8a244f` | GPL-3.0 | images | Variante blanche, bleu d'accent → violet d'Ankh |
 | Icônes `Fluent-Ankh` | Fluent-icon-theme | `c8a244f` | GPL-3.0 | images | Variante « purple » (rose-magenta) recolorée en trois teintes |
@@ -35,8 +38,8 @@
 
 | Projet | Licence | Pour quoi |
 |---|---|---|
-| KDE-Windows-Modern, `plasma/applets/org.kde.windowsmodern.startmenu/` | GPL-3.0 | **Lot 5, le menu Démarrer.** 20 fichiers QML, Plasma 6.0+. C'est du **code** : sa reprise demande une décision qui modifie SPEC §5.6 |
-| KDE-Windows-Modern, applets `icontasks`, `systemtray`, `digitalclock` | GPL-3.0 | Lot 4 avancé et lot 6 |
+| KDE-Windows-Modern, applet `icontasks` | GPL-3.0 | Lot 4 avancé. **Pas repris pour l'instant, pour deux raisons** : son identifiant est `org.kde.plasma.icontasks`, celui de l'applet standard de Plasma — le reprendre tel quel l'écraserait (DE-011 l'interdit) ; et il embarque du C++ (`floatingtooltiparea.cpp`, `smartlauncherbackend.cpp`), donc du code à compiler et à reporter |
+| KDE-Windows-Modern, zone système | GPL-3.0 | Lot 6. 101 fichiers, du C++, et c'est un **conteneur** remplacé : le risque de casse est réel, à traiter avec une session de test |
 | [Tidewater](https://github.com/addition-official/tidewater) | GPL-3.0, actif (2026-10) | Lot 6 (paramètres rapides), lot 7 (Alt+Tab, aperçus) |
 
 ## Rappel de licence

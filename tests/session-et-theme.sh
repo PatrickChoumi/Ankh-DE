@@ -240,6 +240,53 @@ else
     printf '  ok    %s\n' "l'écran de verrouillage reste celui de Plasma (délibéré)"
 fi
 
+# --- 3ter. Les applets repris (DE-011) ------------------------------------
+applets="${prefixe}/share/plasma/plasmoids"
+if [[ -d "${applets}/org.ankh.demarrer" ]]; then
+    echo "== Les applets"
+    for id in org.ankh.demarrer org.ankh.horloge org.ankh.bureau; do
+        verifies=$((verifies + 1))
+        if [[ -f "${applets}/${id}/metadata.json" ]]; then
+            printf '  ok    %s\n' "${id}"
+        else
+            echo "  ECHEC ${id} est absent" >&2
+            echecs=$((echecs + 1))
+        fi
+    done
+    # DE-011 : aucune pièce ne doit écraser une pièce de la distribution.
+    verifies=$((verifies + 1))
+    etrangers="$(python3 -I - "${applets}" << 'PYEOF'
+import json, pathlib, sys
+mauvais = []
+for m in pathlib.Path(sys.argv[1]).glob("*/metadata.json"):
+    try:
+        ident = json.loads(m.read_text(encoding="utf-8"))["KPlugin"]["Id"]
+    except Exception as e:
+        mauvais.append(f"{m.parent.name} (illisible : {e})")
+        continue
+    if not ident.startswith("org.ankh."):
+        mauvais.append(ident)
+print(" ".join(mauvais))
+PYEOF
+)"
+    if [[ -z "${etrangers}" ]]; then
+        printf '  ok    %s\n' "aucun applet n'usurpe un identifiant de Plasma"
+    else
+        echo "  ECHEC identifiants hors org.ankh.* : ${etrangers}" >&2
+        echecs=$((echecs + 1))
+    fi
+    # L'attribution doit survivre au renommage.
+    verifies=$((verifies + 1))
+    if grep -q 'Jeysef' "${applets}/org.ankh.demarrer/metadata.json"; then
+        printf '  ok    %s\n' "l'auteur amont est conservé dans les métadonnées"
+    else
+        echo "  ECHEC l'attribution de l'auteur amont a disparu" >&2
+        echecs=$((echecs + 1))
+    fi
+else
+    echo "== Les applets : absents (third_party/preparer.sh n'a pas été lancé)"
+fi
+
 # --- 4. Les icônes sont-elles vraiment au violet d'Ankh ? ----------------
 # Le thème peut être présent et les dessins restés roses : c'est la
 # recoloration qui porte l'identité, pas le nom du dossier.

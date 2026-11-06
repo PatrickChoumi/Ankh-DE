@@ -157,7 +157,16 @@ if(ANKH_DE_DATA)
     if(ANKH_DE_APPLETS)
         install(DIRECTORY src/applets/
             DESTINATION ${KDE_INSTALL_DATADIR}/plasma/plasmoids
+            PATTERN "README.md" EXCLUDE
         )
+    endif()
+    # Applets repris (DE-011), fabriqués par third_party/preparer.sh.
+    if(EXISTS "${ANKH_DE_PREPARE}/applets")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/applets/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/plasma/plasmoids
+        )
+    else()
+        message(STATUS "Ankh DE : applets absents ; lancer third_party/preparer.sh")
     endif()
     file(GLOB ANKH_DE_KWIN "${CMAKE_CURRENT_SOURCE_DIR}/src/kwin/*")
     if(ANKH_DE_KWIN)

@@ -25,6 +25,7 @@
 | DE-008 | La version de Plasma visée est un choix de release, pas une contrainte subie | DÉCIDÉ (réécrite le 2026-11-05 ; montée vers Plasma 6.8 faite le même jour) |
 | DE-009 | Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard | DÉCIDÉ |
 | DE-010 | Ankh DE livre sa propre session, qui porte ce que le thème global ne sait pas porter (corrige DE-002) | DÉCIDÉ |
+| DE-011 | Reprendre le code libre existant plutôt que le réécrire (modifie ANKH-DE-SPEC §5.6) | DÉCIDÉ |
 
 ---
 
@@ -290,3 +291,47 @@
   `kdedefaults` active, le 2026-11-05, conteneur Fedora 44 : `widgetStyle=Ankh`,
   `ColorScheme=Ankh`, `library=org.ankh.decoration`, `cursorTheme=Ankh-curseurs` relus ;
   `font` **vide**. La session elle-même est `À VALIDER` : elle se teste en VM (job `VM`).
+
+## DE-011 — Reprendre le code libre existant plutôt que le réécrire (modifie ANKH-DE-SPEC §5.6)
+
+- **Statut** : DÉCIDÉ (2026-11-06), ton choix, après ta question du même jour : « pourquoi ne pas
+  juste s'appuyer sur le code source de KDE ou d'autres projets open source pour aller plus
+  vite », puis ton autorisation explicite : « tu peux changer cette règle et t'appuyer sur tout
+  l'open source que tu veux ».
+- **Contexte** : ANKH-DE-SPEC §5.6 interdisait d'embarquer un projet tiers **comme code**
+  (Klassy, Lightly, Menu11, KDE-Rounded-Corners), et n'autorisait que les **images** et les
+  **feuilles de style**. Cette règle avait une bonne raison — chacun de ces projets a un seul
+  mainteneur et doit être recompilé à chaque version de Plasma, soit notre propre problème en
+  double — mais elle nous coûtait très cher : le menu Démarrer était chiffré à deux ou trois
+  semaines d'écriture, alors qu'il existe, libre, sous une licence compatible.
+- **Décision** : la règle devient une règle de **diligence**, pas d'interdiction.
+  Reprendre du code tiers est **permis et même préféré** à le réécrire, à cinq conditions, toutes
+  vérifiables :
+  1. **Licence compatible avec GPL-3.0-or-later**, lue dans un **fichier de licence** du dépôt —
+     une mention dans un fichier de métadonnées ne suffit pas (c'est le cas de `menu-11-next`,
+     écarté pour cela) ;
+  2. **commit figé**, jamais une branche ;
+  3. **provenance tracée** dans `docs/UPSTREAMS.md` : source, commit, licence, **nature** (code
+     ou images) et ce qu'on y a changé. Les notices et en-têtes amont sont conservés ;
+  4. **rien de Microsoft** n'entre par cette porte : la reprise est relue avec le même garde-fou
+     que le reste (DE-005), polices, sons, icônes et fonds compris ;
+  5. **on ne reprend pas une pièce qui en écrase une de la distribution**. C'est pourquoi
+     l'applet `icontasks` de KDE-Windows-Modern n'est pas repris : son identifiant est
+     `org.kde.plasma.icontasks`, celui de l'applet standard de Plasma.
+- **Ce que cela change tout de suite** : le menu Démarrer, l'horloge et « Afficher le bureau »
+  de [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern) (GPL-3.0, commit
+  `7ef6bfe`) sont repris et renommés aux noms d'Ankh. Le lot 5 passe de deux ou trois semaines à
+  deux jours.
+- **Ce que cela ne change pas** : DE-001 (on ne remplace ni le compositeur, ni le gestionnaire
+  de session, ni `plasmashell`), DE-005 (rien de Microsoft), DE-008 (une version visée), et la
+  règle « une pièce qu'on ne sait pas retirer ne s'installe pas » (CLAUDE.md §3.8).
+- **Risque assumé, et il est réel** : du code repris est du code à reporter à chaque version de
+  Plasma, en plus du nôtre. Le menu Démarrer dépend de `org.kde.plasma.private.kicker` et de
+  `…private.sessions`, modules **privés** : ils peuvent casser d'une version à l'autre. Le test
+  hebdomadaire contre l'amont les surveille, et le README le dit à l'utilisateur.
+- **Alternatives rejetées** : garder l'interdiction (coût : des mois d'écriture pour un résultat
+  moins bon) ; dépendre des projets tiers à l'exécution plutôt que les reprendre (l'utilisateur
+  devrait les installer lui-même, et nous ne maîtriserions plus la version).
+- **Vérification** : `ci/verifier-licences.sh` pour les actifs ; `docs/UPSTREAMS.md` pour la
+  provenance ; `tests/session-et-theme.sh` pour que chaque pièce installée existe là où Plasma
+  la cherche.
