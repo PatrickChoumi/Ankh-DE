@@ -27,3 +27,6 @@ __pycache__/
 
 # Travail de la VM : images disque de plusieurs Gio
 /bench/vm/travail/
+
+# Nos propres icônes, dessinées pour le projet
+!/src/icons/**/*.svg

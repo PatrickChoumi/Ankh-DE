@@ -344,6 +344,40 @@ if (( morts_chez_nous > morts_amont )); then
     exit 1
 fi
 echo "liens : ${morts_chez_nous} morts, autant qu'en amont (icônes d'applications disparues)"
+# DE-005 : « start-here » de Fluent EST le quadrillage à quatre carreaux de
+# Windows. Repéré le 2026-11-06 sur la capture d'une vraie session en VM —
+# aucun contrôle de licence ne l'aurait vu, puisque le fichier n'est pas
+# versionné chez nous. On le remplace partout par notre ankh.
+# TOUTES les variantes y passent, « start-here-kde », « -kde-plasma » et
+# « -symbolic » comprises : n'importe laquelle peut se retrouver sur un
+# bouton Démarrer, et un bureau d'Ankh n'a pas à porter le logo d'un autre.
+notre_demarrer="${racine}/src/icons/places/start-here.svg"
+[[ -f "${notre_demarrer}" ]] || { echo "src/icons/places/start-here.svg manque" >&2; exit 1; }
+remplaces=0
+while read -r icone; do
+    # Les liens symboliques sont retargés, pas écrasés : écraser un lien
+    # réécrirait sa cible, et donc une autre icône.
+    [[ -L "${icone}" ]] && { rm -f "${icone}"; }
+    install -m 0644 "${notre_demarrer}" "${icone}"
+    remplaces=$((remplaces + 1))
+done < <(find "${sortie}/icones" -name 'start-here*.svg')
+(( remplaces > 0 )) || { echo "Aucun start-here.svg trouvé à remplacer" >&2; exit 1; }
+# Le quadrillage de Windows ne doit plus exister nulle part dans nos icônes.
+# Sa signature : quatre quadrants arrondis, soit quatre « c-1.662 » ou
+# « 1.338 » dans le même chemin.
+restants=0
+while read -r icone; do
+    if ! grep -q 'Ankh DE' "${icone}" 2>/dev/null; then
+        restants=$((restants + 1))
+        echo "  pas remplacé : ${icone#${sortie}/icones/}" >&2
+    fi
+done < <(find "${sortie}/icones" -name 'start-here*.svg')
+if (( restants )); then
+    echo "DE-005 : ${restants} icône(s) « start-here » ne sont pas les nôtres" >&2
+    exit 1
+fi
+echo "bouton Démarrer : ${remplaces} icône(s) remplacées par l'ankh"
+
 echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
 
 echo "== Style Plasma d'Ankh (lot 4)"

@@ -208,10 +208,18 @@ echo "   plasmashell et kwin_wayland sont vivants"
 # --- 7. Ce que la session doit prouver -----------------------------------
 etape "7. Vérifications dans la session"
 uid="$(ssh_vm 'id -u')"
+# Une commande lancée par SSH n'hérite RIEN de la session graphique : au
+# premier passage, « kreadconfig6 » rendait des valeurs vides alors que la
+# session, elle, était correcte. On reprend donc l'environnement DE LA
+# SESSION, lu dans le processus plasmashell.
+env_session="$(ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ \
+    | grep -E '^(XDG_CONFIG_DIRS|XDG_CONFIG_HOME|XDG_DATA_DIRS|QT_PLUGIN_PATH)=' \
+    | sed 's/^/export /' | tr '\n' ';'")"
 dans_session() {
-    ssh_vm "XDG_RUNTIME_DIR=/run/user/${uid} \
-            DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus \
-            WAYLAND_DISPLAY=wayland-0 $*"
+    ssh_vm "${env_session} \
+            export XDG_RUNTIME_DIR=/run/user/${uid}; \
+            export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/${uid}/bus; \
+            export WAYLAND_DISPLAY=wayland-0; $*"
 }
 {
     echo "## Session Ankh DE, dans une VM"
