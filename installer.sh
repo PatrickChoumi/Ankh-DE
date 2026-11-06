@@ -144,11 +144,27 @@ AVERTIR
     [[ "${reponse}" =~ ^[oOyY]$ ]] || { echo "  Barres gardées."; barre=non; }
 fi
 
+# plasma-apply-lookandfeel est une application Qt : sans session graphique
+# — depuis un TTY, par SSH, ou dans un script d'installation — elle
+# S'ARRÊTE SUR UN DÉFAUT (« Aborted, core dumped »). Constaté le 2026-11-06
+# dans une vraie VM : l'installation échouait là, après avoir pourtant tout
+# installé correctement.
+# Hors session, on lui donne la plateforme « offscreen » : elle écrit alors
+# ses réglages sans rien afficher. Vérifié en conteneur et en VM.
+appliquer() {
+    if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
+        plasma-apply-lookandfeel "$@"
+    else
+        echo "  (hors session graphique : application sans affichage)"
+        QT_QPA_PLATFORM=offscreen plasma-apply-lookandfeel "$@"
+    fi
+}
+
 if [[ "${barre}" == oui ]]; then
-    plasma-apply-lookandfeel -a org.ankh.de.desktop --resetLayout
+    appliquer -a org.ankh.de.desktop --resetLayout
 else
     # Sans --resetLayout, vos barres ne sont pas touchées.
-    plasma-apply-lookandfeel -a org.ankh.de.desktop
+    appliquer -a org.ankh.de.desktop
 fi
 
 echo

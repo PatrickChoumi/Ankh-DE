@@ -11,10 +11,20 @@ echo "== Retour à Breeze"
 if command -v plasma-apply-lookandfeel > /dev/null; then
     sombre=org.kde.breezedark.desktop
     plasma-apply-lookandfeel --list 2>/dev/null | grep -q "${sombre}" || sombre=org.kde.breeze.desktop
+    # Même défaut que dans installer.sh : hors session graphique,
+    # plasma-apply-lookandfeel s'arrête sur un défaut. Un désinstallateur
+    # qui plante laisse le système à moitié défait, ce qui est pire.
+    appliquer() {
+        if [[ -n "${WAYLAND_DISPLAY:-}" || -n "${DISPLAY:-}" ]]; then
+            plasma-apply-lookandfeel "$@"
+        else
+            QT_QPA_PLATFORM=offscreen plasma-apply-lookandfeel "$@"
+        fi
+    }
     if [[ "${barre}" == oui ]]; then
-        plasma-apply-lookandfeel -a "${sombre}" --resetLayout
+        appliquer -a "${sombre}" --resetLayout
     else
-        plasma-apply-lookandfeel -a "${sombre}"
+        appliquer -a "${sombre}"
     fi
 else
     echo "plasma-apply-lookandfeel introuvable : thème global non changé." >&2
