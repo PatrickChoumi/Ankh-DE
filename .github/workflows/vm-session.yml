@@ -1,0 +1,56 @@
+name: VM — session réelle
+
+# La seule épreuve qui permet de dire « ça marche » plutôt que « ça compile » :
+# une vraie machine virtuelle, une vraie session Plasma, Ankh DE installé par
+# son propre installateur, puis les vérifications lancées DANS la session.
+#
+# Pas à chaque PR : c'est long. Sur demande, et une fois par semaine.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '23 5 * * 2'
+
+jobs:
+  session:
+    name: Installer et ouvrir Ankh DE dans une VM
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Outils de virtualisation
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq \
+            qemu-system-x86 qemu-utils cloud-image-utils socat jq python3-pil
+
+      - name: Essayer Ankh DE dans la VM
+        run: ./bench/vm/essayer.sh
+
+      - name: Rapport
+        if: always()
+        run: |
+          {
+            echo "## Session réelle"
+            echo
+            [[ -f bench/sortie/vm-rapport.md ]] && cat bench/sortie/vm-rapport.md
+            echo
+            echo "### Vérifications"
+            echo '```'
+            tail -30 bench/sortie/vm-tests.log 2>/dev/null || echo "(pas de journal)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # Les journaux comptent autant que le résultat : un passage qui échoue
+      # doit apprendre quelque chose.
+      - name: Journaux, captures et rapport
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vm-session
+          path: |
+            bench/sortie/vm-*
+          if-no-files-found: warn

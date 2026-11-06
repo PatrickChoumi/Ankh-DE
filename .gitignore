@@ -24,3 +24,6 @@ __pycache__/
 
 # Bundle de transfert
 /Ankh-DE.bundle
+
+# Travail de la VM : images disque de plusieurs Gio
+/bench/vm/travail/
