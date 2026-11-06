@@ -26,6 +26,7 @@
 | DE-009 | Ankh DE et Ankh restent deux dépôts séparés ; Ankh consommera Ankh DE plus tard | DÉCIDÉ |
 | DE-010 | Ankh DE livre sa propre session, qui porte ce que le thème global ne sait pas porter (corrige DE-002) | DÉCIDÉ |
 | DE-011 | Reprendre le code libre existant plutôt que le réécrire (modifie ANKH-DE-SPEC §5.6) | DÉCIDÉ |
+| DE-012 | Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005) | DÉCIDÉ |
 
 ---
 
@@ -335,3 +336,29 @@
 - **Vérification** : `ci/verifier-licences.sh` pour les actifs ; `docs/UPSTREAMS.md` pour la
   provenance ; `tests/session-et-theme.sh` pour que chaque pièce installée existe là où Plasma
   la cherche.
+
+## DE-012 — Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005)
+
+- **Statut** : DÉCIDÉ (2026-11-06), ton choix.
+- **Contexte** : la première capture d'une vraie session, le 2026-11-06, montrait un bouton
+  Démarrer portant le quadrillage à quatre carreaux de Windows. Je l'ai remplacé par une icône
+  dessinée pour le projet, au motif de DE-005. Ton arbitrage : garder celle qui est là.
+- **La distinction qui tranche, et elle est réelle** : l'icône `start-here` de
+  [Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme) **n'est pas un fichier de
+  Microsoft**. C'est un dessin **original**, de vinceliuice, publié sous **GPL-3.0**, qui
+  *ressemble* au motif de Windows. C'est exactement la même nature que **Selawik** — un sosie
+  libre de Segoe UI — que le projet emploie déjà depuis le lot 1, et que le thème **Fluent** tout
+  entier, qui est un sosie libre de l'iconographie de Windows.
+- **Décision** : DE-005 interdit les **fichiers de Microsoft** — ses polices, ses icônes, ses
+  sons, ses curseurs, ses fonds d'écran, ses captures, son logo. Elle **n'interdit pas** les
+  **redessins libres** de ces motifs, publiés sous une licence compatible par un tiers. Ceux-ci
+  sont acceptés, au même titre que Selawik et que le reste de Fluent.
+- **Ce que cela ne change pas** : aucun fichier venant de Microsoft n'entre, et le garde-fou
+  `ci/verifier-licences.sh` reste en place. Le projet continue de se présenter comme indépendant
+  et non affilié à Microsoft (README).
+- **Risque assumé, et il est nommé** : un motif qui ressemble à une marque reste un risque
+  d'habillage commercial, quelle que soit la licence du dessin. C'est le risque que le projet
+  porte déjà pour l'ensemble du thème Fluent, et il est décrit dans
+  [AUDIT.md §5](../AUDIT.md). Cette décision ne l'augmente pas : elle le rend explicite.
+- **Vérification** : l'icône livrée est celle de Fluent, à son commit figé `c8a244f`, déclarée
+  dans `LICENSES/README.md` comme le reste du thème.
