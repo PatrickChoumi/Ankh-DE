@@ -142,9 +142,17 @@ if [[ "${pret}" != oui ]]; then
 fi
 echo "   VM joignable : $(ssh_vm 'cat /etc/os-release | sed -n "s/^PRETTY_NAME=//p"')"
 
+# cloud-init met le système à jour en arrière-plan. Installer pendant qu'il
+# travaille laisse des bibliothèques dépareillées : au passage du
+# 2026-11-06, rsvg-convert ne trouvait plus libglib. On attend qu'il ait
+# fini avant de toucher à quoi que ce soit.
+echo "   attente de la fin de cloud-init"
+ssh_vm 'sudo cloud-init status --wait' > /dev/null 2>&1 || true
+echo "   cloud-init : $(ssh_vm 'sudo cloud-init status' | head -1)"
+
 # --- 4. Plasma dans l'invité ---------------------------------------------
 etape "4. Installation de Plasma"
-ssh_vm 'sudo dnf install -y --setopt=install_weak_deps=False \
+ssh_vm 'sudo dnf install -y \
     plasma-desktop plasma-workspace kwin sddm \
     kf6-kconfig kf6-kirigami plasma-integration \
     xorg-x11-server-Xwayland dbus-daemon \
