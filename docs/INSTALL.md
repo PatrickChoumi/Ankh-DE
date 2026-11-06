@@ -4,10 +4,15 @@
 
 | Quoi | Version |
 |---|---|
-| KDE Plasma | **6.7.x** (6.8 pas encore pris en charge, [docs/REBASE.md](REBASE.md)) |
-| Session | **Wayland** (X11 non testé) |
-| Qt | 6.6 ou plus |
-| KDE Frameworks | 6.0 ou plus |
+| KDE Plasma | **6.8.x** — installé et la session ouverte en VM sur **6.8.2** (Fedora 44). Une autre version arrête la construction, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON` ([DE-008](../DECISIONS.md), `src/decoration/VERSION-BREEZE`) |
+| Session | **Wayland** (X11 non testé — Plasma 6.8 abandonne X11) |
+| Qt | 6.6 ou plus (essayé sur 6.11.2) |
+| KDE Frameworks | 6.0 ou plus (essayé sur 6.31.0) |
+
+> Ce tableau annonçait « 6.7.x, 6.8 pas encore pris en charge » jusqu'au 2026-11-06, alors que
+> la montée vers 6.8 était faite depuis le 2026-11-05 et que tous les passages en VM tournent
+> sur 6.8.2. La source de la décoration reste Breeze **6.7.5**, qui compile tel quel contre
+> 6.8 ; c'est la version de Breeze dérivée, pas la version de Plasma visée.
 
 ## Paquets à installer
 
@@ -115,7 +120,7 @@ liste des chemins à retirer à la main.
 | La police reste celle de la distribution | fontconfig n'a pas vu Selawik. Lancez `fc-cache -f`, puis `fc-match Selawik` : il doit répondre `Selawik`. C'est le défaut exact qui a fait échouer le premier passage du lot 1 dans Ankh |
 | Le texte paraît trop fin ou coloré sur les bords | `29-ankh-rendu.conf` n'est pas lu. Vérifiez `fc-match -f '%{rgba} %{hintstyle}' Selawik` : attendu `5 1` |
 | Les coins sont à 5 px, pas 8 | c'est Breeze qui dessine : la décoration d'Ankh n'est pas active |
-| Plasma 6.8 | pas encore pris en charge ([docs/REBASE.md](REBASE.md)) |
+| « Plasma non testé » à la construction | votre Plasma n'est pas 6.8.x. `-DANKH_DE_PLASMA_NON_TESTE=ON` passe outre, à vos risques ([DE-008](../DECISIONS.md)) |
 
 Si le problème persiste, ouvrez une issue avec la sortie de :
 

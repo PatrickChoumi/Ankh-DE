@@ -45,7 +45,7 @@ montre. Et si la mesure n'existe pas encore, la PR commence par l'ajouter — **
 1. une branche par lot ;
 2. les mesures du lot **conformes** dans la VM de test ;
 3. les captures « avant » et « après », en sombre et en clair, à 100, 125 et 150 % ;
-4. `bench/jetons.toml` à jour : le numéro du lot ajouté à `lots_termines`, les mesures atteintes ;
+4. `bench/jetons.toml` à jour : le numéro du lot ajouté à `lots_mesures_obligatoires` et les mesures atteintes ; à `lots_complets` **seulement** s'il ne reste aucun jeton non mesuré dans ce lot ;
 5. `python3 bench/fidelite.py` relancé (la CI refuse la PR si `docs/FIDELITE.md` diffère) ;
 6. `AVANCEMENT.md` mis à jour : ce qui est vérifié, et ce qui ne l'est pas.
 

@@ -4,13 +4,17 @@
 > [`bench/jetons.toml`](../bench/jetons.toml). Ne pas le modifier à la main :
 > la CI le régénère et refuse la PR s'il diffère.
 >
-> Une mesure dont le lot est **terminé** fait échouer le test en VM si elle s'écarte de
-> sa cible (DE-007). Une mesure dont le lot n'est pas terminé est seulement relevée.
-> Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose pas.
+> **Obligatoire** et **complet** ne sont pas la même chose. Une mesure d'un lot
+> *obligatoire* fait échouer le test si elle s'écarte de sa cible (DE-007) ; un lot
+> *complet* est un lot dont il ne reste aucun jeton à mesurer. Un lot en cours est
+> normalement obligatoire sans être complet — et ce document a déclaré les lots 1, 2
+> et 3 « terminés » jusqu'au 2026-11-06, alors que cinq jetons du lot 2 ne sont pas
+> mesurés. Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose
+> pas.
 
-**47 mesures.** Lots terminés : 1, 2, 3.
+**47 mesures.** Mesures obligatoires, lots : 1, 2, 3. Lots complets : 1, 3.
 
-## Lot 1 — fondations — **obligatoire**
+## Lot 1 — fondations — **complet**, mesures obligatoires
 
 | Mesure | Cible Windows 11 | Tolérance | Source |
 |---|---|---|---|
@@ -25,7 +29,7 @@
 | Fond des fenêtres (Dolphin) (`couleur.fenetre`) | *relevé* | — | Relevé ; couleurs d'Ankh (D-037) |
 | Barre de titre de la fenêtre active (`couleur.barre_de_titre`) | *relevé* | — | Relevé ; couleurs d'Ankh (D-037) |
 
-## Lot 2 — fenêtres — **obligatoire**
+## Lot 2 — fenêtres — **mesures obligatoires**, lot en cours
 
 | Mesure | Cible Windows 11 | Tolérance | Source |
 |---|---|---|---|
@@ -41,7 +45,7 @@
 | Hauteur du bouton Fermer, au survol (`fenetre.fermer.hauteur`) | 32 px | ± 1 px | Pleine hauteur de la barre de titre (doc basics/titlebar-design) |
 | Couleur du bouton Fermer, au survol (`fenetre.fermer.couleur`) | `#c42b1c` | ± 16 | Terminal src/cascadia/TerminalApp/MinMaxCloseControl.xaml ; doc develop/title-bar |
 
-## Lot 3 — contrôles — **obligatoire**
+## Lot 3 — contrôles — **complet**, mesures obligatoires
 
 | Mesure | Cible Windows 11 | Tolérance | Source |
 |---|---|---|---|

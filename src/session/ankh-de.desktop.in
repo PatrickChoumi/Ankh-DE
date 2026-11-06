@@ -5,8 +5,17 @@ TryExec=@ANKH_DE_BINDIR@/ankh-de-session
 # le portail XDG (dialogues de fichiers des applications Flatpak) et le thème
 # de plateforme de Qt. Un premier nom inconnu ferait retomber le portail sur
 # un défaut, au risque de casser ce qui marche — et la règle du projet est de
-# ne rien casser (CLAUDE.md §3). Notre identité passe par XDG_SESSION_DESKTOP,
-# que le gestionnaire de connexion remplit avec le nom de ce fichier.
+# ne rien casser (CLAUDE.md §3).
+#
+# Notre identité passe par DESKTOP_SESSION, et non par XDG_SESSION_DESKTOP
+# comme l'affirmait ce commentaire jusqu'au 2026-11-06. Dans SDDM
+# (src/daemon/Display.cpp) : DESKTOP_SESSION reçoit le nom de CE fichier
+# (ligne 453, via Session::desktopSession(), qui rend completeBaseName()),
+# tandis que XDG_CURRENT_DESKTOP (455) et XDG_SESSION_DESKTOP (462)
+# reçoivent tous deux DesktopNames — donc « KDE ». L'erreur avait voyagé
+# jusque dans une assertion du harnais de VM, qui exigeait « ankh-de » là où
+# notre propre choix impose « KDE » : elle a échoué à son premier passage.
+#
 # « Ankh-DE;KDE » est à reprendre quand le comportement des portails aura été
 # vérifié en VM.
 DesktopNames=KDE

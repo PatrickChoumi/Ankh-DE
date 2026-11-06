@@ -10,15 +10,27 @@ to the pixel, and **checked by a program** — in the graphite-and-violet identi
 [Ankh](https://github.com/PatrickChoumi/Ankh). It installs on Fedora, Arch or Ubuntu without
 modifying a single file belonging to your distribution, and it uninstalls in one command.
 
-> ### Status: batch 0, in progress. Nothing in this repository has run on a machine yet.
+> ### Status: pre-release — and the taskbar is not ours yet.
 >
-> The code for batches 1–3 comes from the Ankh repository, where its metrics are **measured in a
-> VM on Fedora 44** ([run 39753444882](https://github.com/PatrickChoumi/Ankh/actions/runs/39753444882)):
-> 32 px title bar, `#C42B1C` close button at 46×32, 8.2 px corners, 32 px controls, 40×20 toggle,
-> 12 px scrollbar, Selawik at 14 px.
-> **Outside the Ankh OS image, nothing is proven yet**: not the build on Arch and Ubuntu, not the
-> installer, not the global theme. That is exactly what batch 0 is for
-> ([ROADMAP.md](ROADMAP.md#lot-0--autonomie)).
+> **Established on a real machine.** Ankh DE has been **installed by its own installer in a VM**
+> (Fedora 44, Plasma 6.8.2) and the session opened **from the login screen**. Inside it:
+> `ANKH_DE_SESSION=1`, style `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration
+> `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh`, Selawik found by fontconfig,
+> and every key-by-key check passing *inside the session*. The exact count is printed by the test
+> and carried in the run's report: it depends on which tools the guest has, and a number frozen
+> in prose goes stale silently.
+>
+> **Not established, and this is the part that matters.** The **Start menu is not in the
+> taskbar**, and the bar you see in the screenshots is **Breeze's**, wearing our colours and
+> icons. The cause was found on 2026-11-06: `kdeglobals [KDE] LookAndFeelPackage` was written
+> nowhere, so `plasmashell` evaluated Breeze's layout ([DE-014](DECISIONS.md), French). The fix
+> is pushed; the VM run that must confirm it has not returned a verdict, and this paragraph will
+> not change before it does.
+>
+> Metrics for batches 1–3 are **measured in a VM on Fedora 44**: 32 px title bar, `#C42B1C`
+> close button at 46×32, 8.2 px corners, 32 px controls, 40×20 toggle, 12 px scrollbar, Selawik
+> at 14 px. **18 of 47 tokens measured.**
+> Still unproven: the installer on Arch and Ubuntu, and the Arch and Debian packages.
 > What is verified and what is not: [AVANCEMENT.md](AVANCEMENT.md) (French).
 
 ## What it is

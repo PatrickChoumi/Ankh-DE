@@ -44,3 +44,25 @@ activeFont=Selawik,9,-1,5,50,0,0,0,0,0
 # 5/6 : les durées de Kirigami (50, 100, 200, 400 ms) deviennent 42, 83, 167
 # et 333 ms, celles de Windows 11 (page signature-experiences/motion).
 AnimationDurationFactor=0.8333333
+
+# C'est CETTE clé qui décide quelle barre des tâches plasmashell construit à
+# son premier démarrage, et son absence est la raison pour laquelle la nôtre
+# n'a jamais existé (DE-014).
+#
+# Le chemin, dans plasma-workspace 6.8 :
+#   shell/shellcorona.cpp:1813  paquet = kdeglobals[KDE][LookAndFeelPackage]
+#   shell/shellcorona.cpp:1117  script = <paquet>/layouts/<shell>-layout.js
+# et kcms/lookandfeel/lookandfeelsettings.kcfg donne « org.kde.breeze.desktop »
+# pour défaut. Sans cette ligne, plasmashell évaluait donc la disposition de
+# BREEZE : une barre existait, elle avait l'air plausible, et elle ne
+# contenait aucun de nos applets. Nos autres réglages — style, couleurs,
+# décoration, icônes — s'appliquaient par-dessus, ce qui rendait le défaut
+# invisible à l'œil comme au rapport.
+#
+# Elle est ici, et pas dans contents/defaults, pour deux raisons : un thème
+# global ne peut pas se désigner lui-même ; et placée dans XDG_CONFIG_DIRS
+# elle vaut pour TOUTE session d'Ankh DE sans dépendre d'une étape
+# d'installation. Le ~/.config de l'utilisateur garde la priorité : qui
+# choisit un autre thème global le conserve, et quitter la session défait
+# tout.
+LookAndFeelPackage=org.ankh.de.desktop

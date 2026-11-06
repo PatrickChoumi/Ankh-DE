@@ -108,6 +108,11 @@ attendre "contours"                     "hintslight"  "$(lire --group General --
 attendre "sous-pixels"                  "none"        "$(lire --group General --key XftSubPixel)"
 attendre "accent suit le fond d'écran"  "true"        "$(lire --group General --key accentColorFromWallpaper)"
 attendre "facteur d'animation"          "0.8333333"   "$(lire --group KDE --key AnimationDurationFactor)"
+# Sans cette clé, plasmashell construit la barre des tâches de BREEZE et
+# aucun de nos applets n'y entre (DE-014). Le défaut a vécu du 2026-11-06 au
+# 2026-11-06 sans qu'aucun test ne le voie, parce qu'aucun ne regardait ici.
+attendre "thème global de la session"   "org.ankh.de.desktop" \
+    "$(lire --group KDE --key LookAndFeelPackage)"
 attendre "Alt+Tab"                      "org.kde.breeze.desktop" \
     "$(lire --file kwinrc --group TabBox --key LayoutName)"
 # Portés par la session depuis le 2026-11-05 : le thème global ne les écrit

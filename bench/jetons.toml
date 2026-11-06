@@ -19,10 +19,29 @@
 #   lot        le lot de D-052 qui atteint la cible
 #   source     d'où vient la cible
 #
-# Une mesure devient obligatoire quand son lot figure dans lots_termines :
-# un écart fait alors échouer le test en VM. Chaque PR de lot ajoute son
-# numéro ici, avec les mesures qu'elle atteint.
-lots_termines = [1, 2, 3]
+# DEUX listes, et les confondre a produit une contradiction (constat du
+# 2026-11-06 : FIDELITE.md déclarait les lots 1, 2 et 3 « terminés » quand la
+# feuille de route ne considérait pas le lot 2 fini, et c'est la feuille de
+# route qui avait raison).
+#
+#   lots_mesures_obligatoires  un écart sur une mesure RELEVÉE de ce lot fait
+#                              échouer le test. Dit : « ce qu'on sait mesurer
+#                              ici doit être juste. »
+#   lots_complets              tous les jetons du lot sont mesurés ET
+#                              conformes. Dit : « il n'y a plus rien à faire
+#                              dans ce lot. »
+#
+# Un lot peut être dans la première sans être dans la seconde, et c'est le cas
+# normal d'un lot en cours : le lot 2 a six jetons mesurés et conformes, et
+# cinq qu'on ne sait pas encore mesurer (rayon des coins, bouton Fermer,
+# alignement du titre — « ScreenShot2 » fait tomber KWin sur le backend
+# virtuel). Ses six mesures sont obligatoires ; le lot n'est pas fini.
+#
+# Chaque PR de lot ajoute son numéro à la première liste, avec les mesures
+# qu'elle atteint. La seconde n'accueille un lot que quand il ne reste aucun
+# jeton non mesuré.
+lots_mesures_obligatoires = [1, 2, 3]
+lots_complets = [1, 3]
 
 # --- Lot 1 : fondations ---------------------------------------------------
 

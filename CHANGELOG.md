@@ -17,7 +17,9 @@ de connexion (workflow `VM — session réelle`).
 - `XDG_CONFIG_DIRS` porte notre dossier **entre** celui de l'utilisateur et celui de la
   distribution : vos propres réglages gardent la priorité ;
 - **fontconfig trouve Selawik** ;
-- les **46 vérifications** de `tests/session-et-theme.sh` passent *dans la session*.
+- les vérifications clé par clé de `tests/session-et-theme.sh` passent *dans la session* — le
+  compte est imprimé par le test et repris dans le rapport du passage, car il dépend des
+  outils présents dans l'invité ; ce journal annonçait 46 quand le test en passait 47.
 
 ### Mesures
 
@@ -26,6 +28,21 @@ de connexion (workflow `VM — session réelle`).
 | Jetons mesurés | **18 sur 47** |
 | Contrôles (lot 3) | 12, tous conformes, rejoués à chaque PR |
 | Fenêtres (lot 2) | 6, dont la **barre de titre de 32 px** et les bords à 0 |
+
+### Corrigé après la rédaction de cette entrée, le 2026-11-06
+
+- **La barre des tâches n'était pas la nôtre.** `kdeglobals [KDE] LookAndFeelPackage` n'était
+  écrit nulle part : `plasmashell` évaluait la disposition de **Breeze**, et aucun de nos applets
+  n'entrait dans la barre. Nos couleurs, nos icônes et notre thème Plasma s'appliquaient
+  par-dessus, ce qui rendait le défaut invisible — y compris sur la capture du bureau.
+  Cause et conséquences : [DE-014](DECISIONS.md).
+- **Trois constats du harnais de VM s'affichaient sans faire échouer le passage** : les
+  vérifications clé par clé, la présence de l'applet et l'ouverture du menu. Un passage pouvait
+  écrire « ÉCHEC » à l'écran et se conclure en réussite.
+- **Six documents racontaient un état périmé** : la version de Plasma annoncée (6.7.x au lieu de
+  6.8.x), l'interdiction du code tiers abrogée par DE-011, la session « jamais ouverte »,
+  l'installateur « jamais exécuté », le compte des vérifications, et les lots 1, 2 et 3 déclarés
+  terminés quand cinq jetons du lot 2 ne sont pas mesurés.
 
 ### Ce qui n'est pas encore là
 

@@ -9,6 +9,26 @@
 > établi en exécutant quelque chose, dans un conteneur Fedora 44 (Qt 6.11.2, KF6 6.31.0,
 > kdecoration 6.8.2) ou sur la CI. Quand un point n'a pas pu être établi, il est marqué
 > `NON ÉTABLI` et dit pourquoi.
+>
+> ---
+>
+> **Ce document est un instantané du 2026-11-05, et il n'est pas mis à jour.** Ses constats
+> restent écrits tels qu'ils étaient : un audit qu'on révise au fil des corrections ne sert plus
+> à rien. Mais lu au présent, il égare — il affirme encore que l'installateur n'a jamais tourné
+> et que la session n'a jamais été ouverte. Pour l'état **courant**, la référence est
+> [AVANCEMENT.md](AVANCEMENT.md), et [DECISIONS.md](DECISIONS.md) pour les choix.
+>
+> Ce qu'il disait et qui a changé depuis :
+>
+> | Constat de ce document | Depuis |
+> |---|---|
+> | §2.3 « aucun fichier `.desktop` de session n'existe » | **réglé** le 2026-11-05 : `src/session/ankh-de.desktop.in`, et Ankh DE se choisit à l'écran de connexion |
+> | §2.3 « la session n'a jamais été ouverte » | **réglé** le 2026-11-06 : ouverte dans une VM Fedora 44 par SDDM, `ANKH_DE_SESSION=1` |
+> | §2.4 « `installer.sh` n'a jamais été exécuté » | **réglé** le 2026-11-06 : il installe dans une VM neuve, et la session s'ouvre |
+> | §2.4 « `desinstaller.sh` non plus n'a jamais tourné » | **partiellement** : il tourne en conteneur, le retour à l'état de départ n'est pas comparé en VM |
+> | §1.2 « le thème d'icônes n'est jamais fabriqué » | **réglé** le 2026-11-05 : `preparer.sh` fabrique `Fluent-Ankh`, et la construction échoue s'il manque |
+> | §2.5 « les paquets sont des squelettes » | **RPM réglé** le 2026-11-06 ; Arch et Debian toujours non construits |
+> | — rien ici ne le voyait — | **nouveau** le 2026-11-06 : `LookAndFeelPackage` manquait, donc la barre était celle de Breeze ([DE-014](DECISIONS.md)). Cet audit ne l'a pas vu, parce qu'il n'avait pas de session à regarder |
 
 ---
 

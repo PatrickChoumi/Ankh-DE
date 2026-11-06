@@ -222,15 +222,24 @@ avant le lot 5.
 
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
+> **Relu le 2026-11-06.** Ce tableau se lit au présent : trois de ses lignes étaient devenues
+> fausses sans que rien ne le dise — l'installateur avait tourné, la session s'était ouverte, et
+> les paquets avaient été construits. Les entrées datées plus haut gardent, elles, ce qui était
+> vrai à leur date : c'est un journal, pas un état.
+
+
 | Affirmation | État |
 |---|---|
 | Les mesures des lots 1 à 3 atteignent les cibles de Windows 11 | `MESURÉ` dans Ankh, en VM, sur **Fedora 44 seulement** ([run 39753444882](https://github.com/PatrickChoumi/Ankh/actions/runs/39753444882)) |
 | Le code compile tel quel hors de l'image d'Ankh | **vérifié** le 2026-11-05, conteneur Fedora 44, contre Plasma 6.8 |
-| Le thème global applique bien ses 20 clés | **non vérifié** — lot 0.7, et SPEC §7 question 1 |
-| `installer.sh` fonctionne sur Fedora, Arch, Ubuntu | **non vérifié** — jamais lancé (il demande une session Plasma) |
-| `desinstaller.sh` ramène à l'état de départ | **non vérifié** |
-| `panel.lengthMode = "fill"` existe en Plasma 6.7 | `À VALIDER` — SPEC §7 question 2 |
-| Les paquets (`.spec`, `PKGBUILD`, `debian/`) construisent | **non vérifié** — squelettes |
+| Le thème global applique bien ses clés | **vérifié** le 2026-11-05 : il n'en recopie qu'un ensemble FIXE, onze des nôtres étaient ignorées en silence. Les polices, le rendu, l'accent et les boutons de titre sont passés dans la session ([DE-010](DECISIONS.md)) |
+| `kdeglobals [KDE] LookAndFeelPackage` désigne notre thème | **corrigé le 2026-11-06** — la clé n'existait nulle part, donc plasmashell construisait la barre de **Breeze** ([DE-014](DECISIONS.md)). Vérifiée par `tests/session-et-theme.sh` ; le passage en VM qui le confirme est en cours |
+| `installer.sh` fonctionne sur Fedora | **vérifié** le 2026-11-06 : il installe dans une VM Fedora 44 neuve, et la session s'ouvre depuis l'écran de connexion (workflow `VM — session réelle`) |
+| `installer.sh` fonctionne sur Arch et Ubuntu | **non vérifié** — la construction passe en conteneur, l'installation et la session non |
+| `desinstaller.sh` ramène à l'état de départ | **non vérifié en VM** — il tourne sans erreur en conteneur ; personne n'a encore comparé l'avant et l'après dans une vraie session |
+| La barre des tâches est celle d'Ankh | **NON** au 2026-11-06 : notre applet n'est pas dans la barre, et la cause est trouvée ([DE-014](DECISIONS.md)). C'est le prochain passage en VM qui dira si le correctif suffit |
+| Le paquet RPM construit | **vérifié** le 2026-11-06 : `rpmbuild` passe, et il a révélé deux défauts du `CMakeLists.txt` (un README installé dans `/usr/share/kwin/scripts`, un autre listé deux fois) |
+| Les paquets Arch et Debian construisent | **non vérifié** — squelettes |
 | `third_party/preparer.sh` fabrique police, curseurs et thème GTK | **vérifié** le 2026-11-05, de bout en bout |
 | Les mesures du lot 3 sont conformes hors de l'image d'Ankh | **vérifié** le 2026-11-05 par `bench/captures.sh` |
 | Le garde-fou des licences refuse un actif non déclaré ou un nom interdit | **testé** ici, sur deux violations plantées |

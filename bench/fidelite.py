@@ -35,7 +35,8 @@ TITRES = {
 def rendre() -> str:
     donnees = tomllib.loads(JETONS.read_text(encoding="utf-8"))
     mesures = donnees["mesure"]
-    termines = set(donnees.get("lots_termines", []))
+    obligatoires = set(donnees.get("lots_mesures_obligatoires", []))
+    complets = set(donnees.get("lots_complets", []))
 
     lignes = [
         "# FIDELITE — ce qui est mesuré, et ce qui ne l'est pas",
@@ -44,18 +45,29 @@ def rendre() -> str:
         "> [`bench/jetons.toml`](../bench/jetons.toml). Ne pas le modifier à la main :",
         "> la CI le régénère et refuse la PR s'il diffère.",
         ">",
-        "> Une mesure dont le lot est **terminé** fait échouer le test en VM si elle s'écarte de",
-        "> sa cible (DE-007). Une mesure dont le lot n'est pas terminé est seulement relevée.",
-        "> Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose pas.",
+        "> **Obligatoire** et **complet** ne sont pas la même chose. Une mesure d'un lot",
+        "> *obligatoire* fait échouer le test si elle s'écarte de sa cible (DE-007) ; un lot",
+        "> *complet* est un lot dont il ne reste aucun jeton à mesurer. Un lot en cours est",
+        "> normalement obligatoire sans être complet — et ce document a déclaré les lots 1, 2",
+        "> et 3 « terminés » jusqu'au 2026-11-06, alors que cinq jetons du lot 2 ne sont pas",
+        "> mesurés. Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose",
+        "> pas.",
         "",
-        f"**{len(mesures)} mesures.** Lots terminés : "
-        + (", ".join(str(n) for n in sorted(termines)) if termines else "aucun")
+        f"**{len(mesures)} mesures.** Mesures obligatoires, lots : "
+        + (", ".join(str(n) for n in sorted(obligatoires)) if obligatoires else "aucun")
+        + ". Lots complets : "
+        + (", ".join(str(n) for n in sorted(complets)) if complets else "aucun")
         + ".",
         "",
     ]
 
     for lot in sorted({m["lot"] for m in mesures}):
-        etat = "**obligatoire**" if lot in termines else "relevé seulement"
+        if lot in complets:
+            etat = "**complet**, mesures obligatoires"
+        elif lot in obligatoires:
+            etat = "**mesures obligatoires**, lot en cours"
+        else:
+            etat = "relevé seulement"
         lignes += [
             f"## {TITRES.get(lot, f'Lot {lot}')} — {etat}",
             "",

@@ -4,9 +4,16 @@
 > Complète [LICENSES/README.md](../LICENSES/README.md), qui porte les licences ;
 > ce fichier-ci porte la **provenance, la décision et les modifications**.
 >
-> Règle du dépôt ([ANKH-DE-SPEC.md §5.6](../ANKH-DE-SPEC.md)) : on n'embarque pas un projet
-> tiers **comme code**. Les **images** et les **feuilles de style**, oui, à un commit figé,
-> avec leur licence. La colonne « Nature » dit de quel côté tombe chaque reprise.
+> Règle du dépôt ([DE-011](../DECISIONS.md), qui modifie ANKH-DE-SPEC.md §5.6) : **reprendre le
+> code libre existant plutôt que le réécrire** — QML, C++, feuilles de style, images — à un
+> **commit figé**, avec sa licence, et avec une entrée dans ce tableau. La colonne « Nature »
+> dit ce qu'est chaque reprise.
+>
+> Jusqu'au 2026-11-06, ce paragraphe citait encore l'interdiction d'origine (« on n'embarque pas
+> un projet tiers comme code ») alors que le menu Démarrer QML tiers était intégré depuis
+> plusieurs commits : la règle vivait au passé dans le document censé la faire appliquer.
+> `ci/verifier-licences.sh` ne regardait que la provenance, pas la cohérence de l'en-tête ;
+> `ci/verifier-coherence.sh` surveille désormais cette phrase-ci aussi.
 
 ## Intégré
 

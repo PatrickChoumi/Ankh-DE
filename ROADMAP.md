@@ -59,8 +59,8 @@ sur Arch ni sur Ubuntu (DE-002).
 | 0.4 | `installer.sh` et `desinstaller.sh` : système ou dossier personnel, barre en option, retour arrière | fait |
 | 0.5 | Banc de mesure porté | **fait pour le style** : `bench/galerie` + `bench/captures.sh` + `bench/rapport.py` mesurent et photographient sans VM ni Plasma ; toutes les mesures du lot 3 conformes. **Reste le shell** (décoration, barre, Démarrer), qui demande une session |
 | 0.6 | CI : construction sur Fedora, Arch et Ubuntu, plus le banc | **fait et vert** le 2026-11-05 : les six jobs passent, le banc rejoue les mesures à chaque PR et joint les captures |
-| 0.7 | Test en session : Plasma fraîche, thème appliqué, les 20 clés relues, décoration mesurée | **à faire** — la voie est tranchée : une VM sur un runner GitHub, dont le job `VM` a établi la faisabilité (`/dev/kvm`, qemu 8.2.2, VM accélérée qui démarre). Le conteneur ne suffit pas : voir l'en-tête de `bench/session.sh` |
-| 0.8 | Paquets : `.spec` Fedora, `PKGBUILD` Arch, `debian/` Ubuntu | squelettes écrits, non testés |
+| 0.7 | Test en session : Plasma fraîche, thème appliqué, les clés relues, décoration mesurée | **fait** le 2026-11-06 : `bench/vm/essayer.sh` installe Ankh DE dans une VM Fedora 44 neuve, SDDM ouvre notre session, et les vérifications sont rejouées **dedans**. Le harnais a d'abord menti dans trois directions — voir [DE-014](DECISIONS.md) ; il échoue maintenant au lieu d'afficher « ÉCHEC » dans un passage vert |
+| 0.8 | Paquets : `.spec` Fedora, `PKGBUILD` Arch, `debian/` Ubuntu | **RPM construit** le 2026-11-06 (`rpmbuild` passe, et a révélé deux défauts du `CMakeLists.txt`). `PKGBUILD` et `debian/` restent des squelettes non construits |
 | 0.9 | Garde-fou de licence : la CI refuse un fichier dont la provenance n'est pas dans `LICENSES/` | fait — `ci/verifier-licences.sh`, testé sur deux violations plantées |
 
 **Critère de fin** : sur les trois distributions, dans une VM, `./installer.sh` part d'une session
@@ -106,7 +106,7 @@ section « Mise en œuvre : onze lots ». Résumé des pièces à écrire :
   que les curseurs ; sa variante « violette » est en fait rose-magenta `#dc63ee` et doit être
   recolorée).
 - **Lot 10** — hautes résolutions, thème clair, accessibilité (contrastes, focus au clavier,
-  animations réduites), et `lots_termines = [1,2,3,4,5,6,7,8,9,10]` dans `bench/jetons.toml`.
+  animations réduites), et les dix lots dans `lots_mesures_obligatoires` **et** dans `lots_complets` (`bench/jetons.toml`).
 
 ---
 

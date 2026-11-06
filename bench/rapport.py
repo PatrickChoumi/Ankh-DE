@@ -21,7 +21,7 @@ RACINE = Path(__file__).resolve().parent.parent
 
 def charger_jetons() -> tuple[dict[str, dict], set[int]]:
     d = tomllib.loads((RACINE / "bench" / "jetons.toml").read_text(encoding="utf-8"))
-    return {m["id"]: m for m in d["mesure"]}, set(d.get("lots_termines", []))
+    return {m["id"]: m for m in d["mesure"]}, set(d.get("lots_mesures_obligatoires", []))
 
 
 def comparer(jeton: dict, valeur) -> tuple[str, str]:
@@ -93,8 +93,9 @@ def main() -> int:
             etat, ecart = comparer(j, v) if i in jetons else ("relevé", "")
             marque = {"conforme": "✓", "ECART": "✗", "relevé": "·"}[etat]
             cellules.append(f"{marque} {v}" + (f" ({ecart})" if ecart else ""))
-            # Un écart ne fait échouer que sur le style d'Ankh, et que si le
-            # lot est terminé : Breeze est le « avant », il a le droit d'être loin.
+            # Un écart ne fait échouer que sur le style d'Ankh, et que si les
+            # mesures du lot sont obligatoires : Breeze est le « avant », il a
+            # le droit d'être loin.
             if etat == "ECART" and c.endswith("-ankh") and j.get("lot") in termines:
                 echecs.append(f"{i} [{c}] : {v} au lieu de {cible} ({ecart})")
         lot = j.get("lot", "—")
@@ -102,7 +103,7 @@ def main() -> int:
 
     lignes += [
         "",
-        f"**Lots terminés** (leurs mesures sont obligatoires) : "
+        f"**Lots dont les mesures relevées sont obligatoires** : "
         + (", ".join(str(n) for n in sorted(termines)) or "aucun"),
         "",
         "Légende : ✓ conforme · ✗ écart · · relevé seulement (pas de cible).",
@@ -121,11 +122,11 @@ def main() -> int:
     conformes = sum(1 for l in lignes if "| ✓ " in l or "| ✓" in l)
     print(f"  colonnes : {', '.join(colonnes)}")
     if echecs:
-        print(f"\n{len(echecs)} écart(s) sur un lot terminé, dans le style d'Ankh :", file=sys.stderr)
+        print(f"\n{len(echecs)} écart(s) sur une mesure obligatoire, dans le style d'Ankh :", file=sys.stderr)
         for e in echecs:
             print(f"  {e}", file=sys.stderr)
         return 1
-    print("  aucun écart sur un lot terminé.")
+    print("  aucun écart sur une mesure obligatoire.")
     return 0
 
 

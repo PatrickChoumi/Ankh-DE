@@ -201,7 +201,7 @@ def comparer(mesure, valeur):
 def rapport(chemin_jetons, chemin_mesures, sortie):
     with open(chemin_jetons, "rb") as f:
         jetons = tomllib.load(f)
-    termines = set(jetons.get("lots_termines", []))
+    termines = set(jetons.get("lots_mesures_obligatoires", []))
     valeurs = {}
     with open(chemin_mesures, encoding="utf-8") as f:
         for ligne in f:

@@ -36,6 +36,31 @@ trap nettoyer EXIT
 
 etape() { echo; echo "=== $* ==="; }
 
+# --- Les échecs qui ne doivent PAS passer pour un succès -----------------
+# Jusqu'au 2026-11-06, trois constats de ce script étaient affichés sans
+# jamais changer son code de sortie : les vérifications clé par clé
+# (« ÉCHEC — voir vm-tests.log » suivi d'un workflow vert), la présence de
+# notre applet dans la barre, et l'ouverture du menu. Un passage pouvait
+# donc écrire « ÉCHEC » à l'écran et se conclure en réussite.
+#
+# On ne sort pas tout de suite pour autant : les captures, le rapport et les
+# journaux sont rassemblés jusqu'au bout — c'est précisément quand ça rate
+# qu'ils servent. Les griefs sont donc mis de côté et rendus à la fin, et
+# c'est la fin qui décide du code de sortie.
+griefs=()
+grief() { echo "   ÉCHEC $*" >&2; griefs+=("$*"); }
+verdict() {
+    echo
+    if (( ${#griefs[@]} )); then
+        echo "=== ${#griefs[@]} ÉCHEC(S) ==="
+        printf '  - %s\n' "${griefs[@]}"
+        echo
+        echo "Les artéfacts du passage sont dans ${sortie}." >&2
+        exit 1
+    fi
+    echo "=== Tout ce que ce passage vérifie est vérifié ==="
+}
+
 ssh_vm() {
     ssh -p "${PORT_SSH}" -i "${travail}/cle" \
         -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null \
@@ -183,6 +208,33 @@ ssh_vm 'cd ~/ankh-de && ./installer.sh > /tmp/installer.log 2>&1' || {
 echo "   installé"
 ssh_vm 'ls /usr/local/share/wayland-sessions/' | sed 's/^/   session : /'
 
+# --- 5bis. Rendre audible la voix de la disposition ----------------------
+# Le script de disposition parle avec print(), que plasmashell envoie dans
+# qCDebug(PLASMASHELL). Sa catégorie est « kde.plasmashell » et sa sévérité
+# par défaut est Info (shell/CMakeLists.txt:23-28) : qCDebug est donc MUET,
+# et le 2026-11-06 j'ai pris ce silence pour la preuve que le script
+# n'avait pas tourné. Il ne prouvait rien du tout.
+#
+# On ouvre la catégorie, dans la VM seulement : la session livrée ne doit
+# pas inonder le journal de l'utilisateur.
+ssh_vm 'mkdir -p ~/.config/QtProject && cat > ~/.config/QtProject/qtlogging.ini << INI
+[Rules]
+kde.plasmashell.debug=true
+INI'
+echo "   journalisation de kde.plasmashell ouverte (print() de la disposition)"
+
+# La disposition n'est évaluée QU'À un premier démarrage : shellcorona ne
+# l'appelle que si la configuration ne porte aucun conteneur
+# (shell/shellcorona.cpp:811). Si un appletsrc traîne déjà, le test ne
+# mesure plus ce qu'il croit mesurer — alors on le dit avant de commencer.
+if ssh_vm 'test -s ~/.config/plasma-org.kde.plasma.desktop-appletsrc'; then
+    echo "   ATTENTION un appletsrc existe DÉJÀ : la disposition ne sera pas réévaluée" >&2
+    premier_demarrage=non
+else
+    echo "   aucun appletsrc : ce sera bien un premier démarrage"
+    premier_demarrage=oui
+fi
+
 # --- 6. Ouvrir la session ------------------------------------------------
 etape "6. Ouverture de la session Ankh DE"
 # SDDM se connecte tout seul dans NOTRE session : c'est le chemin réel,
@@ -260,36 +312,73 @@ preuve() { # $1 : libellé, $2 : attendu, $3 : obtenu
 }
 echec_session=non
 
-# C'est SDDM qui remplit XDG_SESSION_DESKTOP, avec le NOM DU FICHIER de
-# session choisi : s'il dit « ankh-de », notre session a bien été lancée,
-# et non celle de Plasma.
-preuve "session lancée par le gestionnaire" "ankh-de" "$(environ_de XDG_SESSION_DESKTOP)"
+# Quelle variable porte le nom du fichier de session ? J'ai affirmé le
+# 2026-11-06 que c'était XDG_SESSION_DESKTOP, et c'est faux. Dans SDDM
+# (src/daemon/Display.cpp) :
+#   453  DESKTOP_SESSION      = session.desktopSession()
+#   455  XDG_CURRENT_DESKTOP  = session.desktopNames()
+#   462  XDG_SESSION_DESKTOP  = session.desktopNames()
+# et desktopSession() rend QFileInfo(fichier).completeBaseName()
+# (src/common/Session.cpp:168), donc « ankh-de ».
+#
+# XDG_SESSION_DESKTOP vaut donc DesktopNames, que notre fichier de session
+# pose à « KDE » EXPRÈS : les portails XDG et une partie de KDE cherchent
+# « KDE » là-dedans, et annoncer « ankh-de » casserait les sélecteurs de
+# fichiers. Mon assertion exigeait donc le contraire de notre propre choix
+# — elle a échoué à son premier passage réel, et elle avait tort.
+#
+# On vérifie les deux : le FICHIER lancé, et l'identité annoncée.
+preuve "fichier de session lancé"           "ankh-de" "$(environ_de DESKTOP_SESSION)"
+preuve "identité annoncée (portails XDG)"   "KDE"     "$(environ_de XDG_CURRENT_DESKTOP)"
 preuve "type de session"                    "wayland" "$(environ_de XDG_SESSION_TYPE)"
 preuve "c'est notre lanceur"                "1"       "$(environ_de ANKH_DE_SESSION)"
 
 # Le compositeur compose-t-il vraiment ? Une image uniforme — noire ou
 # autre — veut dire qu'il n'a rien dessiné.
-printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
-    "${travail}/preuve.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
-if [[ -s "${travail}/preuve.ppm" ]]; then
-    variete="$(python3 -c "
+#
+# Le 2026-11-06, ce contrôle jugeait sur UN cliché pris deux secondes après
+# l'apparition de plasmashell : il tombait sur l'écran de chargement (65
+# couleurs, écart-type 2,5) et criait « rien n'est composé » alors que la
+# session était en train de s'ouvrir normalement. Un instantané pris trop
+# tôt n'est pas une preuve, c'est un tirage au sort.
+#
+# On attend donc que l'écran se peuple, et on dit AU BOUT DE COMBIEN DE
+# TEMPS : la durée est elle-même une information, et un échec dit alors
+# « jamais en N secondes », ce qui est vérifiable.
+variete() { # rend « écart-type couleurs » du cliché courant
+    printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+        "${travail}/preuve.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+    [[ -s "${travail}/preuve.ppm" ]] || { echo "0 0"; return; }
+    python3 -I -c "
 from PIL import Image, ImageStat
 import sys
 im = Image.open(sys.argv[1]).convert('RGB')
 s = ImageStat.Stat(im)
 print(round(max(s.stddev), 1), len(im.convert('P', palette=Image.ADAPTIVE, colors=256).getcolors(1 << 20) or []))
-" "${travail}/preuve.ppm" 2>/dev/null || echo "0 0")"
-    ecart="${variete%% *}"; couleurs="${variete##* }"
-    # Un bureau composé a de la variété : des dizaines de couleurs et un
-    # écart-type franc. Un écran noir donne 0 et 1.
+" "${travail}/preuve.ppm" 2>/dev/null || echo "0 0"
+}
+compose=non
+attendu=0
+for essai in $(seq 24); do          # 24 × 5 s = 2 minutes
+    v="$(variete)"
+    ecart="${v%% *}"; couleurs="${v##* }"
     if (( $(printf '%.0f' "${ecart}") > 5 )) && (( couleurs > 20 )); then
-        printf '   ok    %-34s écart-type %s, %s couleurs\n' "le compositeur dessine" "${ecart}" "${couleurs}"
-    else
-        echo "   ECHEC l'écran est uniforme (écart-type ${ecart}, ${couleurs} couleurs) : rien n'est composé" >&2
-        echec_session=oui
+        compose=oui; break
     fi
+    attendu=$((essai * 5))
+    sleep 5
+done
+if [[ "${compose}" == oui ]]; then
+    printf '   ok    %-34s écart-type %s, %s couleurs, au bout de %s s\n' \
+        "le compositeur dessine" "${ecart}" "${couleurs}" "${attendu}"
 else
-    echo "   ECHEC aucune capture : impossible de prouver que le compositeur dessine" >&2
+    echo "   ECHEC l'écran est resté uniforme pendant ${attendu} s (écart-type ${ecart}, ${couleurs} couleurs)" >&2
+    # La capture du dernier essai part avec les artéfacts : sans elle, on ne
+    # peut pas savoir si c'était un écran noir ou un écran de chargement.
+    python3 -I -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/preuve.ppm" "${sortie}/vm-ecran-uniforme.png" 2>/dev/null || true
     echec_session=oui
 fi
 
@@ -329,6 +418,11 @@ dans_session() {
     echo "- décoration : $(dans_session 'kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library')"
     echo "- icônes : $(dans_session 'kreadconfig6 --group Icons --key Theme')"
     echo "- style Plasma : $(dans_session 'kreadconfig6 --file plasmarc --group Theme --key name')"
+    # La clé qui décide quelle barre des tâches plasmashell construit
+    # (DE-014). Elle manquait, et c'est pour cela que la nôtre n'existait
+    # pas. Elle est dans le rapport pour que son absence saute aux yeux.
+    echo "- thème global (décide la barre) : $(dans_session 'kreadconfig6 --group KDE --key LookAndFeelPackage')"
+    echo "- premier démarrage (disposition évaluée) : ${premier_demarrage}"
     echo "- Selawik vue par fontconfig : $(ssh_vm 'fc-match -f "%{family[0]}" Selawik')"
 } | tee "${sortie}/vm-rapport.md"
 
@@ -348,11 +442,21 @@ if (( ${#manquants[@]} )); then
 fi
 echo "   tous les réglages du rapport sont renseignés"
 
-etape "8. Les 46 vérifications, dans la VM"
+# Pas de nombre dans le titre : le total dépend des outils présents dans
+# l'invité (qmllint, par exemple, n'est pas partout). Un nombre figé ici
+# devient faux sans que rien ne le dise — README annonçait 46 quand le test
+# en passait 47. Le script imprime son propre compte, c'est lui qui fait foi.
+etape "8. Les vérifications clé par clé, dans la VM"
 dans_session 'cd ~/ankh-de && ANKH_DE_CMAKE_EXTRA=-DANKH_DE_PLASMA_NON_TESTE=ON ./tests/session-et-theme.sh' \
     > "${sortie}/vm-tests.log" 2>&1 \
     && echo "   toutes passées" \
-    || { echo "   ÉCHEC — voir vm-tests.log" >&2; tail -20 "${sortie}/vm-tests.log" >&2; }
+    || { grief "les vérifications clé par clé ne passent pas dans la session"
+         tail -25 "${sortie}/vm-tests.log" >&2; }
+# Le compte réel, dans le rapport : c'est lui qu'on cite, pas un souvenir.
+compte_tests="$(sed -n 's/^\([0-9]*\) vérifications.*/\1/p' "${sortie}/vm-tests.log" | tail -1)"
+echo "   compte annoncé par le test : ${compte_tests:-inconnu}"
+echo "- vérifications clé par clé passées dans la session : ${compte_tests:-inconnu}" \
+    >> "${sortie}/vm-rapport.md"
 
 etape "9. Capture du bureau"
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
@@ -376,8 +480,25 @@ applets="$(plasma_script 'var n=[]; panels().forEach(function(p){p.widgetIds.for
 echo "   applets de la barre : ${applets:-inconnus}"
 # Ce que la disposition a dit en construisant la barre : c'est là qu'un
 # repli silencieux se voit.
-ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-LAYOUT.*' | head -6" \
-    | sed 's/^/   /' || true
+dit_layout="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-LAYOUT.*' | head -8" || true)"
+if [[ -n "${dit_layout}" ]]; then
+    printf '%s\n' "${dit_layout}" | sed 's/^/   /'
+else
+    echo "   la disposition n'a rien dit (voir « script évalué » ci-dessous)"
+fi
+# Et SURTOUT : quelle disposition plasmashell a-t-il évaluée ? C'est la
+# seule ligne qui distingue « notre script a tourné et n'a rien trouvé » de
+# « notre script n'a jamais tourné ». shellcorona.cpp:1125 la journalise,
+# dans la catégorie qu'on vient d'ouvrir (étape 5bis).
+script_evalue="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | sed -n 's/.*evaluating startup script: //p' | tail -1" || true)"
+echo "   script de disposition évalué : ${script_evalue:-inconnu}"
+case "${script_evalue}" in
+    *org.ankh.de.desktop*) ;;
+    "") grief "on ne sait pas quelle disposition plasmashell a évaluée" ;;
+    *)  grief "plasmashell a évalué une disposition qui n'est pas la nôtre : ${script_evalue}" ;;
+esac
+[[ "${premier_demarrage}" == oui ]] \
+    || grief "un appletsrc existait déjà : la disposition n'a pas été réévaluée, ce passage ne mesure pas ce qu'il annonce"
 
 if [[ -z "${applets}" ]]; then
     demarrer_present="INCONNU — la requête a échoué"
@@ -386,39 +507,112 @@ else
     case "${applets}" in *org.ankh.demarrer*) demarrer_present=oui ;; esac
 fi
 echo "   org.ankh.demarrer dans la barre : ${demarrer_present}"
+case "${demarrer_present}" in
+    oui) ;;
+    non) grief "org.ankh.demarrer n'est pas dans la barre (applets : ${applets})" ;;
+    *)   grief "impossible de savoir ce que porte la barre : la requête à plasmashell a échoué" ;;
+esac
 
 # Ouvrir le menu par le chemin que Plasma emploie lui-même pour la touche
 # Meta. S'il s'ouvre, l'applet se charge et répond.
+#
+# Une image AVANT, prise juste maintenant, pour que la comparaison ne porte
+# que sur l'ouverture. (La capture de l'étape 9 est trop vieille : l'horloge
+# a pu changer entre-temps.)
+printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+    "${travail}/avant-menu.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+
 dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu" \
     > /dev/null 2>&1 && echo "   demande d'ouverture envoyée" \
-    || echo "   activateLauncherMenu a échoué" >&2
+    || grief "activateLauncherMenu a échoué : la demande d'ouverture n'est même pas partie"
 sleep 3
 
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
     "${travail}/demarrer.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
-if [[ -s "${travail}/demarrer.ppm" ]]; then
-    python3 -c "
+
+# Ce que l'ÉCRAN dit, indépendamment de toute requête à Plasma.
+#
+# Le 2026-11-06, « vm-demarrer-ouvert.png » s'écrivait quoi qu'il arrive :
+# les trois captures du passage étaient octet pour octet identiques, et un
+# fichier nommé « menu ouvert » montrait un bureau vide. Un nom de fichier
+# ne prouve rien. On mesure donc l'ampleur du changement — mesuré ici :
+# 0,02 % de l'écran pour une minute d'horloge, 24 % pour un menu. Le seuil
+# de 2 % laisse trois ordres de grandeur de marge.
+ecran_change="INCONNU"
+mesure_menu="?"
+if [[ -s "${travail}/demarrer.ppm" && -s "${travail}/avant-menu.ppm" ]]; then
+    mesure_menu="$(python3 -I "${racine}/bench/vm/comparer.py" \
+        "${travail}/avant-menu.ppm" "${travail}/demarrer.ppm" 2>&1 || echo '')"
+    part="$(awk '{print $6+0}' <<< "${mesure_menu}" 2>/dev/null || echo 0)"
+    if [[ -n "${mesure_menu}" ]] && awk "BEGIN{exit !(${part:-0} >= 2)}"; then
+        ecran_change=oui
+    elif [[ -n "${mesure_menu}" ]]; then
+        ecran_change=non
+    fi
+    echo "   changement à l'écran (pixels x y l h part%) : ${mesure_menu}"
+    echo "   quelque chose s'est ouvert : ${ecran_change}"
+
+    # Le nom du fichier dit ce que le fichier MONTRE.
+    case "${ecran_change}" in
+        oui) nom=vm-demarrer-ouvert.png ;;
+        non) nom=vm-demarrer-rien-ne-sest-ouvert.png ;;
+        *)   nom=vm-demarrer-indetermine.png ;;
+    esac
+    python3 -I -c "
 from PIL import Image
 import sys
-Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/demarrer.ppm" "${sortie}/vm-demarrer-ouvert.png" 2>/dev/null \
-        && echo "   vm-demarrer-ouvert.png écrit"
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/demarrer.ppm" "${sortie}/${nom}" 2>/dev/null \
+        && echo "   ${nom} écrit"
+else
+    grief "pas de capture avant/après : l'ouverture du menu n'est pas observable"
 fi
+case "${ecran_change}" in
+    oui) ;;
+    non) grief "rien ne s'est ouvert à l'écran après activateLauncherMenu (${mesure_menu})" ;;
+    *)   grief "impossible de savoir si le menu s'est ouvert (${mesure_menu})" ;;
+esac
+
+# Ce que cette étape prouve, et ce qu'elle ne prouve pas.
+#
+# Elle prouve : notre applet est dans la barre (demandé à plasmashell), la
+# demande d'ouverture part, et l'écran change beaucoup. La boîte englobante
+# dit OÙ : le menu de Windows 11 est centré, Kickoff est collé au bord
+# gauche — les deux ne se confondent pas à l'œil sur la capture.
+#
+# Elle ne prouve PAS, à elle seule, que la fenêtre ouverte est la nôtre
+# plutôt que Kickoff : activateLauncherMenu choisit le lanceur de la barre,
+# et si les deux y étaient, rien ici ne les distinguerait. C'est la
+# vérification d'applet ci-dessus qui porte ce point — et c'est pour cela
+# qu'elle est bloquante.
 
 # Un menu qui s'ouvre mais dont le QML crache des erreurs n'est pas un
-# succès : on regarde ce que plasmashell a dit de notre applet.
-erreurs="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -iE 'ankh|qml' | grep -iE 'error|warning|cannot|undefined' | head -8" || true)"
+# succès : on regarde ce que plasmashell a dit de NOS pièces.
+#
+# Le filtre ne vise plus « ankh|qml » : le 2026-11-06, il attrapait
+# « plasma-welcome : module org.kde.plasma.networkmanagement is not
+# installed » — une pièce de Fedora, étrangère à nous — et le rapport
+# écrivait « erreurs QML signalées : oui ». On ne cherche donc que ce qui
+# nomme org.ankh, et on rapporte le bruit étranger à part, sans le compter.
+erreurs="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -i 'org\.ankh' | grep -iE 'error|warning|cannot|undefined|not installed' | head -8" || true)"
 if [[ -n "${erreurs}" ]]; then
-    echo "   plasmashell signale :" ; printf '%s\n' "${erreurs}" | sed 's/^/     /'
+    echo "   plasmashell signale sur NOS pièces :" ; printf '%s\n' "${erreurs}" | sed 's/^/     /'
 else
-    echo "   plasmashell ne signale aucune erreur QML"
+    echo "   plasmashell ne signale aucune erreur sur nos pièces"
+fi
+autres="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -i 'qml' | grep -iv 'org\.ankh' | grep -iE 'error|not installed' | head -4" || true)"
+if [[ -n "${autres}" ]]; then
+    echo "   (bruit QML étranger à Ankh, non compté :)"
+    printf '%s\n' "${autres}" | sed 's/^/     /'
 fi
 {
     echo
     echo "### Menu Démarrer"
     echo
+    echo "- script de disposition évalué : \`${script_evalue:-inconnu}\`"
     echo "- applets de la barre : \`${applets:-inconnus}\`"
     echo "- notre applet est dans la barre : ${demarrer_present}"
-    echo "- erreurs QML signalées : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
+    echo "- l'écran a changé à l'ouverture : ${ecran_change} (\`${mesure_menu}\`)"
+    echo "- erreurs sur nos pièces : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
 
 etape "11. Mesurer la barre des tâches (lot 4)"
@@ -449,10 +643,19 @@ if [[ -s "${travail}/barre.ppm" ]]; then
     # mesurer.py rend « espace_sous hauteur couleur » à l'abscisse donnée.
     mesure_barre="$(python3 "${racine}/bench/mesurer.py" barre "${travail}/barre.ppm" 200 2>/dev/null || echo '? ? ?')"
     echo "   sur l'image (espace sous, hauteur, couleur) : ${mesure_barre}"
-    python3 -c "
+    # « vm-barre.png » portait un nom de recadrage et montrait tout l'écran :
+    # elle faisait exactement les mêmes octets que vm-bureau.png. On recadre
+    # vraiment sur le bas de l'écran, pour que l'image montre ce que son nom
+    # annonce — et à l'échelle 3, car une barre de 48 px ne se lit pas.
+    python3 -I -c "
 from PIL import Image
 import sys
-Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/barre.ppm" "${sortie}/vm-barre.png" 2>/dev/null || true
+im = Image.open(sys.argv[1]).convert('RGB')
+l, h = im.size
+bande = im.crop((0, max(0, h - 120), l, h))
+bande.resize((bande.width * 3, bande.height * 3), Image.NEAREST).save(sys.argv[2])
+print('   vm-barre.png : les %d px du bas, à l\'échelle 3' % bande.height)
+" "${travail}/barre.ppm" "${sortie}/vm-barre.png" 2>/dev/null || true
 fi
 
 python3 - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
@@ -490,3 +693,8 @@ ssh_vm 'sudo journalctl --no-pager -b' > "${sortie}/vm-journal.log" 2>/dev/null 
 cp "${travail}/console.log" "${sortie}/vm-console.log" 2>/dev/null || true
 echo
 echo "Rapport : ${sortie}/vm-rapport.md"
+
+# C'est ici, et nulle part ailleurs, que ce passage est déclaré réussi ou
+# raté. Tout est rassemblé avant : les captures et les journaux d'un passage
+# qui échoue sont les plus utiles de tous.
+verdict

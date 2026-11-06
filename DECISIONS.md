@@ -28,6 +28,7 @@
 | DE-011 | Reprendre le code libre existant plutôt que le réécrire (modifie ANKH-DE-SPEC §5.6) | DÉCIDÉ |
 | DE-012 | Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005) | REMPLACÉE par DE-013 |
 | DE-013 | Aucun motif qui ressemble à un logo de Windows : le bouton Démarrer porte le logo d'Ankh (remplace DE-012) | DÉCIDÉ |
+| DE-014 | La disposition de la barre n'est chargée que si `kdeglobals [KDE] LookAndFeelPackage` nous désigne ; un instrument muet ne vaut pas une réponse | DÉCIDÉ |
 
 ---
 
@@ -181,7 +182,7 @@
 
 - **Statut** : DÉCIDÉ (2026-11-05), reprise du lot 0 de D-052.
 - **Décision** : `bench/jetons.toml` porte la référence : 47 mesures, chacune avec sa cible
-  Windows 11, sa tolérance, son unité, sa source et son lot. `lots_termines` liste les lots
+  Windows 11, sa tolérance, son unité, sa source et son lot. `lots_mesures_obligatoires` liste les lots
   fusionnés. Une mesure dont le lot est terminé **fait échouer le test** si elle s'écarte de sa
   cible. Aucune PR de lot ne fusionne sans :
   1. ses mesures conformes dans la VM de test ;
@@ -391,3 +392,88 @@
 - **Pourquoi DE-012 était quand même utile** : elle a nommé la distinction entre un fichier de
   Microsoft et un redessin libre, qui reste vraie et qui justifie Selawik et Fluent. Elle se
   trompait seulement sur l'endroit où tracer la limite.
+
+
+## DE-014 — La barre ne se construit que si `LookAndFeelPackage` nous désigne ; et un instrument muet ne vaut pas une réponse
+
+**Date** : 2026-11-06. **État** : DÉCIDÉ.
+
+### Le fait
+
+Le menu Démarrer n'était pas « livré mais pas encore ouvert ». Il n'était **pas dans la
+barre**, et la barre visible à l'écran était celle de **Breeze**.
+
+Le chemin, dans plasma-workspace 6.8 :
+
+| Où | Quoi |
+|---|---|
+| `shell/shellcorona.cpp:1813` | le paquet vient de `kdeglobals [KDE] LookAndFeelPackage` |
+| `shell/shellcorona.cpp:1117` | le script vient de `<ce paquet>/layouts/<shell>-layout.js` |
+| `shell/shellcorona.cpp:811` | il n'est évalué **qu'**à un premier démarrage, sans conteneur existant |
+| `kcms/lookandfeel/lookandfeelsettings.kcfg` | à défaut, la clé vaut `org.kde.breeze.desktop` |
+
+Cette clé n'était écrite **nulle part** dans le dépôt. Nos autres réglages — style, couleurs,
+décoration, icônes, style Plasma — s'appliquaient par-dessus la barre de Breeze, ce qui rendait
+le défaut invisible : la barre avait nos couleurs et nos icônes, et ce n'était pas la nôtre.
+
+**La décision** : la clé vit dans `src/config/kdeglobals`, que la session place dans
+`XDG_CONFIG_DIRS`. Pas dans `contents/defaults` — un thème global ne peut pas se désigner
+lui-même — et pas dans l'installateur : une session doit être juste par elle-même, sans dépendre
+d'une étape d'installation. Le `~/.config` de l'utilisateur garde la priorité.
+
+### Ce que ce défaut a appris, et qui dépasse la clé
+
+J'ai annoncé deux causes avant celle-là, et les deux étaient fausses. Voici pourquoi, parce que
+le mécanisme est plus instructif que la clé :
+
+1. **`XDG_DATA_DIRS` ne manquait pas.** Le passage en VM du 2026-11-06 affichait
+   `XDG_DATA_DIRS : /usr/local/share:/usr/share` : notre préfixe y était déjà. Le correctif
+   était juste par principe et ne réglait pas ce symptôme.
+
+2. **« Le script n'a rien dit » ne voulait pas dire « le script n'a pas tourné ».** Un script de
+   disposition parle avec `print()`, que plasmashell envoie dans `qCDebug(PLASMASHELL)`. Sa
+   catégorie est `kde.plasmashell`, de sévérité `Info` par défaut
+   (`shell/CMakeLists.txt:23-28`) : `qCDebug` est donc **muet**. J'ai pris ce silence pour une
+   preuve.
+
+3. **`qdbus6` n'existe pas sur Fedora** — c'est `qdbus-qt6`. Toutes les requêtes à plasmashell
+   échouaient en silence, et le rapport écrivait « notre applet est dans la barre : **non** »
+   alors que la question n'avait jamais été posée.
+
+**La règle qui en sort, et qui vaut pour tout le dépôt** : *une requête qui échoue doit le dire,
+et « je ne sais pas » ne s'écrit jamais « non ».* Un rapport qui invente une réponse négative
+est pire qu'un rapport muet : il envoie corriger un défaut qui n'existe peut-être pas, et il
+cache celui qui existe.
+
+Ce qui l'applique, désormais :
+
+- `bench/vm/essayer.sh` cherche le nom de l'outil dans l'invité et **s'arrête** s'il n'y en a
+  pas ; une requête qui rate affiche son code et sa sortie ; `INCONNU` ne se confond plus
+  avec `non` ;
+- le harnais **ouvre** `kde.plasmashell.debug` dans la VM, pour que `print()` soit audible, et
+  rapporte **quel** script de disposition plasmashell a évalué — la seule ligne qui distingue
+  « notre script a tourné » de « notre script n'a jamais tourné » ;
+- il vérifie **avant** de commencer qu'aucun `appletsrc` ne traîne, sans quoi la disposition
+  n'est pas réévaluée et le passage ne mesure pas ce qu'il annonce ;
+- l'ouverture du menu est jugée sur l'**écran**, par l'ampleur du changement entre deux clichés
+  (mesuré : 0,02 % pour une minute d'horloge, 24 % pour un menu ; seuil à 2 %), et le nom du
+  fichier de capture dit ce que le fichier **montre** — `vm-demarrer-rien-ne-sest-ouvert.png`
+  quand rien ne s'est ouvert ;
+- **aucun constat de ce harnais n'est plus affiché sans compter** : les griefs sont rassemblés
+  et c'est la fin du script qui décide du code de sortie. Trois constats — les vérifications
+  clé par clé, la présence de l'applet, l'ouverture du menu — s'affichaient en « ÉCHEC » dans
+  un passage vert.
+
+### Deux assertions de ce même harnais avaient tort
+
+Elles ont échoué à leur premier passage réel, et c'est le harnais qui se trompait :
+
+- `XDG_SESSION_DESKTOP` ne porte **pas** le nom du fichier de session. Dans SDDM
+  (`src/daemon/Display.cpp`) : `DESKTOP_SESSION` reçoit le nom du fichier (ligne 453, via
+  `Session::desktopSession()` qui rend `completeBaseName()`), tandis que `XDG_CURRENT_DESKTOP`
+  (455) et `XDG_SESSION_DESKTOP` (462) reçoivent `DesktopNames` — donc `KDE`, que nous posons
+  **exprès** pour les portails XDG. L'assertion exigeait le contraire de notre propre choix.
+- la preuve de composition jugeait sur **un** cliché pris deux secondes après l'apparition de
+  `plasmashell` : elle tombait sur l'écran de chargement (écart-type 2,5, 65 couleurs) et
+  criait « rien n'est composé ». Elle attend maintenant que l'écran se peuple, jusqu'à deux
+  minutes, et dit **au bout de combien de temps**.

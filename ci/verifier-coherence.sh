@@ -62,6 +62,11 @@ done < <(grep -oiE 'remplace (DE-[0-9]+)' DECISIONS.md | grep -oE 'DE-[0-9]+' | 
 ABROGEES=(
     "DE-011|CLAUDE.md|On n'embarque pas un projet tiers"
     "DE-011|ANKH-DE-SPEC.md|Pas de projet tiers embarqué comme code"
+    # Celle-ci a survécu au contrôle précédent parce qu'elle est formulée
+    # autrement : le document de PROVENANCE citait encore l'interdiction
+    # pendant que le menu QML tiers était déjà intégré (constat du
+    # 2026-11-06). Une règle abrogée se cache dans ses paraphrases.
+    "DE-011|docs/UPSTREAMS.md|on n'embarque pas un projet"
 )
 for regle in "${ABROGEES[@]}"; do
     IFS='|' read -r decision fichier phrase <<< "${regle}"
