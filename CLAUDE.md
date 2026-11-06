@@ -31,13 +31,18 @@
 
 ## 2. État actuel
 
-- **Lot en cours : 0 — Autonomie.** Son tableau est dans
-  [ROADMAP.md](ROADMAP.md#lot-0--autonomie). Fait et **éprouvé en conteneur Fedora 44** :
-  CMake, thème global, `preparer.sh`, garde-fous, et le banc du style (`bench/captures.sh`),
-  dont toutes les mesures du lot 3 sont conformes. Reste : le test en session (0.7, décoration,
-  barre, Démarrer) et les paquets (0.8).
-- **Lots 1 et 3 mesurés ici**, dans ce dépôt, par `bench/captures.sh`. Le **lot 2** (décoration
-  des fenêtres) ne l'est pas : il demande une session avec KWin.
+- **Lot en cours : 4 — le shell.** Le lot 0 est **fini** : le DE se compile sur trois
+  distributions, s'installe, et sa session s'ouvre dans une VM. L'état complet, lot par lot, est
+  dans [ROADMAP.md](ROADMAP.md).
+- **Éprouvé dans une VRAIE VM** (Fedora 44, Plasma 6.8.2, `VM — session réelle`) : la session
+  s'ouvre, `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
+  `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
+  fontconfig, et les vérifications de `tests/session-et-theme.sh` passent *dans la session*.
+- **18 jetons sur 47 mesurés** : 12 pour les contrôles (lot 3, sans VM, à chaque PR) et 6 pour
+  les fenêtres (lot 2, par un vrai KWin en backend `--virtual`).
+- **Le menu Démarrer est livré mais n'a pas encore été ouvert.** Au passage du 2026-11-06 il
+  n'était même pas chargé : la session n'annonçait pas `XDG_DATA_DIRS`. Corrigé ; la preuve
+  reste à faire.
 - Ne jamais présenter une mesure d'Ankh comme une mesure d'Ankh DE : citer le dépôt et le run.
 - **Version de Plasma visée : 6.8** (`src/*/VERSION-BREEZE`). La source reste Breeze 6.7.5, qui
   compile tel quel contre 6.8. Monter de version est **notre** décision de release, pas une
@@ -53,9 +58,15 @@ Elles ne se contournent pas. Si une règle bloque, on ouvre une décision dans D
 
 ### Périmètre
 1. On ne remplace ni le compositeur, ni le gestionnaire de session, ni `plasmashell` (DE-001).
-2. On n'embarque pas un projet tiers **comme code** (Klassy, Lightly, Menu11,
-   KDE-Rounded-Corners). Des **images** et des **feuilles de style** tierces, oui, à un commit
-   figé et avec leur licence (SPEC §5.6).
+2. **Reprendre du code libre est permis, et préféré à le réécrire** (DE-011, qui a remplacé
+   l'interdiction d'origine le 2026-11-06). Cinq conditions, toutes vérifiables : licence
+   compatible GPL-3.0-or-later **portée par un fichier de licence** ; commit figé ; provenance
+   tracée dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md) avec sa nature et ses modifications ; rien
+   de Microsoft, ni aucun motif qui ressemble à un de ses logos (DE-013) ; et **aucune pièce qui
+   en écrase une de la distribution**.
+   Ce qui reste écarté l'est pour une raison nommée : `menu-11-next` (licence déclarée en
+   métadonnées, sans fichier de licence), l'applet `icontasks` de KDE-Windows-Modern (il porte
+   l'identifiant de l'applet standard de Plasma), PlasmaZones (exige Qt 6.10+).
 
 ### Licence et actifs
 3. **Aucun fichier de Microsoft**, jamais : police, icône, son, curseur, fond d'écran, capture,
@@ -108,6 +119,12 @@ Elles ne se contournent pas. Si une règle bloque, on ouvre une décision dans D
   est cité dans `bench/jetons.toml`.
 - DECISIONS.md : on ne supprime pas une entrée ; une décision qui change en cite l'ancienne ;
   l'index reste à jour.
+- **Une décision qui modifie une règle corrige les documents qui la portent DANS LE MÊME
+  COMMIT** — ce fichier, ANKH-DE-SPEC.md, ROADMAP.md. Le 2026-11-06, DE-011 a autorisé la
+  reprise de code libre sans que le §3.2 d'ici soit touché : le dépôt a porté deux règles
+  contradictoires pendant plusieurs commits. `ci/verifier-coherence.sh` le refuse désormais.
+- **Un lot terminé se marque dans ROADMAP.md dans le commit qui le termine**, avec ce qui est
+  prouvé et ce qui ne l'est pas. Un tableau en retard donne une vision fausse de l'état.
 
 ### Git
 - Travailler sur une branche dédiée. Pas de push direct sur `main`, pas de force-push.

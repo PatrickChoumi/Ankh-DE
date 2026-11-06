@@ -7,8 +7,28 @@
 > Les lots 1 à 10 sont ceux de **D-052** du dépôt [Ankh](https://github.com/PatrickChoumi/Ankh).
 > Le lot 0 est propre à ce dépôt : il rend le tout autonome.
 
-| Lot | Objectif | État |
+| Lot | Objectif | État au 2026-11-06 |
 |---|---|---|
+| **0** | **Autonomie** : le DE se compile, s'installe et se retire seul | **FINI** — compile sur Fedora 44, Arch et Ubuntu 26.04 ; s'installe et sa session s'ouvre dans une VM |
+| **1** | Fondations : police, tailles, couleurs, rendu, animations, curseurs | **FINI** — appliqué par la session (DE-010), vérifié en VM : `Selawik 10.5`, couleurs `Ankh`. 12 jetons conformes |
+| **2** | Fenêtres : la décoration « Ankh » | **mesuré ici** — 6 jetons sur 11 par un vrai KWin : barre de titre **32 px**, bords à 0, boutons `M`/`IAX`. Les 5 autres (rayon des coins, bouton Fermer, alignement du titre) demandent une capture que KWin refuse en backend virtuel |
+| **3** | Contrôles : style Qt, QtQuick de KDE, thème GTK | **FINI** — 12 jetons conformes, rejoués à chaque PR sans VM |
+| **4** | Shell : style Plasma, barre, zone de notification, horloge, notifications | **en cours** — le style Plasma `ankh` et `ankh-clair` sont livrés (DE-011, dérivés de KDE-Windows-Modern) ; l'horloge et « Afficher le bureau » aussi. Les 9 jetons de la barre ne sont **pas encore mesurés** |
+| **5** | Démarrer d'Ankh | **livré, non prouvé** — `org.ankh.demarrer` est installé, mais il n'a **jamais été ouvert**. Au passage du 2026-11-06 il n'était même pas chargé, faute de `XDG_DATA_DIRS` ; corrigé, la preuve reste à faire |
+| **6** | Paramètres rapides en un seul volet | à faire — le plus fragile (trois modules privés, aucun appui amont) |
+| **7** | Alt+Tab, vue d'ensemble, déconnexion, verrouillage, sons, Windows+Z | à faire. L'écran de **verrouillage** reste délibérément celui de Plasma tant qu'un déverrouillage réel n'aura pas été essayé |
+| **8** | Applications : Dolphin, Configuration du système, Discover, Konsole, GTK, Flatpak, Electron | à faire |
+| **9** | Icônes et curseurs au violet d'Ankh | **FINI** — curseurs au lot 1 ; thème d'icônes `Fluent-Ankh` recoloré, et bouton Démarrer au logo d'Ankh (DE-013) |
+| **10** | Finitions : 125 et 150 %, thème clair, accessibilité, mesures obligatoires | à faire |
+
+**Compte des mesures : 18 jetons sur 47.** Le détail est dans
+[docs/FIDELITE.md](docs/FIDELITE.md), généré depuis `bench/jetons.toml`.
+
+**Ce qui livre quoi** : `bench/captures.sh` mesure le style sans VM, à chaque PR ;
+`bench/session-virtuelle.sh` mesure la décoration par un KWin en backend `--virtual` ;
+`bench/vm/essayer.sh` ouvre une vraie session dans une VM et vérifie tout le reste.
+
+---|---|---|
 | **0** | **Autonomie** : le DE se compile, s'installe et se retire seul, sur trois distributions | **en cours** — la session est faite (jour 1) |
 | **1** | Fondations : police, tailles, couleurs par couches, rendu, animations, curseurs | repris d'Ankh — `MESURÉ` en VM le 2026-10-20 |
 | **2** | Fenêtres : la décoration « Ankh » | repris d'Ankh — `MESURÉ` en VM le 2026-10-22 |

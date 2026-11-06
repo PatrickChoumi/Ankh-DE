@@ -140,6 +140,11 @@ jobs:
       - name: Garde-fou des licences
         run: ./ci/verifier-licences.sh
 
+      # Le dépôt ne doit pas porter deux règles contradictoires : le
+      # 2026-11-06, DE-011 a autorisé ce que CLAUDE.md interdisait encore.
+      - name: Cohérence des décisions et des règles
+        run: ./ci/verifier-coherence.sh
+
       # DE-007 : le tableau de fidélité est généré, jamais écrit à la main.
       - name: docs/FIDELITE.md est à jour avec bench/jetons.toml
         run: python3 bench/fidelite.py --verifier

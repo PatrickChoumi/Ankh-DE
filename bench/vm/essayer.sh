@@ -213,6 +213,65 @@ if [[ "${session}" != oui ]]; then
 fi
 echo "   plasmashell et kwin_wayland sont vivants"
 
+# --- 6bis. PROUVER que c'est une session graphique, et la NÔTRE ---------
+# Des processus vivants ne font pas une session : il faut que le
+# gestionnaire de connexion ait lancé NOTRE fichier de session, que la
+# session soit en Wayland, et que le compositeur compose vraiment. Un
+# écran noir passerait tous les contrôles précédents.
+echo "== Preuves de la session"
+environ_de() { # $1 : variable
+    ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^$1=//p'" \
+        2>/dev/null | tr -d '\r' || true
+}
+preuve() { # $1 : libellé, $2 : attendu, $3 : obtenu
+    if [[ "$3" == "$2" ]]; then
+        printf '   ok    %-34s %s\n' "$1" "$3"
+    else
+        echo "   ECHEC $1 : attendu « $2 », obtenu « $3 »" >&2
+        echec_session=oui
+    fi
+}
+echec_session=non
+
+# C'est SDDM qui remplit XDG_SESSION_DESKTOP, avec le NOM DU FICHIER de
+# session choisi : s'il dit « ankh-de », notre session a bien été lancée,
+# et non celle de Plasma.
+preuve "session lancée par le gestionnaire" "ankh-de" "$(environ_de XDG_SESSION_DESKTOP)"
+preuve "type de session"                    "wayland" "$(environ_de XDG_SESSION_TYPE)"
+preuve "c'est notre lanceur"                "1"       "$(environ_de ANKH_DE_SESSION)"
+
+# Le compositeur compose-t-il vraiment ? Une image uniforme — noire ou
+# autre — veut dire qu'il n'a rien dessiné.
+printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+    "${travail}/preuve.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+if [[ -s "${travail}/preuve.ppm" ]]; then
+    variete="$(python3 -c "
+from PIL import Image, ImageStat
+import sys
+im = Image.open(sys.argv[1]).convert('RGB')
+s = ImageStat.Stat(im)
+print(round(max(s.stddev), 1), len(im.convert('P', palette=Image.ADAPTIVE, colors=256).getcolors(1 << 20) or []))
+" "${travail}/preuve.ppm" 2>/dev/null || echo "0 0")"
+    ecart="${variete%% *}"; couleurs="${variete##* }"
+    # Un bureau composé a de la variété : des dizaines de couleurs et un
+    # écart-type franc. Un écran noir donne 0 et 1.
+    if (( $(printf '%.0f' "${ecart}") > 5 )) && (( couleurs > 20 )); then
+        printf '   ok    %-34s écart-type %s, %s couleurs\n' "le compositeur dessine" "${ecart}" "${couleurs}"
+    else
+        echo "   ECHEC l'écran est uniforme (écart-type ${ecart}, ${couleurs} couleurs) : rien n'est composé" >&2
+        echec_session=oui
+    fi
+else
+    echo "   ECHEC aucune capture : impossible de prouver que le compositeur dessine" >&2
+    echec_session=oui
+fi
+
+if [[ "${echec_session}" == oui ]]; then
+    echo "La session n'est pas celle qu'on prétend ouvrir." >&2
+    ssh_vm 'sudo journalctl -u sddm --no-pager | tail -25' >&2 || true
+    exit 1
+fi
+
 # --- 7. Ce que la session doit prouver -----------------------------------
 etape "7. Vérifications dans la session"
 uid="$(ssh_vm 'id -u')"
