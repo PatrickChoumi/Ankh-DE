@@ -9,16 +9,24 @@ de Windows 11 — au pixel près, et **vérifiées par un programme** — sous l
 violet d'[Ankh](https://github.com/PatrickChoumi/Ankh). Il s'installe sur Fedora, Arch ou Ubuntu
 sans modifier un seul fichier de la distribution, et se retire d'un geste.
 
-> ### État : lot 0, en cours. Rien de ce dépôt n'a encore tourné sur une machine.
+> ### État : **v0.1.0**, pré-version — et elle a tourné sur une vraie machine.
 >
-> Le code des lots 1 à 3 vient du dépôt Ankh, où ses mesures sont **relevées en VM sur Fedora 44**
-> ([run 39753444882](https://github.com/PatrickChoumi/Ankh/actions/runs/39753444882)) : barre de
-> titre de 32 px, bouton Fermer `#C42B1C` en 46×32, coins de 8,2 px, contrôles de 32 px,
-> interrupteur de 40×20, barre de défilement de 12 px, Selawik en 14 px.
-> **Hors de l'image d'Ankh, rien n'est encore prouvé** : ni la compilation sur Arch et Ubuntu, ni
-> l'installateur, ni le thème global. C'est tout l'objet du lot 0
-> ([ROADMAP.md](ROADMAP.md#lot-0--autonomie)).
-> Ce qui est vérifié et ce qui ne l'est pas : [AVANCEMENT.md](AVANCEMENT.md).
+> Ankh DE a été **installé par son propre installateur dans une machine virtuelle**
+> (Fedora 44, Plasma 6.8.2), et la session ouverte **depuis l'écran de connexion**. Dans cette
+> session : `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`,
+> décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée
+> par fontconfig, et les **46 vérifications** passées *dans la session*.
+> Détail et limites : [CHANGELOG.md](CHANGELOG.md) et [AVANCEMENT.md](AVANCEMENT.md).
+>
+> **18 jetons sur 47 mesurés.** Le menu Démarrer est livré mais **n'a pas été ouvert**.
+
+## Le bureau, dans une vraie session
+
+![Le bureau d'Ankh DE dans une VM](docs/images/bureau-vm.png)
+
+Capture prise par le moniteur de QEMU, dans le test `VM — session réelle`, à chaque exécution.
+Le bouton Démarrer porte **le logo d'Ankh** — aucun motif qui ressemble à un logo de Microsoft
+([DE-013](DECISIONS.md)).
 
 ## À quoi ça ressemble
 

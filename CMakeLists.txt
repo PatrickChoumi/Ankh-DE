@@ -172,6 +172,11 @@ if(ANKH_DE_DATA)
     if(ANKH_DE_KWIN)
         install(DIRECTORY src/kwin/
             DESTINATION ${KDE_INSTALL_DATADIR}/kwin/scripts
+            # Les README des dossiers de lot décrivent ce qui reste à
+            # écrire : ils n'ont rien à faire sur le système de
+            # l'utilisateur. Le paquet Fedora l'a attrapé le 2026-11-06,
+            # en refusant un fichier installé mais non empaqueté.
+            PATTERN "README.md" EXCLUDE
         )
     endif()
 

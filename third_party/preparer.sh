@@ -82,9 +82,49 @@ AIDE
 fi
 
 # Récupère un dépôt à un commit, seulement les dossiers demandés.
+#
+# ANKH_DE_SOURCES=/chemin fait travailler le script SANS RÉSEAU, sur des
+# sources déjà présentes : c'est la règle de Fedora, de Debian et d'Arch, qui
+# interdisent toutes de télécharger pendant la construction d'un paquet
+# (AUDIT.md §2.3). Chaque dépôt y est attendu dans un dossier nommé d'après
+# lui, au commit voulu ; la fonction vérifie le commit comme elle le ferait
+# après un téléchargement.
 recuperer() { # $1 : dépôt, $2 : commit, $3 : dossier de travail, puis les dossiers voulus
     local depot=$1 commit=$2 dossier=$3
     shift 3
+    if [[ -n "${ANKH_DE_SOURCES:-}" ]]; then
+        local nom="${depot##*/}" local_src
+        local_src="${ANKH_DE_SOURCES}/${nom}"
+        if [[ ! -d "${local_src}" ]]; then
+            echo "ANKH_DE_SOURCES : ${local_src} est absent." >&2
+            echo "Attendu : un dossier par dépôt, au commit ${commit}." >&2
+            exit 1
+        fi
+        cp -a "${local_src}" "${dossier}"
+        # Même exigence que pour un téléchargement : le commit doit être le
+        # bon. Une source locale n'est pas une raison de moins vérifier.
+        if [[ -d "${dossier}/.git" ]]; then
+            local obtenu
+            obtenu="$(git -C "${dossier}" rev-parse HEAD)"
+            if [[ "${obtenu}" != "${commit}" ]]; then
+                echo "${local_src} : commit ${obtenu}, attendu ${commit}" >&2
+                exit 1
+            fi
+        elif [[ -r "${local_src}.commit" ]]; then
+            local declare_
+            declare_="$(cat "${local_src}.commit")"
+            if [[ "${declare_}" != "${commit}" ]]; then
+                echo "${local_src}.commit dit ${declare_}, attendu ${commit}" >&2
+                exit 1
+            fi
+        else
+            echo "${local_src} : ni dépôt git ni fichier ${nom}.commit." >&2
+            echo "Impossible de vérifier qu'il s'agit bien de ${commit}." >&2
+            exit 1
+        fi
+        echo "${depot} : ${commit} (source locale, hors réseau)"
+        return 0
+    fi
     git init -q "${dossier}"
     git -C "${dossier}" remote add origin "${depot}"
     git -C "${dossier}" sparse-checkout set "$@"

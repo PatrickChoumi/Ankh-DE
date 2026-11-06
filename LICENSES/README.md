@@ -27,6 +27,7 @@ Tous ces fichiers gardent l'en-tête de licence de KDE. L'ensemble du dépôt es
 | Fichier | Origine | Licence |
 |---|---|---|
 | `src/icons/ankh/**/start-here.svg` | **Dessinés pour ce projet** d'après le logo d'Ankh (dépôt [Ankh](https://github.com/PatrickChoumi/Ankh), `ankh-logo.svg`) : le A au trait barré de violet, recalé pour une barre des tâches, une version par taille | GPL-3.0-or-later |
+| `docs/images/bureau-vm.png` | Capture de la session Ankh DE, prise par le moniteur de QEMU dans la VM de test. Aucun contenu tiers hors le thème livré | GPL-3.0-or-later |
 | `docs/images/comparaison-sombre.png` | Produit par `bench/captures.sh` : la galerie d'Ankh DE, photographiée par Qt sous Xvfb. Aucun contenu tiers | GPL-3.0-or-later, comme le reste |
 | `docs/images/comparaison-clair.png` | idem | GPL-3.0-or-later |
 | `src/lookandfeel/org.ankh.de.desktop/contents/previews/preview.png` | Généré par `bench/captures.sh` depuis la même capture. Vignette du thème global | GPL-3.0-or-later |
