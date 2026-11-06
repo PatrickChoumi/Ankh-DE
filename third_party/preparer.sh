@@ -42,6 +42,10 @@ readonly VIOLETS_GTK=('AB47BC:7C3AED' 'BA68C8:A78BFA' '9C27B0:6D28D9' 'CE93D8:C4
 # Bleu d'accent des curseurs Fluent (#0078d4, celui de Windows, et son reflet
 # #23e6fa) -> violet d'Ankh (sélection #8455f0 et violet du logo #a78bfa).
 readonly COULEURS=('0078d4:8455f0' '23e6fa:a78bfa')
+# Rose-magenta de la variante « purple » des icônes Fluent -> violets d'Ankh,
+# de la teinte principale à la plus claire. Relevé le 2026-11-05 dans ses
+# sources : 39 occurrences de #dc63ee, une de #e275f0, une de #ff85de.
+readonly VIOLETS_ICONES=('dc63ee:8455f0' 'e275f0:a78bfa' 'ff85de:c4b5fd')
 # Tailles de chaque curseur, comme le build.sh des curseurs Fluent.
 readonly TAILLES=('x1:32' 'x1_25:40' 'x1_5:48' 'x2:64')
 
@@ -227,6 +231,106 @@ done
 for feuille in gtk-3.0/gtk.css gtk-3.0/gtk-dark.css gtk-4.0/gtk.css gtk-4.0/gtk-dark.css; do
     echo "Fluent-Ankh, ${feuille} : $(grep -o -i '#7c3aed\|#a78bfa' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
 done
+
+echo "== Thème d'icônes Fluent-Ankh (lot 9)"
+# Mon choix du 2026-10-15 : les icônes Fluent, au violet d'Ankh. Sa variante
+# « purple » est en réalité un rose-magenta (#dc63ee) : on la recolore.
+recuperer "${FLUENT_DEPOT}" "${FLUENT_COMMIT}" "${travail}/fluent-icones" src links install.sh
+fluent_icones="${travail}/fluent-icones"
+dessins_violets=( "${fluent_icones}"/src/scalable/places/purple-*.svg )
+if (( ${#dessins_violets[@]} == 0 )); then
+    echo "Icônes Fluent : aucun dessin « purple » dans les sources" >&2
+    exit 1
+fi
+for couple in "${VIOLETS_ICONES[@]}"; do
+    avant="${couple%%:*}"; apres="${couple##*:}"
+    # La couleur doit encore exister : sinon, les dessins ont changé en amont
+    # et le violet d'Ankh ne serait pas appliqué.
+    if ! grep -qil "#${avant}" "${dessins_violets[@]}"; then
+        echo "Icônes Fluent : la couleur #${avant} n'existe plus dans les sources" >&2
+        exit 1
+    fi
+    sed -i "s/#${avant}/#${apres}/gI" "${dessins_violets[@]}"
+done
+if grep -qil '#dc63ee\|#e275f0\|#ff85de' "${dessins_violets[@]}"; then
+    echo "Icônes Fluent : du rose reste après la recoloration" >&2
+    exit 1
+fi
+echo "${#dessins_violets[@]} dessins recolorés"
+
+brut="${travail}/icones-brut"
+(cd "${fluent_icones}" && ./install.sh --dest "${brut}" --name Fluent-Ankh purple > /dev/null)
+
+# install.sh nomme la variante « <nom>-purple » et range le gros des dessins
+# dans des dossiers cachés que les thèmes atteignent par des liens RELATIFS
+# (vérifié : aucun lien absolu). Renommer le dossier du thème est donc sûr.
+install -d -m 0755 "${sortie}/icones"
+renommer() { # $1 : suffixe produit par install.sh, $2 : notre nom, $3 : libellé
+    local source="${brut}/Fluent-Ankh${1}" cible="${sortie}/icones/$2"
+    [[ -d "${source}" ]] || { echo "Icônes : ${source} n'a pas été produit" >&2; exit 1; }
+    rm -rf "${cible}"
+    cp -a "${source}" "${cible}"
+    sed -i "s/^Name=.*/Name=$3/" "${cible}/index.theme"
+    sed -i "s/^Comment=.*/Comment=Icônes Fluent (vinceliuice\/Fluent-icon-theme, GPL-3.0), au violet d'Ankh/" "${cible}/index.theme"
+}
+renommer "-purple"       Fluent-Ankh       "Ankh"
+renommer "-purple-dark"  Fluent-Ankh-dark  "Ankh (sombre)"
+renommer "-purple-light" Fluent-Ankh-light "Ankh (clair)"
+
+# Les variantes sombre et claire atteignent le thème principal PAR SON NOM :
+# leurs liens « scalable », « scalable@2x » et « scalable@3x » pointent vers
+# « Fluent-Ankh-purple ». Le renommer les casse. On les retarge.
+retargetes=0
+for variante in Fluent-Ankh Fluent-Ankh-dark Fluent-Ankh-light; do
+    while read -r lien; do
+        cible="$(readlink "${lien}")"
+        case "${cible}" in
+            *Fluent-Ankh-purple*)
+                ln -sfn "${cible//Fluent-Ankh-purple/Fluent-Ankh}" "${lien}"
+                retargetes=$((retargetes + 1))
+                ;;
+        esac
+    done < <(find "${sortie}/icones/${variante}" -type l)
+done
+echo "${retargetes} lien(s) retargé(s) après le renommage"
+# Les dossiers cachés portent l'essentiel des dessins : sans eux, tous les
+# liens des thèmes pointent dans le vide.
+for base in "${brut}"/.Fluent-Ankh*; do
+    [[ -d "${base}" ]] || continue
+    rm -rf "${sortie}/icones/$(basename "${base}")"
+    cp -a "${base}" "${sortie}/icones/"
+done
+install -m 0644 "${fluent_icones}/src/../LICENSE" "${sortie}/icones/Fluent-Ankh/LICENSE" 2>/dev/null \
+    || install -m 0644 "${travail}/fluent/cursors/LICENSE" "${sortie}/icones/Fluent-Ankh/LICENSE"
+
+# Un thème d'icônes à moitié installé se voit tout de suite et se diagnostique
+# mal : il faut vérifier que les liens mènent quelque part. Mais l'amont en
+# livre lui-même quelques-uns de morts (gnome-hideseek, regexxer, kerry… des
+# icônes d'applications disparues). On compare donc notre copie à ce que
+# l'amont produit : un lien mort de plus est une vraie casse, par exemple un
+# dossier caché oublié à la copie.
+compter_liens_morts() { # $1 : dossier d'un thème
+    local n=0 lien
+    while read -r lien; do
+        [[ -e "${lien}" ]] || n=$((n + 1))
+    done < <(find "$1" -type l 2>/dev/null)
+    echo "${n}"
+}
+morts_amont=0
+morts_chez_nous=0
+for variante in "" "-dark" "-light"; do
+    morts_amont=$((morts_amont + $(compter_liens_morts "${brut}/Fluent-Ankh-purple${variante}")))
+    morts_chez_nous=$((morts_chez_nous + $(compter_liens_morts "${sortie}/icones/Fluent-Ankh${variante}")))
+done
+if (( morts_chez_nous > morts_amont )); then
+    echo "Icônes Fluent : ${morts_chez_nous} liens morts chez nous contre ${morts_amont} en amont." >&2
+    echo "Un dossier a probablement été oublié à la copie. Premiers liens morts :" >&2
+    find "${sortie}/icones/Fluent-Ankh" -type l ! -exec test -e {} \; -print 2>/dev/null \
+        | head -5 | sed "s|${sortie}/icones/|  |" >&2
+    exit 1
+fi
+echo "liens : ${morts_chez_nous} morts, autant qu'en amont (icônes d'applications disparues)"
+echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
 
 echo
 echo "Prêt dans ${sortie}. Le CMake de la racine l'installera."

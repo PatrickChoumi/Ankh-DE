@@ -177,8 +177,14 @@ for couple in \
     "Theme|name|${prefixe}/share/plasma/desktoptheme"
 do
     IFS='|' read -r groupe cle dossier <<< "${couple}"
-    valeur="$(grep -A4 "^\[kdeglobals\]\[${groupe}\]\|^\[plasmarc\]\[${groupe}\]" "${defauts}" 2>/dev/null \
-        | awk -F= -v k="${cle}" '$1==k{print $2; exit}' || true)"
+    # Lecture d'un vrai fichier INI : on entre dans la section, on en sort au
+    # prochain en-tête, et on ignore les commentaires. Un « grep -A4 » ratait
+    # la clé dès qu'un commentaire la précédait — et rendait un faux « ok ».
+    valeur="$(awk -F= -v g="${groupe}" -v k="${cle}" '
+        /^\[/ { dedans = ($0 ~ "\\]\\[" g "\\]$"); next }
+        /^[[:space:]]*#/ { next }
+        dedans && $1 == k { print $2; exit }
+    ' "${defauts}" 2>/dev/null || true)"
     verifies=$((verifies + 1))
     if [[ -z "${valeur}" ]]; then
         printf '  ok    %s\n' "${groupe}/${cle} n'est pas désigné (pièce non livrée)"
@@ -189,6 +195,87 @@ do
         echecs=$((echecs + 1))
     fi
 done
+
+# --- 3bis. L'écran de chargement et les aperçus --------------------------
+echo "== Écran de chargement et aperçus"
+paquet="${prefixe}/share/plasma/look-and-feel/org.ankh.de.desktop"
+for fichier in contents/splash/Splash.qml contents/previews/preview.png \
+               contents/previews/fullscreenpreview.jpg; do
+    verifies=$((verifies + 1))
+    if [[ -s "${paquet}/${fichier}" ]]; then
+        printf '  ok    %s\n' "${fichier}"
+    else
+        echo "  ECHEC ${fichier} est absent ou vide" >&2
+        echecs=$((echecs + 1))
+    fi
+done
+# Un QML qui ne compile pas retarde l'ouverture de la session.
+# Le nom varie : qmllint-qt6 sur Fedora, qmllint6 ailleurs, et Qt l'installe
+# aussi dans son propre dossier.
+lint=""
+for candidat in qmllint-qt6 qmllint6 qmllint /usr/lib64/qt6/bin/qmllint /usr/lib/qt6/bin/qmllint; do
+    if command -v "${candidat}" > /dev/null 2>&1; then lint="$(command -v "${candidat}")"; break; fi
+    if [[ -x "${candidat}" ]]; then lint="${candidat}"; break; fi
+done
+if [[ -n "${lint}" ]]; then
+    verifies=$((verifies + 1))
+    if "${lint}" "${paquet}/contents/splash/Splash.qml" > /tmp/qmllint.log 2>&1; then
+        printf '  ok    %s\n' "Splash.qml compile"
+    else
+        echo "  ECHEC Splash.qml ne compile pas :" >&2
+        head -10 /tmp/qmllint.log >&2
+        echecs=$((echecs + 1))
+    fi
+else
+    echo "  (qmllint absent : la syntaxe du splash n'est pas vérifiée)"
+fi
+# L'écran de VERROUILLAGE doit rester celui de Plasma : s'en emparer sans
+# l'avoir essayé enfermerait l'utilisateur dehors.
+verifies=$((verifies + 1))
+if grep -qE '^\[kscreenlockerrc\]' "${defauts}"; then
+    echo "  ECHEC le thème désigne un écran de verrouillage : interdit tant qu'il" >&2
+    echo "        n'a pas été déverrouillé pour de vrai en VM" >&2
+    echecs=$((echecs + 1))
+else
+    printf '  ok    %s\n' "l'écran de verrouillage reste celui de Plasma (délibéré)"
+fi
+
+# --- 4. Les icônes sont-elles vraiment au violet d'Ankh ? ----------------
+# Le thème peut être présent et les dessins restés roses : c'est la
+# recoloration qui porte l'identité, pas le nom du dossier.
+icones="${prefixe}/share/icons/Fluent-Ankh"
+if [[ -d "${icones}" ]]; then
+    echo "== Les icônes"
+    attendre "nom affiché du thème d'icônes" "Ankh" \
+        "$(awk -F= '/^Name=/{print $2; exit}' "${icones}/index.theme" 2>/dev/null || true)"
+    dossier_svg="$(find "${prefixe}/share/icons" -name 'folder_color_purple.svg' 2>/dev/null | head -1)"
+    verifies=$((verifies + 1))
+    if [[ -z "${dossier_svg}" ]]; then
+        echo "  ECHEC aucun dessin de dossier trouvé dans le thème d'icônes" >&2
+        echecs=$((echecs + 1))
+    elif grep -qi '#8455f0' "${dossier_svg}" && ! grep -qiE '#dc63ee|#e275f0|#ff85de' "${dossier_svg}"; then
+        printf '  ok    %s\n' "les dossiers portent le violet d'Ankh, plus de rose"
+    else
+        echo "  ECHEC les dossiers ne sont pas au violet d'Ankh : ${dossier_svg}" >&2
+        grep -oE '#[0-9a-fA-F]{6}' "${dossier_svg}" | sort -u | head -4 >&2
+        echecs=$((echecs + 1))
+    fi
+    # Un thème d'icônes dont les liens pointent dans le vide se voit tout de
+    # suite. L'amont en livre 10 de morts (icônes d'applications disparues).
+    morts=0
+    while read -r lien; do [[ -e "${lien}" ]] || morts=$((morts + 1)); done \
+        < <(find "${prefixe}/share/icons/Fluent-Ankh" "${prefixe}/share/icons/Fluent-Ankh-dark" \
+                 "${prefixe}/share/icons/Fluent-Ankh-light" -type l 2>/dev/null)
+    verifies=$((verifies + 1))
+    if (( morts <= 10 )); then
+        printf '  ok    %s\n' "${morts} lien(s) mort(s), pas plus qu'en amont"
+    else
+        echo "  ECHEC ${morts} liens morts dans le thème d'icônes (10 attendus au plus)" >&2
+        echecs=$((echecs + 1))
+    fi
+else
+    echo "== Les icônes : thème absent (third_party/preparer.sh n'a pas été lancé)"
+fi
 
 echo
 if (( echecs )); then

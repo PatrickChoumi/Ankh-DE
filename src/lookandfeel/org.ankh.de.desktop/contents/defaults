@@ -23,6 +23,13 @@
 # couches (src/colors/Ankh.colors, lot 1).
 ColorScheme=Ankh
 
+[kdeglobals][Icons]
+# Icônes Fluent, dossiers au violet d'Ankh (lot 9, fait le 2026-11-05).
+# Fabriquées par third_party/preparer.sh depuis un commit figé. Sans lui,
+# le thème est absent : le test le signale au lieu de laisser Plasma
+# retomber en silence sur les icônes de la distribution.
+Theme=Fluent-Ankh
+
 [kdeglobals][KDE]
 # Le style des contrôles, aux mesures de WinUI (lot 3).
 # ATTENTION : l'outil n'écrit cette clé que s'il arrive à CHARGER le greffon
@@ -44,6 +51,11 @@ library=org.ankh.decoration
 BorderSize=None
 BorderSizeAuto=false
 
+[ksplashrc][KSplash]
+# Écran de chargement d'Ankh (contents/splash/Splash.qml), fait le 2026-11-05.
+Theme=org.ankh.de.desktop
+Engine=KSplashQML
+
 [Wallpaper]
 Image=org.kde.image
 
@@ -52,15 +64,16 @@ Image=org.kde.image
 # silence sur la sienne, et on croit que le réglage est appliqué. Chacune de
 # ces lignes revient le jour où sa pièce est livrée (AUDIT.md §1.2).
 #
-# [kdeglobals][Icons]
-# Theme=Fluent-Ankh            <- thème d'icônes, lot 9
-#
 # [plasmarc][Theme]
 # name=ankh                    <- style Plasma, lot 4 (src/desktoptheme/ est vide)
 #
-# [kscreenlockerrc][Greeter]
-# Theme=org.ankh.de.desktop    <- contents/lockscreen/, lot 7
+# --- L'écran de VERROUILLAGE reste celui de Plasma, et c'est délibéré -----
+# Ce n'est pas une pièce décorative : c'est elle qui déverrouille la machine.
+# Un écran de verrouillage dérivé qui plante, ou dont le champ de mot de passe
+# ne reçoit pas le clavier, enferme l'utilisateur dehors — avec, pour seule
+# issue, un changement de console ou un redémarrage forcé. On ne prend pas ce
+# risque pour une question d'allure. Il sera repris au lot 7, en VM, avec un
+# essai de déverrouillage réel avant toute livraison.
 #
-# [ksplashrc][KSplash]
-# Theme=org.ankh.de.desktop    <- contents/splash/, lot 7
-# Engine=KSplashQML
+# [kscreenlockerrc][Greeter]
+# Theme=org.ankh.de.desktop

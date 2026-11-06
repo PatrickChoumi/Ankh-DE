@@ -83,9 +83,15 @@ jobs:
             kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
             kf6-frameworkintegration-devel kdecoration-devel \
             plasma-workspace plasma-integration \
+            fontmake librsvg2-tools xcursorgen sassc fontconfig \
             git findutils
 
       - uses: actions/checkout@v5
+
+      # Sans lui, le thème d'icônes n'existe pas et le test ne peut pas
+      # vérifier que le thème global ne désigne rien d'absent.
+      - name: Pièces venues d'ailleurs
+        run: ./third_party/preparer.sh
 
       - name: Relire chaque clé promise
         run: ./tests/session-et-theme.sh

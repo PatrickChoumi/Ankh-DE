@@ -9,6 +9,10 @@
 /bench/sortie/
 *.png
 !/docs/images/*.png
+# Aperçus du thème global : générés par bench/captures.sh, mais versionnés —
+# sans eux Ankh DE n'a pas de vignette dans la configuration du système.
+!/src/lookandfeel/**/previews/*.png
+!/src/lookandfeel/**/previews/*.jpg
 
 # Divers
 *.swp

@@ -210,6 +210,30 @@ for theme in sombre clair; do
     echo "   comparaison-${theme}.png  $(identify -format '%wx%h' "${sortie}/comparaison-${theme}.png")"
 done
 
-# --- 4. Rapport ----------------------------------------------------------
+# --- 4. Aperçus du thème global ------------------------------------------
+# Sans eux, Ankh DE apparaît sans vignette dans la page « Thème global » de
+# la configuration du système : il a l'air cassé avant d'être essayé. Ils
+# sont tirés de la capture du banc, jamais dessinés à la main, donc toujours
+# à jour avec ce que le style produit vraiment.
+echo "== Aperçus du thème global"
+apercus="${racine}/src/lookandfeel/org.ankh.de.desktop/contents/previews"
+install -d -m 0755 "${apercus}"
+source_apercu="${sortie}/ui-sombre-ankh.png"
+if [[ -f "${source_apercu}" ]]; then
+    # Vignette de la liste des thèmes : la taille de celle de Breeze.
+    magick "${source_apercu}" -resize 400x250^ -gravity north -extent 400x250 \
+        "${apercus}/preview.png"
+    # Aperçu plein écran : la fenêtre posée sur le fond d'Ankh.
+    magick -size 1920x1080 "xc:#1c2027" \
+        \( "${source_apercu}" -resize 1100x \) -gravity center -composite \
+        -quality 88 "${apercus}/fullscreenpreview.jpg"
+    for f in preview.png fullscreenpreview.jpg; do
+        echo "   ${f}  $(identify -format '%wx%h' "${apercus}/${f}")"
+    done
+else
+    echo "   capture source absente : aperçus non régénérés" >&2
+fi
+
+# --- 5. Rapport ----------------------------------------------------------
 echo "== Rapport"
 python3 "${racine}/bench/rapport.py" "${sortie}"

@@ -163,17 +163,19 @@ if(ANKH_DE_DATA)
             DESTINATION ${KDE_INSTALL_DATADIR}/fonts
         )
     endif()
-    foreach(ANKH_DE_ICONS Ankh-curseurs Fluent-Ankh)
-        if(EXISTS "${ANKH_DE_PREPARE}/icones/${ANKH_DE_ICONS}")
-            install(DIRECTORY "${ANKH_DE_PREPARE}/icones/${ANKH_DE_ICONS}"
-                DESTINATION ${KDE_INSTALL_DATADIR}/icons
-            )
-        else()
-            # « Fluent-Ankh » n'est pas encore fabriqué (lot 9). Le dire,
-            # plutôt que de laisser un if(EXISTS) qui ne se vérifie jamais.
-            message(STATUS "Ankh DE : ${ANKH_DE_ICONS} absent de third_party/sortie/icones")
-        endif()
-    endforeach()
+    # Tout le contenu de icones/ : les thèmes visibles, ET les dossiers
+    # CACHÉS (.Fluent-Ankh-base…) qui portent l'essentiel des dessins. Sans
+    # eux, les liens relatifs des thèmes pointent dans le vide.
+    if(EXISTS "${ANKH_DE_PREPARE}/icones")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/icones/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/icons
+            USE_SOURCE_PERMISSIONS
+        )
+    else()
+        # Le dire, plutôt que de laisser un if(EXISTS) qui ne se vérifie jamais.
+        message(STATUS "Ankh DE : third_party/sortie/icones est absent ; "
+                       "lancer third_party/preparer.sh")
+    endif()
     if(EXISTS "${ANKH_DE_PREPARE}/themes/Fluent-Ankh")
         install(DIRECTORY "${ANKH_DE_PREPARE}/themes/Fluent-Ankh"
             DESTINATION ${KDE_INSTALL_DATADIR}/themes
