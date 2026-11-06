@@ -281,6 +281,52 @@ else
     echo "   capture indisponible" >&2
 fi
 
+etape "10. Le menu Démarrer"
+# Première question, et elle n'est pas rhétorique : la barre porte-t-elle
+# NOTRE applet, ou celui de Plasma avec nos icônes ? On le demande à
+# plasmashell plutôt que de le déduire d'une capture.
+applets="$(dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
+    'var n=[]; panels().forEach(function(p){p.widgetIds.forEach(function(i){n.push(p.widgetById(i).type)})}); print(n.join(\",\"))'" 2>/dev/null || true)"
+echo "   applets de la barre : ${applets:-inconnus}"
+
+demarrer_present=non
+case "${applets}" in *org.ankh.demarrer*) demarrer_present=oui ;; esac
+echo "   org.ankh.demarrer dans la barre : ${demarrer_present}"
+
+# Ouvrir le menu par le chemin que Plasma emploie lui-même pour la touche
+# Meta. S'il s'ouvre, l'applet se charge et répond.
+dans_session 'qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu' \
+    > /dev/null 2>&1 && echo "   demande d'ouverture envoyée" \
+    || echo "   activateLauncherMenu a échoué" >&2
+sleep 3
+
+printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+    "${travail}/demarrer.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+if [[ -s "${travail}/demarrer.ppm" ]]; then
+    python3 -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/demarrer.ppm" "${sortie}/vm-demarrer-ouvert.png" 2>/dev/null \
+        && echo "   vm-demarrer-ouvert.png écrit"
+fi
+
+# Un menu qui s'ouvre mais dont le QML crache des erreurs n'est pas un
+# succès : on regarde ce que plasmashell a dit de notre applet.
+erreurs="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -iE 'ankh|qml' | grep -iE 'error|warning|cannot|undefined' | head -8" || true)"
+if [[ -n "${erreurs}" ]]; then
+    echo "   plasmashell signale :" ; printf '%s\n' "${erreurs}" | sed 's/^/     /'
+else
+    echo "   plasmashell ne signale aucune erreur QML"
+fi
+{
+    echo
+    echo "### Menu Démarrer"
+    echo
+    echo "- applets de la barre : \`${applets:-inconnus}\`"
+    echo "- notre applet est dans la barre : ${demarrer_present}"
+    echo "- erreurs QML signalées : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
+} >> "${sortie}/vm-rapport.md"
+
 # Journaux, quoi qu'il arrive.
 ssh_vm 'sudo journalctl --no-pager -b' > "${sortie}/vm-journal.log" 2>/dev/null || true
 cp "${travail}/console.log" "${sortie}/vm-console.log" 2>/dev/null || true
