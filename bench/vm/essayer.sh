@@ -219,6 +219,33 @@ echo "   plasmashell et kwin_wayland sont vivants"
 # session soit en Wayland, et que le compositeur compose vraiment. Un
 # écran noir passerait tous les contrôles précédents.
 echo "== Preuves de la session"
+
+# Le nom de l'outil change selon la distribution : « qdbus-qt6 » sur
+# Fedora, « qdbus6 » ailleurs. Le 2026-11-06, le harnais appelait « qdbus6 »
+# dans la VM : TOUTES les requêtes à Plasma échouaient en silence, et le
+# rapport donnait leur vide pour un fait — « notre applet n'est pas dans la
+# barre » alors que la question n'avait jamais été posée.
+QDBUS=""
+for candidat in qdbus-qt6 qdbus6 qdbus; do
+    if ssh_vm "command -v ${candidat}" > /dev/null 2>&1; then QDBUS="${candidat}"; break; fi
+done
+if [[ -z "${QDBUS}" ]]; then
+    echo "Aucun outil qdbus dans l'invité : impossible d'interroger Plasma." >&2
+    exit 1
+fi
+echo "   outil d'interrogation : ${QDBUS}"
+
+# Une requête qui échoue doit le DIRE. Un vide silencieux se lit comme une
+# réponse, et c'est ainsi qu'on affirme le contraire de la vérité.
+plasma_script() { # $1 : JavaScript
+    local sortie code
+    sortie="$(dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript '$1'" 2>&1)" && code=0 || code=$?
+    if (( code != 0 )); then
+        echo "   ECHEC evaluateScript (code ${code}) : ${sortie}" >&2
+        return 1
+    fi
+    printf '%s' "${sortie}" | tr -d '\r'
+}
 environ_de() { # $1 : variable
     ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^$1=//p'" \
         2>/dev/null | tr -d '\r' || true
@@ -345,21 +372,24 @@ etape "10. Le menu Démarrer"
 # Première question, et elle n'est pas rhétorique : la barre porte-t-elle
 # NOTRE applet, ou celui de Plasma avec nos icônes ? On le demande à
 # plasmashell plutôt que de le déduire d'une capture.
-applets="$(dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
-    'var n=[]; panels().forEach(function(p){p.widgetIds.forEach(function(i){n.push(p.widgetById(i).type)})}); print(n.join(\",\"))'" 2>/dev/null || true)"
+applets="$(plasma_script 'var n=[]; panels().forEach(function(p){p.widgetIds.forEach(function(i){n.push(p.widgetById(i).type)})}); print(n.join(","))' || true)"
 echo "   applets de la barre : ${applets:-inconnus}"
 # Ce que la disposition a dit en construisant la barre : c'est là qu'un
 # repli silencieux se voit.
 ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-LAYOUT.*' | head -6" \
     | sed 's/^/   /' || true
 
-demarrer_present=non
-case "${applets}" in *org.ankh.demarrer*) demarrer_present=oui ;; esac
+if [[ -z "${applets}" ]]; then
+    demarrer_present="INCONNU — la requête a échoué"
+else
+    demarrer_present=non
+    case "${applets}" in *org.ankh.demarrer*) demarrer_present=oui ;; esac
+fi
 echo "   org.ankh.demarrer dans la barre : ${demarrer_present}"
 
 # Ouvrir le menu par le chemin que Plasma emploie lui-même pour la touche
 # Meta. S'il s'ouvre, l'applet se charge et répond.
-dans_session 'qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu' \
+dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu" \
     > /dev/null 2>&1 && echo "   demande d'ouverture envoyée" \
     || echo "   activateLauncherMenu a échoué" >&2
 sleep 3
@@ -396,29 +426,20 @@ etape "11. Mesurer la barre des tâches (lot 4)"
 # premières d'abord : elles disent ce que Plasma a RETENU, l'image dira ce
 # qu'il a dessiné.
 lire_panneau() { # $1 : expression JavaScript sur le premier panneau
-    dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
-        'var p=panels()[0]; print($1)'" 2>/dev/null | tr -d '\r' || true
+    plasma_script "var p=panels()[0]; print($1)" || true
 }
 barre_hauteur="$(lire_panneau 'p.height')"
 barre_position="$(lire_panneau 'p.location')"
 barre_flottante="$(lire_panneau 'p.floating')"
 echo "   hauteur=${barre_hauteur} position=${barre_position} flottante=${barre_flottante}"
 
-horloge_date="$(dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
-    'var p=panels()[0]; p.widgetIds.forEach(function(i){var w=p.widgetById(i);
-     if (w.type.indexOf(\"horloge\")>=0 || w.type.indexOf(\"digitalclock\")>=0) {
-       w.currentConfigGroup=[\"Appearance\"]; print(w.readConfig(\"dateDisplayFormat\")); }})'" \
-    2>/dev/null | tr -d '\r' || true)"
+horloge_date="$(plasma_script 'var p=panels()[0]; p.widgetIds.forEach(function(i){var w=p.widgetById(i); if (w.type.indexOf("horloge")>=0 || w.type.indexOf("digitalclock")>=0) { w.currentConfigGroup=["Appearance"]; print(w.readConfig("dateDisplayFormat")); }})' || true)"
 notif_position="$(dans_session 'kreadconfig6 --file plasmanotifyrc --group Notifications --key PopupPosition' || true)"
 echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
 
 # Fond uni avant de mesurer l'image : la barre est en verre, et un papier
 # peint coloré se lirait à travers elle.
-dans_session "qdbus6 org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.evaluateScript \
-    'desktopsForActivity(currentActivity()).forEach(function(d){
-       d.wallpaperPlugin=\"org.kde.color\";
-       d.currentConfigGroup=[\"Wallpaper\",\"org.kde.color\",\"General\"];
-       d.writeConfig(\"Color\",\"0,0,0\"); })'" > /dev/null 2>&1 || true
+plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","0,0,0"); })' > /dev/null || true
 sleep 3
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
     "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
