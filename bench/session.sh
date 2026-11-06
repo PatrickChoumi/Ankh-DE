@@ -17,6 +17,28 @@
 #      À vérifier auprès de KDE avant de conclure.
 #   2. « kwin_x11 », que Fedora livre encore en 6.7.5 : le paquet s'installe
 #      mais n'apporte aucun binaire de ce nom à côté de kwin 6.8.2.
+#   1bis. « kwin_wayland --virtual » (rendu hors écran) : ÇA MARCHE.
+#      Essayé le 2026-11-06, conteneur Fedora 44, avec --cap-add=SYS_NICE.
+#      KWin démarre, reste vivant, crée sa socket Wayland, et la galerie s'y
+#      connecte en client (QT_QPA_PLATFORM=wayland). Avec le style demandé,
+#      elle mesure : style « ankh », bouton de 32 px. C'est le mode dont KDE
+#      se sert pour ses propres tests d'intégration — l'audit avait essayé
+#      --x11-display et conclu trop vite.
+#      Ce qui reste à brancher, et qui n'est PAS fait :
+#        - sous Wayland, le client IGNORE la taille de sa décoration :
+#          frameGeometry vaut geometry. Il faut interroger le COMPOSITEUR,
+#          par le scripting de KWin (workspace.windowList(), frameGeometry
+#          contre clientGeometry) — la voie qu'emploie déjà le banc d'Ankh ;
+#        - un bus de session est nécessaire (dbus-daemon --session --fork
+#          --print-address ; le paquet « dbus-daemon » manquait à l'image) ;
+#        - loadScript puis start() répondent (identifiant 0), mais la sortie
+#          du script n'a pas été retrouvée : le journal de KWin est resté
+#          vide, même avec QT_LOGGING_RULES. À reprendre : écrire depuis le
+#          script dans un FICHIER plutôt que par print(), ou lire le journal
+#          par journald plutôt que par une redirection.
+#      CONSÉQUENCE : mesurer la décoration ne demande PLUS une VM. C'est
+#      quelques heures de plomberie dans le conteneur de CI existant.
+#
 #   3. Première embûche, elle résolue : kwin_wayland porte la capability
 #      cap_sys_nice. Sans « --cap-add=SYS_NICE », son exec échoue sur
 #      « Operation not permitted ».
