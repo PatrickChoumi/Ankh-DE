@@ -1,0 +1,95 @@
+name: Publier
+
+# Une version se publie en poussant son étiquette, et rien d'autre : les
+# archives et le paquet sont construits ICI, par la CI, à partir de
+# l'étiquette elle-même. Personne ne téléverse un fichier fabriqué sur sa
+# machine, et la Release est donc reproductible.
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      etiquette:
+        description: "Étiquette à publier, par exemple v0.1.0"
+        required: true
+
+permissions:
+  contents: write   # nécessaire pour créer la Release
+
+jobs:
+  publier:
+    name: Construire et publier
+    runs-on: ubuntu-latest
+    container: fedora:44
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Paquets
+        run: |
+          dnf install -y \
+            rpm-build rpmdevtools git tar gzip \
+            cmake gcc-c++ extra-cmake-modules \
+            qt6-qtbase-devel qt6-qtdeclarative-devel \
+            kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
+            kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
+            kf6-frameworkintegration-devel kdecoration-devel
+
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.etiquette || github.ref }}
+
+      - name: Version
+        id: v
+        run: |
+          set -euo pipefail
+          etiquette="${{ inputs.etiquette || github.ref_name }}"
+          version="${etiquette#v}"
+          echo "etiquette=${etiquette}" >> "$GITHUB_OUTPUT"
+          echo "version=${version}"     >> "$GITHUB_OUTPUT"
+          # L'étiquette et la version du projet doivent concorder : une
+          # Release qui annonce 0.1.0 et livre 0.0.9 est pire que pas de
+          # Release du tout.
+          declaree="$(sed -n 's/^ *VERSION \([0-9.]*\).*/\1/p' CMakeLists.txt | head -1)"
+          if [[ "${declaree}" != "${version}" ]]; then
+            echo "::error::l'étiquette dit ${version}, CMakeLists.txt dit ${declaree}"
+            exit 1
+          fi
+          echo "version ${version}, concordante"
+
+      - name: Archive des sources
+        run: |
+          set -euo pipefail
+          v="${{ steps.v.outputs.version }}"
+          git config --global --add safe.directory "$PWD"
+          git archive --format=tar.gz --prefix="Ankh-DE-${v}/" \
+            -o "/tmp/ankh-de-${v}.tar.gz" HEAD
+
+      - name: Paquet Fedora
+        run: |
+          set -euo pipefail
+          v="${{ steps.v.outputs.version }}"
+          rpmdev-setuptree
+          cp "/tmp/ankh-de-${v}.tar.gz" ~/rpmbuild/SOURCES/
+          cp packaging/fedora/ankh-de.spec ~/rpmbuild/SPECS/
+          rpmbuild -bb ~/rpmbuild/SPECS/ankh-de.spec
+          cp ~/rpmbuild/RPMS/*/ankh-de-"${v}"*.rpm /tmp/
+
+      - name: Sommes de contrôle
+        run: |
+          set -euo pipefail
+          cd /tmp && sha256sum ankh-de-*.tar.gz ankh-de-*.rpm > SHA256SUMS
+          cat SHA256SUMS
+
+      - name: Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.v.outputs.etiquette }}
+          name: Ankh DE ${{ steps.v.outputs.version }}
+          body_path: CHANGELOG.md
+          prerelease: true
+          files: |
+            /tmp/ankh-de-*.tar.gz
+            /tmp/ankh-de-*.rpm
+            /tmp/SHA256SUMS
