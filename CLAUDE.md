@@ -110,14 +110,12 @@ Et une version n'est « stabilisée » que si **Construire, Banc et VM passent s
   s'ouvre, `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
   `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
   fontconfig, et les vérifications de `tests/session-et-theme.sh` passent *dans la session*.
-- **25 jetons sur 53 mesurés ET conformes** : 12 pour les contrôles (lot 3, sans VM, à chaque
-  PR), 6 pour les fenêtres (lot 2, par un vrai KWin en backend `--virtual`) et 7 pour la barre
-  (lot 4, lus dans la configuration de la session en VM le 2026-11-06 : hauteur 48, position
-  `bottom`, non flottante, alignement `center`, longueur `fill`, masquage `none`, décalage 0).
-  Deux autres jetons du lot 4 — `barre.marge_bas` et `barre.hauteur_visible` — ont été relevés
-  FAUX (800 et 0) : la mesure posait un fond noir sous une barre translucide sombre, et les
-  deux se confondaient. Corrigé le 2026-11-07, pas encore rejoué. Compter un relevé faux parmi
-  les mesures serait mentir deux fois.
+- **27 jetons sur 53 mesurés ET conformes** : 12 pour les contrôles (lot 3, sans VM, à chaque
+  PR), 6 pour les fenêtres (lot 2, par un vrai KWin en backend `--virtual`) et **les 9 du lot 4**
+  (barre), relevés en VM sur `fbe7f47` — sept dans la configuration de la session, deux sur
+  l'image : `barre.marge_bas` à 0 et `barre.hauteur_visible` à 48. Ces deux-là avaient été
+  relevés FAUX deux fois (800 et 0) avant qu'on comprenne que la barre, étant en verre, ne se
+  mesure qu'en la rendant opaque le temps du cliché.
 - **Le menu Démarrer s'ouvre**, vérifié en VM le 2026-11-06 (`a71432e`) par trois sondes
   indépendantes : `plasmashell` journalise avoir évalué NOTRE disposition, `org.ankh.demarrer`
   est dans la barre, et 9,48 % de l'écran change à l'ouverture, en une boîte de 662×696 centrée.

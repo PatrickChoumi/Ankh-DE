@@ -266,6 +266,44 @@ après le démarrage, tombant sur l'écran de chargement.
 `tidewater.*` — rien à compiler, aucune collision. C'est la base retenue pour les lots 4, 6 et
 7. Le détail, et ce que leur README ne dit pas, est dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
 
+## 2026-11-07 — les trois workflows passent sur un même SHA, et la barre est mesurée
+
+`fbe7f47` : **Construire, Banc et VM — session réelle** passent tous les trois. C'est la
+première fois, et c'est ce que les consignes exigent pour parler de pré-version stabilisée.
+
+**Les 9 jetons du lot 4 sont mesurés et conformes** : hauteur 48, position `bottom`, non
+flottante, alignement `center`, longueur `fill`, masquage `none`, décalage 0, marge sous la
+barre 0, hauteur visible 48. Total : **27 sur 53**.
+
+Les deux derniers ont coûté trois diagnostics, et le mécanisme vaut d'être retenu. Le relevé
+annonçait « marge 800, hauteur 0 » :
+
+1. *« le fond noir se confond avec la barre sombre »* — plausible, et faux : sur fond blanc, le
+   même nombre.
+2. *« le cliché est pris trop tôt »* — plausible aussi, et faux : 36 secondes n'y ont rien
+   changé.
+3. La capture a tranché. La barre **est** dessinée, mais elle est en **verre** : sur un fond
+   uni, quel qu'il soit, elle prend sa couleur. Il n'y avait rien à voir à mesurer.
+
+On mesure donc la **géométrie** en rendant la barre opaque le temps du cliché, puis on la
+remet. Trois secondes ont suffi.
+
+**Trois autres défauts corrigés dans la foulée**, tous du même genre — un instrument qui parle
+dans le vide :
+
+- `numpy` manquait dans le conteneur Fedora et dans l'invité : la dépendance a été **supprimée**
+  (Pillow fait la rotation de teinte seul) plutôt qu'ajoutée partout. Écart avec l'image
+  validée : 4/255 au plus ;
+- Pillow manquait vraiment, et le contrôle des modules Python ajouté dans la foulée l'a nommé
+  en deux secondes au lieu de vingt minutes ;
+- les lignes `ANKH-PIECE` du script de session n'atteignaient aucun journal — SDDM les rangeait
+  dans son propre fichier. Elles passent par `systemd-cat`, et le harnais regarde trois
+  endroits.
+
+**Phase A des consignes faite** : [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md). Une seule
+implémentation par responsabilité, aucun doublon. Et le constat qui compte : **sur douze
+responsabilités, aucune interaction n'est testée**.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 > **Relu le 2026-11-06.** Ce tableau se lit au présent : trois de ses lignes étaient devenues

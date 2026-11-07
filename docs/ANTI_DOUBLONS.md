@@ -135,6 +135,13 @@ mais le tour complet n'a jamais tourné dans une VM.
 
 **P2.** Les cinq jetons du lot 2, les échelles, Arch et Ubuntu.
 
+> **Jalon du 2026-11-07** : sur `fbe7f47`, **Construire, Banc et VM passent tous les trois sur
+> le même SHA**, et les **9 jetons du lot 4** sont mesurés et conformes — dont les deux qui
+> avaient été relevés faux. Total : **27 sur 53**. C'est la première fois que la définition de
+> « pré-version stabilisée » est tenue sur les points 1, 2, 5 et 8 ; les points 3, 4, 6 et 7
+> restent ouverts, et le point 3 (« le menu identifié sans ambiguïté ») l'est au sens
+> interactif.
+
 ---
 
 ## 7. Tenue de ce document

@@ -31,8 +31,7 @@ standard de Plasma et 11 fichiers C++ ; sa zone système est un fork du conteneu
 fichiers C++ et 6 585 lignes de QML. Le relevé complet, avec ce que leur README ne dit pas, est
 dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
 
-**Compte des mesures : 25 jetons sur 53, mesurés ET conformes.** Deux autres jetons de la barre
-sont relevés faux et ne comptent pas. Le détail est dans
+**Compte des mesures : 27 jetons sur 53, mesurés ET conformes**, dont les 9 du lot 4. Le détail est dans
 [docs/FIDELITE.md](docs/FIDELITE.md), généré depuis `bench/jetons.toml`.
 
 **Ce qui livre quoi** : `bench/captures.sh` mesure le style sans VM, à chaque PR ;
