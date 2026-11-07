@@ -18,13 +18,17 @@ sans modifier un seul fichier de la distribution, et se retire d'un geste.
 > fontconfig, et **48 vérifications clé par clé** passées *dans la session* — le compte est
 > imprimé par le test et repris dans le rapport, car il dépend des outils de l'invité.
 >
-> **Le menu Démarrer s'ouvre.** Trois preuves indépendantes, parce qu'une seule ne suffit pas :
+> **Le menu Démarrer répond.** Il ne s'agit plus seulement de l'ouvrir : depuis le 2026-11-07 le
+> harnais **clique et tape** dans la VM, par les événements d'entrée de QEMU. Ce qui est établi :
 >
 > | Ce qu'on demande | Ce que le passage répond |
 > |---|---|
 > | Quelle disposition `plasmashell` a-t-il évaluée ? | `…/org.ankh.de.desktop/contents/layouts/org.kde.plasma.desktop-layout.js` — **la nôtre**, d'après son propre journal |
 > | Qu'y a-t-il dans la barre ? | `org.ankh.demarrer`, `org.ankh.horloge`, `org.ankh.bureau` installés ; `icontasks` et la zone système restent ceux de Plasma, par repli assumé |
-> | L'écran a-t-il changé à l'ouverture ? | **9,33 %** de l'écran, boîte de 662×694 à x=314 sur 1280 — donc **centrée**, et non collée à gauche comme Kickoff |
+> | L'écran a-t-il changé à l'ouverture ? | **11,40 %** de l'écran, boîte de 675×707 à x=302 sur 1280 — donc **centrée**, et non collée à gauche comme Kickoff |
+> | Le menu prend-il le clavier **sans qu'on clique dedans** ? | **oui** — on tape `konsole`, les résultats s'affichent. C'est le geste de Windows 11 : touche Windows, puis on tape |
+> | Échap le referme-t-il ? | **oui**, 11,69 % de l'écran revient |
+> | Un clic sur les applets de droite ouvre-t-il un panneau ? | **oui** — 18,12 % et 16,25 % |
 >
 > Jusqu'au 2026-11-06 la barre visible était celle de **Breeze**, portant nos couleurs, nos
 > icônes et notre thème Plasma : `kdeglobals [KDE] LookAndFeelPackage` n'était écrit nulle part
@@ -44,6 +48,28 @@ Capture prise par le moniteur de QEMU pendant le test `VM — session réelle`, 
 d'ouverture envoyée par le chemin que Plasma emploie lui-même pour la touche Windows
 (`activateLauncherMenu`). Le nom du fichier est choisi d'après ce que l'image **montre** : s'il
 ne s'était rien ouvert, il s'appellerait `vm-demarrer-rien-ne-sest-ouvert.png`.
+
+## Le menu répond au clavier
+
+![Le menu Démarrer d'Ankh DE, recherche « konsole » tapée au clavier](docs/images/demarrer-recherche-vm.png)
+
+`konsole` a été **tapé sans qu'on clique dans le champ**, par les événements d'entrée de QEMU, et
+le menu a répondu : *Konsole / Terminal*, *Open New Window*, *Open New Tab*, avec les filtres
+*All / Apps / Files / Settings / Actions*.
+
+Avant le 2026-11-07, il ne répondait pas. La cause était dans libplasma
+(`src/plasmaquick/dialog.cpp`, `applyType()`) : un dialogue qui pose
+`Qt.WindowStaysOnTopHint` **sans déclarer de type** est basculé en `Dock`, donc en surface de
+panneau — et un panneau ne reçoit pas le clavier. Le correctif est celui que le commentaire
+amont désigne lui-même : `type: PlasmaCore.Dialog.AppletPopup`.
+
+## Un clic sur la zone de droite ouvre un panneau
+
+![Un panneau ouvert depuis la zone de droite de la barre](docs/images/volet-droite-vm.png)
+
+**Ce que cette capture ne dit pas** : lequel des applets a répondu. Le harnais repère les amas
+de pixels dans la barre et clique leur centre ; il obtient une abscisse, pas un identifiant.
+Écrire « c'est le volet d'état » serait inventer.
 
 ## La barre des tâches
 

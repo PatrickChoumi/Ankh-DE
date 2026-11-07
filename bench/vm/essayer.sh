@@ -1037,22 +1037,33 @@ fi
 # touche Windows, puis on tape. Un échec ici n'est pas un échec du clavier,
 # c'est un menu qui ne prend pas le focus, et les deux ne se corrigent pas
 # au même endroit.
+avant_saisie=${interactions_ok}
 essai_interaction demarrer-saisie-directe \
     "le menu prend le clavier sans qu'on clique dedans" oui 0.15 \
     taper "konsole"
 
-# Second essai, et c'est lui qui DÉPARTAGE : on clique dans le champ, puis
-# on tape. Si le texte apparaît maintenant, les touches arrivent bien à la
-# VM et c'est le focus qui manquait. Si rien n'apparaît non plus, c'est
-# l'injection clavier qui est en cause, et l'essai précédent n'accusait pas
-# la bonne pièce.
-if (( champ_x > 0 )); then
+# Le DISCRIMINANT, et il ne se lance que si l'essai précédent a échoué.
+#
+# Son rôle est de départager « le menu ne prend pas le focus » de « mes
+# touches n'arrivent pas du tout » : on clique dans le champ, puis on tape.
+# Si le texte apparaît alors, les touches arrivaient bien et c'est le focus
+# qui manquait.
+#
+# Le lancer quand la saisie directe a DÉJÀ marché n'a aucun sens, et il
+# échouait pour cette raison le 2026-11-07 : cliquer dans un champ qui a
+# déjà le focus et déjà du texte ne change rien à l'écran, et l'essai
+# réclamait un changement. Un contrôle qui exige l'impossible est un faux
+# échec, et un faux échec coûte autant qu'un défaut manqué.
+if (( champ_x > 0 )) && (( avant_saisie == interactions_ok )); then
+    echo "   la saisie directe a échoué : on départage par un clic dans le champ"
     essai_interaction demarrer-saisie-apres-clic \
-        "le champ de recherche répond après un clic dedans" oui 0.15 \
+        "le champ répond après un clic dedans" oui 0.15 \
         cliquer "${champ_x}" "${champ_y}"
     essai_interaction demarrer-saisie-clavier \
         "la saisie s'affiche une fois le champ cliqué" oui 0.1 \
         taper "konsole"
+else
+    echo "   saisie directe réussie : le discriminant par clic est inutile, il est sauté"
 fi
 
 # Échap. Dans Windows 11, un premier Échap vide la recherche et un second
@@ -1089,10 +1100,26 @@ fi
 
 # --- 12.3 Alt+Tab --------------------------------------------------------
 # Il faut deux fenêtres pour que le sélecteur ait quelque chose à montrer.
-dans_session 'setsid konsole > /dev/null 2>&1 &' > /dev/null 2>&1 || true
-sleep 6
-essai_interaction alt-tab "Alt+Tab montre le sélecteur, Alt maintenu" oui 1 alt_tab_ouvrir
-essai_interaction alt-tab-ferme "le sélecteur disparaît au relâchement" oui 1 alt_tab_fermer
+# Une seconde fenêtre, et on VÉRIFIE qu'elle existe.
+#
+# Le 2026-11-07, konsole n'était pas installé dans l'invité : « setsid
+# konsole & » ne lançait rien, il n'y avait qu'une fenêtre, et l'essai
+# concluait « Alt+Tab ne marche pas ». Il accusait le sélecteur pour un
+# décor absent. konsole est installé depuis, mais la leçon tient : on ne
+# teste pas un sélecteur de fenêtres sans avoir prouvé qu'il y a des
+# fenêtres à sélectionner.
+dans_session 'setsid konsole > /tmp/konsole.log 2>&1 &' > /dev/null 2>&1 || true
+sleep 8
+fenetres=0
+ssh_vm 'pgrep -u ankh -x konsole > /dev/null' 2>/dev/null && fenetres=1
+echo "   konsole lancé : $([[ ${fenetres} == 1 ]] && echo oui || echo NON)"
+if (( fenetres == 0 )); then
+    ssh_vm 'tail -5 /tmp/konsole.log 2>/dev/null' | sed 's/^/     /' || true
+    grief "pas de seconde fenêtre : Alt+Tab n'a rien à montrer, et ce n'est pas le sélecteur qui est en cause"
+else
+    essai_interaction alt-tab "Alt+Tab montre le sélecteur, Alt maintenu" oui 1 alt_tab_ouvrir
+    essai_interaction alt-tab-ferme "le sélecteur disparaît au relâchement" oui 1 alt_tab_fermer
+fi
 
 {
     echo

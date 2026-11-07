@@ -42,7 +42,7 @@ org.ankh.etat, org.ankh.horloge, org.ankh.notifications, org.ankh.bureau
 
 | Responsabilité | Implémentation **active** | Origine | État |
 |---|---|---|---|
-| Lanceur | `org.ankh.demarrer` | KDE-Windows-Modern `7ef6bfe` | chargé ; **s'ouvre** (3 preuves) ; **non interactif** |
+| Lanceur | `org.ankh.demarrer` | KDE-Windows-Modern `7ef6bfe` | **interactif** — s'ouvre, prend le clavier sans clic, cherche, se ferme sur Échap (`7181d91`) |
 | Gestionnaire de tâches | `org.ankh.taches` | Tidewater `4484377` | chargé ; **non interactif** |
 | Vue des tâches | `org.ankh.vuetaches` | Tidewater `4484377` | chargé ; **non interactif** |
 | Hôte de zone système | `org.kde.plasma.systemtray` — **celui de Plasma** | natif | chargé ; repli assumé |
@@ -125,8 +125,14 @@ Rien dans cette liste ne demande d'importer un nouveau dépôt.
 
 ## 6. Ce qui reste à prouver — par ordre de coût
 
-**P0.** Aucune interaction n'est testée. Le harnais observe la présence et l'ouverture, jamais
-une réponse. C'est le plus gros écart entre ce que le dépôt montre et ce qu'il prouve.
+**P0 — levé le 2026-11-07 pour le menu.** Le harnais clique et tape désormais (QEMU
+`input-send-event`). Le menu est **interactif** : il prend le clavier sans clic, cherche, et se
+ferme sur Échap. Un clic sur la zone de droite ouvre un panneau — mais le repérage rend une
+abscisse, pas un identifiant, donc **on ne sait pas lequel des applets a répondu**.
+
+**P0 — reste entier pour les tuiles.** Wi-Fi, Bluetooth, volume, luminosité : aucune n'a été
+pressée nommément. Notifications : jamais déclenchées. Alt+Tab : le sélecteur est installé et
+désigné, mais l'essai n'a encore jamais eu deux fenêtres à lui montrer.
 
 **P1.** Le rôle de `org.ankh.vuetaches` face à l'effet Overview natif n'est pas établi.
 
