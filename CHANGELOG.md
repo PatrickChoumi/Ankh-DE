@@ -46,7 +46,9 @@ de connexion (workflow `VM — session réelle`).
 
 ### Ce qui n'est pas encore là
 
-- le **menu Démarrer est livré mais n'a pas été ouvert** : il dépend de modules privés de Plasma ;
+- le **menu Démarrer est livré mais n'a pas été ouvert** : il dépend de modules privés de
+  Plasma ; *(corrigé le 2026-11-06 : il s'ouvre, trois preuves indépendantes — voir la
+  section « Corrigé après la rédaction de cette entrée »)* ;
 - les paramètres rapides en un volet, les réglages par application, le 125 % et le 150 % ;
 - le rayon des coins, la taille et la couleur du bouton Fermer, l'alignement du titre : non
   mesurés (la capture de l'écran virtuel fait planter KWin) ;

@@ -338,6 +338,11 @@ responsabilités, aucune interaction n'est testée**.
 **Rien de ce dépôt n'a encore tourné sur une machine.** Tant que le lot 0 n'est pas fini, la
 seule preuve de fidélité est celle d'Ankh, sur Fedora.
 
+> *Relu le 2026-11-07* : cette phrase était vraie quand elle a été écrite, et elle ne l'est plus
+> depuis le 2026-11-06 — le dépôt s'installe dans une VM neuve et sa session s'ouvre depuis
+> l'écran de connexion. Elle reste ici parce que c'est un journal : on n'y réécrit pas le passé.
+> L'état courant est le tableau « Ce qui est vérifié, et ce qui ne l'est pas », plus bas.*
+
 ## Ce que je dois faire moi-même
 
 - Créer le dépôt `Ankh-DE` sur GitHub et y pousser cette première version (les sessions Claude

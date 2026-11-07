@@ -7,14 +7,14 @@
 > Les lots 1 à 10 sont ceux de **D-052** du dépôt [Ankh](https://github.com/PatrickChoumi/Ankh).
 > Le lot 0 est propre à ce dépôt : il rend le tout autonome.
 
-| Lot | Objectif | État au 2026-11-06 |
+| Lot | Objectif | État au 2026-11-07 |
 |---|---|---|
 | **0** | **Autonomie** : le DE se compile, s'installe et se retire seul | **FINI** — compile sur Fedora 44, Arch et Ubuntu 26.04 ; s'installe et sa session s'ouvre dans une VM |
 | **1** | Fondations : police, tailles, couleurs, rendu, animations, curseurs | **FINI** — appliqué par la session (DE-010), vérifié en VM : `Selawik 10.5`, couleurs `Ankh`. 12 jetons conformes |
 | **2** | Fenêtres : la décoration « Ankh » | **mesuré ici** — 6 jetons sur 11 par un vrai KWin : barre de titre **32 px**, bords à 0, boutons `M`/`IAX`. Les 5 autres (rayon des coins, bouton Fermer, alignement du titre) demandent une capture que KWin refuse en backend virtuel |
 | **3** | Contrôles : style Qt, QtQuick de KDE, thème GTK | **FINI** — 12 jetons conformes, rejoués à chaque PR sans VM |
 | **4** | Shell : style Plasma, barre, zone de notification, horloge, notifications | **en cours** — le style Plasma `ankh` et `ankh-clair` sont livrés (DE-011, dérivés de KDE-Windows-Modern) ; l'horloge et « Afficher le bureau » aussi. Les 9 jetons de la barre ne sont **pas encore mesurés** |
-| **5** | Démarrer d'Ankh | **livré, non prouvé** — `org.ankh.demarrer` est installé, mais il n'a **jamais été ouvert**. Au passage du 2026-11-06 il n'était même pas chargé, faute de `XDG_DATA_DIRS` ; corrigé, la preuve reste à faire |
+| **5** | Démarrer d'Ankh | **s'ouvre**, vérifié en VM le 2026-11-06 (`a71432e`) : disposition d'Ankh évaluée, applet dans la barre, 9,48 % de l'écran qui change en une boîte centrée de 662×696. **Interactions non prouvées** tant que le passage du 2026-11-07 n'a pas rendu son verdict ; la grille 6 × 3 et « Recommandé » manquent au dessin |
 | **6** | Paramètres rapides en un seul volet | à faire — le plus fragile (trois modules privés, aucun appui amont) |
 | **7** | Alt+Tab, vue d'ensemble, déconnexion, verrouillage, sons, Windows+Z | à faire. L'écran de **verrouillage** reste délibérément celui de Plasma tant qu'un déverrouillage réel n'aura pas été essayé |
 | **8** | Applications : Dolphin, Configuration du système, Discover, Konsole, GTK, Flatpak, Electron | à faire |
@@ -38,7 +38,17 @@ dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
 `bench/session-virtuelle.sh` mesure la décoration par un KWin en backend `--virtual` ;
 `bench/vm/essayer.sh` ouvre une vraie session dans une VM et vérifie tout le reste.
 
----|---|---|
+> **Le tableau qui suit est celui d'ORIGINE, arrêté au 2026-10-22.** Il n'est pas mis à jour :
+> il dit d'où le projet part, et c'est son seul rôle. L'état courant est le tableau en tête de
+> ce fichier.
+>
+> Deux défauts le rendaient trompeur jusqu'au 2026-11-07. Il annonçait les lots 4 à 10
+> « à faire » alors que quatre d'entre eux avaient avancé — deux tableaux dans un même
+> document se lisent tous les deux au présent. Et il avait **perdu sa ligne d'en-tête** : il
+> commençait par un séparateur, donc il ne s'affichait même pas comme un tableau.
+
+| Lot | Objectif | État au 2026-10-22 |
+|---|---|---|
 | **0** | **Autonomie** : le DE se compile, s'installe et se retire seul, sur trois distributions | **en cours** — la session est faite (jour 1) |
 | **1** | Fondations : police, tailles, couleurs par couches, rendu, animations, curseurs | repris d'Ankh — `MESURÉ` en VM le 2026-10-20 |
 | **2** | Fenêtres : la décoration « Ankh » | repris d'Ankh — `MESURÉ` en VM le 2026-10-22 |
