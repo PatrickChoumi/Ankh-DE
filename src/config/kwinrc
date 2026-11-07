@@ -23,17 +23,23 @@ BlurStrength=10
 NoiseStrength=2
 
 [TabBox]
-# Alt+Tab aux mesures de Windows 11 : des vignettes en rangées, et non la
-# liste verticale de Breeze (lot 7, repris de Tidewater — DE-011).
+# Alt+Tab : « Thumbnail Grid », le sélecteur NATIF de KWin (DE-015).
 #
-# ATTENTION, et ce n'est écrit dans aucun README amont : KWin garde le code
-# d'un sélecteur EN MÉMOIRE, par nom de paquet, jusqu'à la déconnexion.
-# Installer une nouvelle version sous le même nom ne change donc rien à la
-# session en cours. Tidewater contourne la chose en renommant le paquet à
-# chaque version ; nous gardons un nom fixe, parce que cette clé le désigne
-# statiquement, et la contrepartie est dite dans docs/INSTALL.md : une mise
-# à jour du sélecteur prend à la déconnexion suivante.
+# C'est une grille de grandes vignettes — la forme même de l'Alt+Tab de
+# Windows 11 — et elle est livrée par KWin lui-même
+# (src/tabbox/switchers/thumbnail_grid, KPackageStructure
+# KWin/WindowSwitcher), pas par plasma-workspace : elle est donc présente
+# partout où KWin est présent, Plasma 6.6 de la cible Ubuntu 26.04 comprise.
+# Vérifié sur la branche Plasma/6.6 de plasma/kwin, Id « thumbnail_grid ».
 #
-# Si le paquet manque, KWin retombe de lui-même sur son sélecteur par
-# défaut — une liste utilisable, pas un écran vide.
-LayoutName=ankh-selecteur
+# Elle remplace « ankh-selecteur », repris de Tidewater, qui n'a JAMAIS été
+# montré à l'écran : trois passages en VM de suite n'ont pas réussi à le
+# déclencher, faute d'une seconde fenêtre à lui donner. Garder un sélecteur
+# maison non éprouvé en écartant celui de KWin, c'était prendre un risque
+# sans contrepartie (DE-015, « configurer le natif avant d'importer »).
+#
+# Au passage, cela supprime un piège documenté dans docs/INSTALL.md : KWin
+# garde le code d'un sélecteur EN MÉMOIRE, par nom de paquet, jusqu'à la
+# déconnexion, si bien qu'une mise à jour du nôtre ne prenait qu'à la
+# session suivante. Le sélecteur de KWin, lui, est mis à jour avec KWin.
+LayoutName=thumbnail_grid

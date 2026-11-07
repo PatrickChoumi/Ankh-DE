@@ -1,11 +1,25 @@
-# Version de Breeze dont ce dossier est dérivé, et version de Plasma visée
-# par cette version d'Ankh DE (DE-008).
+# Version de Breeze dont ce dossier est dérivé, et versions de Plasma que
+# cette version d'Ankh DE prend en charge (DE-008, DE-016).
 #
-# La source reste Breeze 6.7.5 : le code de 6.7.5 compile tel quel contre
-# Plasma 6.8 (vérifié le 2026-11-05, conteneur Fedora 44 : Qt 6.11.2,
-# KF6 6.31.0, kdecoration 6.8.2 ; aucune erreur, « ldd -r » propre).
+# La source reste Breeze 6.7.5. Son code compile et se lie proprement :
+#   - contre kdecoration 6.6.4 — Ubuntu 26.04 LTS, GCC 15.2, Qt 6.10,
+#     KF 6.24 ; run 42392981929 du 2026-11-07, « ldd -r » propre ;
+#   - contre kdecoration 6.8.2 — Fedora 44, Qt 6.11.2, KF6 6.31.0 ; même run.
+#
+# Compiler n'est PAS se charger. Qu'un greffon dérivé de 6.7.5 se charge
+# dans un vrai KWin 6.6 et dessine juste est établi par « VM — session
+# réelle », pas par cette ligne.
+#
+# plasma=      la version visée EN PREMIER : celle de la machine cible,
+#              Ubuntu 26.04 LTS, prise en charge jusqu'en avril 2029.
+# plasma_min=  bornes de la plage éprouvée. Hors de cette plage, le CMake
+# plasma_max=  refuse de construire (-DANKH_DE_PLASMA_NON_TESTE=ON passe
+#              outre, à vos risques).
+#
 # Monter de version suit docs/REBASE.md, quand NOUS décidons de sortir.
 depot=https://invent.kde.org/plasma/breeze
 tag=v6.7.5
 commit=ca217f1
-plasma=6.8
+plasma=6.6
+plasma_min=6.6
+plasma_max=6.8

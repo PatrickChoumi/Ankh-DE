@@ -29,6 +29,8 @@
 | DE-012 | Les sosies libres des dessins de Windows sont acceptés ; seuls les fichiers de Microsoft sont interdits (précise DE-005) | REMPLACÉE par DE-013 |
 | DE-013 | Aucun motif qui ressemble à un logo de Windows : le bouton Démarrer porte le logo d'Ankh (remplace DE-012) | DÉCIDÉ |
 | DE-014 | La disposition de la barre n'est chargée que si `kdeglobals [KDE] LookAndFeelPackage` nous désigne ; un instrument muet ne vaut pas une réponse | DÉCIDÉ |
+| DE-015 | Habiller le natif plutôt que l'importer : les six applets repris de Tidewater et deux de KDE-Windows-Modern sont remplacés par les applets de Plasma (modifie DE-011) | DÉCIDÉ |
+| DE-016 | La version de Plasma prise en charge est une PLAGE, et la cible est celle de la machine de l'utilisateur : Ubuntu 26.04 LTS, Plasma 6.6 (précise DE-008) | DÉCIDÉ |
 
 ---
 
@@ -477,3 +479,131 @@ Elles ont échoué à leur premier passage réel, et c'est le harnais qui se tro
   `plasmashell` : elle tombait sur l'écran de chargement (écart-type 2,5, 65 couleurs) et
   criait « rien n'est composé ». Elle attend maintenant que l'écran se peuple, jusqu'à deux
   minutes, et dit **au bout de combien de temps**.
+
+---
+
+## DE-015 — Habiller le natif plutôt que l'importer : huit applets repris sont remplacés par ceux de Plasma
+
+- **Statut** : DÉCIDÉ (2026-11-07), mon choix, sur ma demande du même jour.
+- **Modifie** : DE-011, qui autorise la reprise de code libre. DE-011 n'est pas abrogée — elle
+  reste vraie pour le style Plasma, le menu Démarrer, les icônes, les curseurs, le thème GTK et
+  le fond d'écran. Ce qui change, c'est **l'ordre** : on configure le natif AVANT d'importer.
+- **Contexte** : ma remarque du 2026-11-07, et elle est juste. « Tu voulais prendre KDE, changer
+  son apparence et obtenir un bureau qui ressemble à Windows 11. Aujourd'hui, nous sommes en
+  train de construire un projet logiciel avec des applets personnalisées, des composants
+  externes, des tests automatisés […]. Ce n'est pas exactement le même chantier. » Et plus
+  précisément : « Pour changer l'apparence de la barre des tâches, nous n'avons pas besoin de
+  réécrire le gestionnaire de tâches. »
+
+  L'état des lieux lui donne raison, chiffres en main. Au 2026-11-07, la barre portait huit
+  applets qui ne sont pas de Plasma. **Un seul** avait été prouvé interactif : `org.ankh.demarrer`
+  (il s'ouvre, prend le clavier sans clic, cherche, se referme sur Échap — `09e4950`). Les sept
+  autres étaient « installés » et « chargés », jamais « qui répondent » (CLAUDE.md §0.2).
+
+  Et il y avait pire qu'un applet non prouvé. Pour faire place à `org.ankh.etat`, la disposition
+  **masquait** les cinq applets natives de la zone système — réseau, Bluetooth, volume,
+  luminosité, notifications. Ankh DE retirait donc à l'utilisateur le réglage du volume, du
+  Wi-Fi, du Bluetooth et de la luminosité, pour les remplacer par un volet qui pilotait le
+  matériel par `wpctl`, `nmcli`, `rfkill` et `bluetoothctl`, et dont **aucune tuile n'avait
+  jamais été pressée**. Ce n'était pas une fonction manquante : c'était une **régression contre
+  Plasma nu**.
+- **Décision** : une seule pièce de la barre nous appartient, et c'est Démarrer. Tout le reste
+  est natif, habillé par notre style Plasma, nos couleurs et nos icônes.
+
+  | Retiré | Remplacé par | Ce que le natif apporte en plus |
+  |---|---|---|
+  | `org.ankh.etat` | `org.kde.plasma.{volume,networkmanagement,bluetooth,brightness}` dans la zone système | les invites de mot de passe Wi-Fi, les touches multimédia, le réglage de luminosité |
+  | `org.ankh.notifications` | `org.kde.plasma.notifications` | c'est l'interface du service de notifications de Plasma, pas une seconde |
+  | `org.ankh.taches` | `org.kde.plasma.icontasks` | groupement par programme, aperçus au survol, listes de sauts, indicateur audio, glisser-déposer |
+  | `org.ankh.vuetaches` | l'effet Overview de KWin (Meta+W) — **DEFER** | rien à réimplémenter ; le bouton revient quand un essai prouvera qu'il appelle l'effet |
+  | `org.ankh.separateur` | `org.kde.plasma.panelspacer`, `expanding=false`, `length=9` | les 9 px exacts, par une clé en pixels |
+  | `org.ankh.horloge` | `org.kde.plasma.digitalclock`, `dateDisplayFormat=BelowTime` | un calendrier, un agenda et les fuseaux horaires |
+  | `org.ankh.bureau` | `org.kde.plasma.showdesktop` | — (la pièce reprise ne faisait rien de plus) |
+  | `ankh-selecteur` | `thumbnail_grid`, le sélecteur natif de KWin | une grille de grandes vignettes, mise à jour avec KWin |
+
+  Le module QML partagé (`ankh-de/qml`) disparaît avec eux : rien d'autre ne le lisait.
+- **Raisons** :
+  1. **Un composant non éprouvé vaut moins que le natif qui marche.** Sept des huit n'avaient
+     aucune preuve d'interaction ; leurs équivalents natifs sont traduits, accessibles et
+     éprouvés par tout KDE.
+  2. **Le coût de report disparaît.** CLAUDE.md §3.13 rappelle que chaque écart avec l'amont
+     rend le report plus coûteux. Huit pièces de moins à reporter à chaque version de Plasma.
+  3. **Deux affirmations du dépôt étaient fausses, et c'est ce qui justifiait deux des
+     reprises.** La disposition affirmait que `BesideTime` était « le mieux que son schéma
+     propose » pour l'horloge de Plasma — elle se notait elle-même « à revérifier ». Vérification
+     faite dans `applets/digital-clock/main.xml` de plasma-workspace : `dateDisplayFormat` offre
+     **`BelowTime`**, soit la date SOUS l'heure, exactement la forme de Windows 11. De même, un
+     commentaire donnait `iconSpacing` d'icontasks pour « une énumération, pas des pixels » :
+     `applets/taskmanager/main.xml` la déclare `Int`. Deux pièces ont été importées sur la foi de
+     valeurs écrites de mémoire.
+  4. **80 % de réutilisation, 20 % d'identité**, comme je l'ai demandé. Ce qui reste à nous est
+     ce qui fait Ankh : le style Qt, la décoration, le style Plasma, les couleurs, Selawik, les
+     icônes, les curseurs, le fond d'écran et le menu Démarrer.
+- **Alternatives rejetées** :
+  - *Garder les huit et les éprouver un par un.* C'est le chemin qu'on suivait. Il coûte un
+    passage en VM par applet et par correction, pour arriver au mieux à l'équivalent du natif.
+  - *Garder `org.ankh.etat` en démasquant la zone système.* Deux implémentations de la même
+    responsabilité dans la même barre : exactement ce que CLAUDE.md §0.3 interdit.
+  - *`org.kde.plasma.marginsseparator` pour l'écart de 9 px.* Plus propre, mais il **n'existe
+    pas en Plasma 6.6** (404 sur la branche `Plasma/6.6` de plasma-workspace, 200 sur `Plasma/6.8`),
+    et 6.6 est la cible (DE-016). Un espaceur natif à longueur fixe fait la même chose partout.
+  - *Supprimer aussi le menu Démarrer au profit de Kickoff.* Kickoff n'a pas la disposition de
+    Windows 11, et notre menu est le seul applet prouvé. Il reste, Kickoff reste le repli.
+- **Vérification** :
+  - `tests/session-et-theme.sh` vérifie désormais l'**absence** des huit pièces, et que nous
+    n'installons pas un sélecteur du nom de celui de KWin.
+  - `bench/vm/essayer.sh` demande nommément les six applets natives dans la barre, refuse le
+    retour des pièces retirées, et **refuse que la zone système masque** `volume`,
+    `networkmanagement`, `bluetooth` ou `brightness` — le contrôle qui empêche la régression de
+    revenir.
+  - Reste `À VALIDER` : que les tuiles natives répondent dans notre session, et que la vue
+    d'ensemble soit atteignable. C'est l'objet du passage en VM qui suit cette décision.
+
+---
+
+## DE-016 — La version de Plasma prise en charge est une plage, et la cible est celle de ma machine
+
+- **Statut** : DÉCIDÉ (2026-11-07), mon choix.
+- **Précise** : DE-008 (« la version de Plasma visée est un choix de release »). DE-008 reste
+  vraie ; elle supposait une version unique, et c'est cette hypothèse qui tombe.
+- **Contexte** : ma demande du 2026-11-07 : « une session Ankh stable sur la version
+  Ubuntu/Plasma réellement présente sur la machine cible », et « nous devrions commencer par ton
+  Ubuntu, obtenir un résultat parfait sur cette cible, puis élargir ».
+
+  Or `CMakeLists.txt` exigeait l'**égalité** avec `plasma=6.8` et sortait en `FATAL_ERROR`
+  sinon. L'archive d'Ubuntu donne pour 26.04 (`resolute`) `kdecoration 4:6.6.4-0ubuntu1`, soit
+  **Plasma 6.6.4** (relevé sur `api.launchpad.net`, 2026-11-07). **Ankh DE refusait donc de se
+  construire sur sa propre cible**, et `installer.sh` ne passe aucune échappatoire.
+
+  Personne ne l'avait vu, et c'est le plus instructif : `construire.yml` passait
+  `-DANKH_DE_PLASMA_NON_TESTE=ON` **sur les trois distributions**. Le garde-fou livré à
+  l'utilisateur n'était jamais celui que la CI éprouvait. Et le test négatif qui devait prouver
+  qu'il refuse bien visait `plasma=`, si bien qu'il aurait continué à « passer » sans rien
+  éprouver dès que la décision est passée à la plage.
+- **Décision** : `src/*/VERSION-BREEZE` porte trois clés — `plasma=` (la cible, **6.6**),
+  `plasma_min=` et `plasma_max=` (la plage éprouvée, **6.6 à 6.8**). Le CMake refuse hors plage.
+  `construire.yml` ne passe plus d'échappatoire : les trois distributions tombent dans la plage,
+  et si l'une en sort, la CI **doit** échouer.
+- **Raisons** :
+  1. La cible est la machine de l'utilisateur. Ubuntu 26.04 est une LTS prise en charge jusqu'en
+     avril 2029 : viser 6.6 n'est pas viser le passé.
+  2. La plage est **déjà prouvée**, pas espérée. Le passage `42392981929` (SHA `09e4950`) compile
+     le code de Breeze 6.7.5 contre `kdecoration 6.6.4` sur Ubuntu 26.04 — GCC 15.2, Qt 6.10,
+     KF 6.24 — avec `ldd -r` propre, et contre `6.8.2` sur Fedora 44.
+  3. Les VM de preuve sont en 6.8 : une plage permet de citer honnêtement les deux sans qu'un
+     document mente.
+- **Alternatives rejetées** :
+  - *Descendre la cible à 6.6 tout court.* La CI de Fedora et d'Arch, en 6.8, échouerait alors
+    au garde-fou. Il faut la plage de toute façon.
+  - *Laisser `-DANKH_DE_PLASMA_NON_TESTE=ON` dans la CI.* C'est ce qui a caché le défaut pendant
+     deux jours. Un garde-fou que rien n'éprouve finit par garder la mauvaise chose.
+- **Vérification** :
+  - `tests/garde-version.sh` : douze cas en `cmake -P`, sans Qt ni kdecoration — 6.6, 6.7 et 6.8
+    acceptées, 6.5 et 6.9 refusées, l'échappatoire qui avertit sans bloquer, et cinq fichiers mal
+    écrits (borne manquante, plage à l'envers, cible hors de sa plage, fichier absent) qui doivent
+    arrêter la construction. **Éprouvé par mutation** : retirer la borne basse ou désarmer le
+    contrôle de plage fait échouer le test.
+  - `ci/verifier-coherence.sh` accepte toute version citée DANS la plage et refuse le reste
+    (éprouvé en insérant « Plasma 6.5 » dans le README : signalé).
+  - Reste `À VALIDER` : que le greffon de décoration **se charge** dans un vrai KWin 6.6.
+    Compiler et se lier n'est pas se charger. C'est l'objet de la VM Ubuntu.

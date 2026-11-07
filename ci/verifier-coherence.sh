@@ -147,8 +147,12 @@ fi
 # et leurs mentions de « Plasma 6.6 » sont justes : elles parlent de
 # Tidewater, pas de notre cible.
 #
-# La source de vérité est « plasma= » de src/decoration/VERSION-BREEZE, que le
-# CMake fait respecter (DE-008). Aucun document ne doit annoncer autre chose.
+# La source de vérité est src/decoration/VERSION-BREEZE, que le CMake fait
+# respecter (DE-008, DE-016). Depuis le 2026-11-07 il y porte une PLAGE :
+# « plasma= » est la cible (Ubuntu 26.04, donc 6.6) et « plasma_min= » /
+# « plasma_max= » les bornes éprouvées. Un document peut donc légitimement
+# nommer 6.6 (la cible) ou 6.8 (les VM de preuve, Fedora 44 et Arch) : ce
+# contrôle accepte toute version DANS la plage, et refuse le reste.
 # Deux lignes nomment légitimement une AUTRE version, et les taire en bloc
 # reviendrait à désarmer le contrôle. Elles sont donc nommées une à une, avec
 # la raison, comme ABROGEES plus haut : fichier | fragment qui la justifie.
@@ -159,8 +163,10 @@ PLASMA_EXCEPTIONS=(
     "docs/REBASE.md|KDecoration2 à KDecoration3"
 )
 plasma_vise="$(sed -n 's/^plasma=//p' src/decoration/VERSION-BREEZE 2>/dev/null | head -1)"
-if [[ -z "${plasma_vise}" ]]; then
-    signaler "src/decoration/VERSION-BREEZE ne dit pas quelle version de Plasma est visée"
+plasma_min="$(sed -n 's/^plasma_min=//p' src/decoration/VERSION-BREEZE 2>/dev/null | head -1)"
+plasma_max="$(sed -n 's/^plasma_max=//p' src/decoration/VERSION-BREEZE 2>/dev/null | head -1)"
+if [[ -z "${plasma_vise}" || -z "${plasma_min}" || -z "${plasma_max}" ]]; then
+    signaler "src/decoration/VERSION-BREEZE ne dit pas la cible et la plage de Plasma (plasma=, plasma_min=, plasma_max=)"
 else
     while IFS=: read -r fichier ligne texte; do
         [[ -n "${fichier}" ]] || continue
@@ -176,10 +182,21 @@ else
             grep -qF -- "${ex_phrase}" <<< "${texte}" && { exemptee=oui; break; }
         done
         [[ "${exemptee}" == non ]] || continue
-        mauvaise="$(grep -oE 'Plasma \*{0,2}6\.[0-9]+' <<< "${texte}" \
-                    | grep -oE '6\.[0-9]+' | grep -v "^${plasma_vise}$" | head -1 || true)"
+        # Toute version citée doit tomber dans la plage éprouvée. « sort -V »
+        # ordonne les versions : si la citée reste entre les deux bornes après
+        # tri, elle est dans la plage.
+        mauvaise=""
+        while read -r citee; do
+            [[ -n "${citee}" ]] || continue
+            dans_plage=oui
+            [[ "$(printf '%s\n%s\n' "${plasma_min}" "${citee}" | sort -V | head -1)" == "${plasma_min}" ]] \
+                || dans_plage=non
+            [[ "$(printf '%s\n%s\n' "${citee}" "${plasma_max}" | sort -V | head -1)" == "${citee}" ]] \
+                || dans_plage=non
+            [[ "${dans_plage}" == oui ]] || { mauvaise="${citee}"; break; }
+        done < <(grep -oE 'Plasma \*{0,2}6\.[0-9]+' <<< "${texte}" | grep -oE '6\.[0-9]+' || true)
         [[ -n "${mauvaise}" ]] \
-            && signaler "${fichier}:${ligne} annonce Plasma ${mauvaise}, mais VERSION-BREEZE vise ${plasma_vise}"
+            && signaler "${fichier}:${ligne} annonce Plasma ${mauvaise}, hors de la plage éprouvée ${plasma_min} à ${plasma_max} (VERSION-BREEZE vise ${plasma_vise})"
     done < <(grep -rnE 'Plasma \*{0,2}6\.[0-9]+' --include='*.md' . 2>/dev/null \
              | grep -v '^\./\.git' | grep -v '^\./AUDIT\.md' | grep -v '^\./AVANCEMENT\.md' \
              | grep -v '^\./CHANGELOG\.md' | grep -v '^\./DECISIONS\.md' \

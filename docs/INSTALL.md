@@ -4,15 +4,18 @@
 
 | Quoi | Version |
 |---|---|
-| KDE Plasma | **6.8.x** — installé et la session ouverte en VM sur **6.8.2** (Fedora 44). Une autre version arrête la construction, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON` ([DE-008](../DECISIONS.md), `src/decoration/VERSION-BREEZE`) |
-| Session | **Wayland** (X11 non testé — Plasma 6.8 abandonne X11) |
+| KDE Plasma | **6.6 à 6.8** — cible : **6.6**, celle d'Ubuntu 26.04 LTS. Hors de cette plage, la construction s'arrête, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON` ([DE-016](../DECISIONS.md), `src/decoration/VERSION-BREEZE`) |
+| Session | **Wayland** (X11 non testé). Kubuntu 26.04 LTS n'installe plus la session X11 par défaut, et Plasma 6.8 abandonne X11 |
 | Qt | 6.6 ou plus (essayé sur 6.11.2) |
 | KDE Frameworks | 6.0 ou plus (essayé sur 6.31.0) |
 
-> Ce tableau annonçait « 6.7.x, 6.8 pas encore pris en charge » jusqu'au 2026-11-06, alors que
-> la montée vers 6.8 était faite depuis le 2026-11-05 et que tous les passages en VM tournent
-> sur 6.8.2. La source de la décoration reste Breeze **6.7.5**, qui compile tel quel contre
-> 6.8 ; c'est la version de Breeze dérivée, pas la version de Plasma visée.
+> La source de la décoration reste Breeze **6.7.5** : c'est la version de Breeze dérivée, pas
+> la version de Plasma visée. Son code compile et se lie proprement contre `kdecoration` **6.6.4**
+> (Ubuntu 26.04) comme contre **6.8.2** (Fedora 44) — passage `42392981929`, `ldd -r` propre.
+>
+> Jusqu'au 2026-11-07, ce tableau exigeait Plasma **6.8** *et le CMake aussi* : Ankh DE refusait
+> donc de se construire sur Ubuntu 26.04, qui livre 6.6.4. La CI ne le voyait pas, parce qu'elle
+> passait `-DANKH_DE_PLASMA_NON_TESTE=ON` sur les trois distributions ([DE-016](../DECISIONS.md)).
 
 ## Paquets à installer
 
@@ -119,10 +122,9 @@ liste des chemins à retirer à la main.
 | Les contrôles gardent l'allure de Breeze | le style n'est pas trouvé. Même cause |
 | La police reste celle de la distribution | fontconfig n'a pas vu Selawik. Lancez `fc-cache -f`, puis `fc-match Selawik` : il doit répondre `Selawik`. C'est le défaut exact qui a fait échouer le premier passage du lot 1 dans Ankh |
 | Le texte paraît trop fin ou coloré sur les bords | `29-ankh-rendu.conf` n'est pas lu. Vérifiez `fc-match -f '%{rgba} %{hintstyle}' Selawik` : attendu `5 1` |
-| Alt+Tab garde l'allure de Plasma après une mise à jour | KWin garde le code d'un sélecteur **en mémoire, par nom de paquet, jusqu'à la déconnexion**. Déconnectez-vous et reconnectez-vous : ce n'est pas un défaut d'installation |
-| Le volet d'état s'affiche mais ne répond pas | il appelle `wpctl`, `nmcli`, `rfkill`, `bluetoothctl` et `busctl`. L'installateur dit lesquels manquent ; chaque outil absent ne coupe que sa propre tuile |
-| Les applets de la barre sont vides | le module QML partagé manque. Vérifiez `<préfixe>/share/ankh-de/qml/Settings.qml` : les applets l'atteignent par un chemin relatif de cinq niveaux depuis leur `contents/ui` |
 | Les coins sont à 5 px, pas 8 | c'est Breeze qui dessine : la décoration d'Ankh n'est pas active |
+| Le volume, le Wi-Fi ou le Bluetooth manquent dans la barre | ce sont les applets natives de Plasma, dans la zone de notification. Vérifiez qu'elles ne sont pas masquées : `kreadconfig6 --file plasma-org.kde.plasma.desktop-appletsrc --group Containments --group 1 --group Applets --group <n> --group Configuration --group General --key hiddenItems`. Ankh DE n'en masque qu'une, la cloche, parce qu'elle est posée à part à droite de l'horloge ([DE-015](../DECISIONS.md)) |
+| Alt+Tab n'a pas l'allure attendue | c'est « Thumbnail Grid », le sélecteur natif de KWin. Vérifiez `kreadconfig6 --file kwinrc --group TabBox --key LayoutName` : attendu `thumbnail_grid` |
 | « Plasma non testé » à la construction | votre Plasma n'est pas 6.8.x. `-DANKH_DE_PLASMA_NON_TESTE=ON` passe outre, à vos risques ([DE-008](../DECISIONS.md)) |
 
 Si le problème persiste, ouvrez une issue avec la sortie de :

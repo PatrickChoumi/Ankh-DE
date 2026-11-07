@@ -35,32 +35,22 @@ option(ANKH_DE_PLASMA_NON_TESTE
 # La version de kdecoration suit celle de Plasma : elles sont publiées
 # ensemble. C'est le seul signal fiable dans un conteneur de construction,
 # où plasmashell n'est pas installé.
-file(READ "${CMAKE_CURRENT_SOURCE_DIR}/src/decoration/VERSION-BREEZE" ANKH_DE_SUIVI)
-string(REGEX MATCH "plasma=([0-9]+\.[0-9]+)" _ "${ANKH_DE_SUIVI}")
-set(ANKH_DE_PLASMA_SUIVI "${CMAKE_MATCH_1}")
-if(NOT ANKH_DE_PLASMA_SUIVI)
-    message(FATAL_ERROR "src/decoration/VERSION-BREEZE ne dit pas quelle version de Plasma est suivie.")
-endif()
+#
+# Depuis DE-016, le garde-fou accepte une PLAGE, et non une seule version.
+# La raison est concrète : la machine cible est en Ubuntu 26.04 LTS, donc en
+# Plasma 6.6, alors que les VM de preuve sont en 6.8. Exiger l'égalité
+# rendait Ankh DE INCONSTRUCTIBLE sur sa propre cible — et « Construire »
+# ne s'en apercevait pas, parce qu'il passait -DANKH_DE_PLASMA_NON_TESTE=ON
+# sur les trois distributions : le garde-fou livré aux utilisateurs n'était
+# donc jamais celui que la CI éprouvait.
+include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/GardeVersionPlasma.cmake")
+ankh_de_lire_plage("${CMAKE_CURRENT_SOURCE_DIR}/src/decoration/VERSION-BREEZE")
 
 find_package(KDecoration3 QUIET)
 if(KDecoration3_FOUND AND KDecoration3_VERSION)
-    string(REGEX MATCH "^[0-9]+\.[0-9]+" ANKH_DE_PLASMA_TROUVE "${KDecoration3_VERSION}")
-    if(NOT ANKH_DE_PLASMA_TROUVE VERSION_EQUAL ANKH_DE_PLASMA_SUIVI)
-        set(ANKH_DE_MESSAGE
-            "Plasma ${ANKH_DE_PLASMA_TROUVE} est installé (kdecoration ${KDecoration3_VERSION}), "
-            "mais Ankh DE suit Plasma ${ANKH_DE_PLASMA_SUIVI} "
-            "(src/*/VERSION-BREEZE). Le style et la décoration dérivent du code de "
-            "cette version : ils peuvent ne pas se charger, ou se charger à moitié.\n"
-            "  Pour reporter le code : docs/REBASE.md\n"
-            "  Pour construire quand même : -DANKH_DE_PLASMA_NON_TESTE=ON")
-        if(ANKH_DE_PLASMA_NON_TESTE)
-            message(WARNING ${ANKH_DE_MESSAGE})
-        else()
-            message(FATAL_ERROR ${ANKH_DE_MESSAGE})
-        endif()
-    else()
-        message(STATUS "Plasma ${ANKH_DE_PLASMA_TROUVE} : la version suivie.")
-    endif()
+    string(REGEX MATCH "^[0-9]+\\.[0-9]+" ANKH_DE_PLASMA_TROUVE "${KDecoration3_VERSION}")
+    ankh_de_garde_version("${ANKH_DE_PLASMA_TROUVE}" "${KDecoration3_VERSION}"
+                          "${ANKH_DE_PLASMA_NON_TESTE}")
 elseif(ANKH_DE_DECORATION)
     message(STATUS
         "kdecoration introuvable pour l'instant : la version de Plasma sera "
@@ -174,22 +164,10 @@ if(ANKH_DE_DATA)
         message(STATUS "Ankh DE : applets absents ; lancer third_party/preparer.sh")
     endif()
 
-    # Le module QML partagé des applets repris de Tidewater (DE-011). Ils
-    # l'atteignent par « ../../../../../ankh-de/qml » depuis leur
-    # contents/ui : cinq niveaux, soit le dossier de données, puis ce
-    # chemin-ci. Déplacer l'un sans l'autre casse l'import en silence.
-    if(EXISTS "${ANKH_DE_PREPARE}/qml")
-        install(DIRECTORY "${ANKH_DE_PREPARE}/qml/"
-            DESTINATION ${KDE_INSTALL_DATADIR}/ankh-de/qml
-        )
-    endif()
-    # Le sélecteur Alt+Tab (lot 7) : un paquet KWin/WindowSwitcher, que
-    # src/config/kwinrc désigne par son nom.
-    if(EXISTS "${ANKH_DE_PREPARE}/tabbox")
-        install(DIRECTORY "${ANKH_DE_PREPARE}/tabbox/"
-            DESTINATION ${KDE_INSTALL_DATADIR}/kwin/tabbox
-        )
-    endif()
+    # Ni module QML partagé, ni paquet KWin/WindowSwitcher : les deux
+    # n'existaient que pour les applets repris de Tidewater, tous retirés
+    # (DE-015). Alt+Tab est désormais « thumbnail_grid », le sélecteur natif
+    # de KWin, que src/config/kwinrc désigne — rien à installer pour lui.
 
     # Le fond d'écran « Prismes d'Ankh », clair et sombre. La disposition le
     # désigne par son nom de paquet : déplacer l'un sans l'autre laisse

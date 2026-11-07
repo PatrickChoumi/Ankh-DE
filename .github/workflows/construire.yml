@@ -57,16 +57,24 @@ jobs:
         run: |
           set -euo pipefail
           echo "Ankh DE vise : $(grep '^plasma=' src/decoration/VERSION-BREEZE)"
+          echo "Plage éprouvée : $(grep '^plasma_min=' src/decoration/VERSION-BREEZE) $(grep '^plasma_max=' src/decoration/VERSION-BREEZE)"
           echo "Distribution : kdecoration $(pkg-config --modversion KDecoration3 2>/dev/null || echo 'version inconnue')"
 
       - name: Configurer
-        # DE-008 : cette version d'Ankh DE vise UNE version de Plasma. Ce job
-        # prouve que le code compile avec la chaîne d'outils de chaque
-        # distribution ; il ne leur demande pas d'avoir déjà cette version.
-        # Le test strict, c'est « Banc », sur la version visée.
+        # SANS -DANKH_DE_PLASMA_NON_TESTE=ON, délibérément (DE-016).
+        #
+        # Jusqu'au 2026-11-07 ce job passait l'override sur les trois
+        # distributions. Conséquence : le garde-fou livré aux utilisateurs
+        # n'était JAMAIS celui que la CI éprouvait, et personne n'a vu
+        # qu'Ankh DE refusait de se construire sur Ubuntu 26.04 — sa propre
+        # cible, en Plasma 6.6, quand le CMake exigeait 6.8.
+        #
+        # Les trois distributions tombent maintenant dans la plage éprouvée
+        # (Ubuntu 26.04 : kdecoration 6.6.4 ; Fedora 44 et Arch : 6.8.x). Si
+        # l'une d'elles en sort, ce job DOIT échouer : c'est le signal qu'il
+        # faut rejouer la plage, pas la contourner.
         run: |
-          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr \
-            -DANKH_DE_PLASMA_NON_TESTE=ON
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr
 
       - name: Compiler
         run: cmake --build build -j"$(nproc)"
@@ -94,20 +102,32 @@ jobs:
             exit 1
           fi
 
-      # DE-008 : le garde-fou doit refuser une version non visée. On le
-      # prouve en lui annonçant une version absurde.
-      - name: Le garde-fou refuse bien une version non visée
+      # DE-008, DE-016 : le garde-fou doit refuser une version HORS de la
+      # plage éprouvée. On le prouve en resserrant la plage sur une valeur
+      # absurde — c'est elle qui décide désormais, pas « plasma= ».
+      #
+      # Ce test a failli devenir décoratif : écrit pour « plasma= », il
+      # aurait continué à passer sans rien éprouver dès que la décision est
+      # passée à la plage. Un test qui ne peut plus échouer est pire que pas
+      # de test (CLAUDE.md §0.5).
+      - name: Le garde-fou refuse bien une version hors plage
         run: |
           set -euo pipefail
           cp src/decoration/VERSION-BREEZE /tmp/VERSION-BREEZE.bak
-          sed -i 's/^plasma=.*/plasma=0.1/' src/decoration/VERSION-BREEZE
+          sed -i -e 's/^plasma_min=.*/plasma_min=0.1/' \
+                 -e 's/^plasma_max=.*/plasma_max=0.1/' src/decoration/VERSION-BREEZE
           if cmake -S . -B /tmp/garde > /tmp/garde.log 2>&1; then
-            echo "::error::le garde-fou a laissé passer une version non visée"
+            cp /tmp/VERSION-BREEZE.bak src/decoration/VERSION-BREEZE
+            echo "::error::le garde-fou a laissé passer une version hors plage"
             exit 1
           fi
-          grep -q "Ankh DE suit Plasma 0.1" /tmp/garde.log \
-            || { echo "::error::le refus ne vient pas du garde-fou"; cat /tmp/garde.log; exit 1; }
           cp /tmp/VERSION-BREEZE.bak src/decoration/VERSION-BREEZE
+          # Mis à plat : CMake replie message() sur plusieurs lignes et
+          # double des espaces, donc chercher la phrase dans la sortie brute
+          # échouerait toujours. tests/garde-version.sh est tombé dessus.
+          tr '\n' ' ' < /tmp/garde.log | tr -s ' ' > /tmp/garde.plat
+          grep -qF "n'est éprouvé que de Plasma 0.1 à 0.1" /tmp/garde.plat \
+            || { echo "::error::le refus ne vient pas du garde-fou"; cat /tmp/garde.log; exit 1; }
           echo "Le garde-fou refuse bien, et dit pourquoi."
 
       - name: Vérifier ce qui est installé
@@ -151,6 +171,13 @@ jobs:
       # sur un faux HOME, sans Plasma, et compare les octets.
       - name: Les barres de l'utilisateur reviennent intactes
         run: ./tests/barres.sh
+
+      # DE-016 : le garde-fou de version s'éprouve sans Qt ni kdecoration,
+      # parce qu'il vit dans cmake/GardeVersionPlasma.cmake. Douze cas, dont
+      # les versions réellement rencontrées : 6.6 sur Ubuntu 26.04, 6.8 sur
+      # Fedora 44 et Arch.
+      - name: Le garde-fou de version garde ce qu'il doit
+        run: ./tests/garde-version.sh
 
       # DE-007 : le tableau de fidélité est généré, jamais écrit à la main.
       - name: docs/FIDELITE.md est à jour avec bench/jetons.toml

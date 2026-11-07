@@ -620,192 +620,51 @@ sed -i 's|^\( *\)flags: Qt.WindowStaysOnTopHint$|\1flags: Qt.WindowStaysOnTopHin
 grep -q "type: PlasmaCore.Dialog.AppletPopup" "${menu_rep}" \
     || { echo "Menu : le type AppletPopup n'a pas été posé" >&2; exit 1; }
 echo "org.ankh.demarrer : type AppletPopup posé (focus clavier)"
-reprendre_applet digitalclock org.ankh.horloge  "Horloge"
-reprendre_applet showdesktop  org.ankh.bureau   "Afficher le bureau"
+# L'horloge et « Afficher le bureau » de KDE-Windows-Modern ne sont PLUS
+# reprises (DE-015). Plasma fait les deux, en natif :
+#   - org.kde.plasma.digitalclock met la date SOUS l'heure
+#     (dateDisplayFormat=BelowTime, applets/digital-clock/main.xml de
+#     plasma-workspace) — donc la forme de Windows 11 — et apporte en plus
+#     un calendrier, un agenda et les fuseaux, que la nôtre n'avait pas ;
+#   - org.kde.plasma.showdesktop est la même bande au coin droit.
+# Les reprendre n'ajoutait rien et nous laissait deux pièces à reporter à
+# chaque version de Plasma.
 
-# --- Tidewater : les pièces des lots 4, 6 et 7 ---------------------------
+# --- Tidewater : plus rien n'en est repris (DE-015) ----------------------
 #
-# Pourquoi celui-ci plutôt qu'un autre : le dépôt entier ne contient AUCUNE
-# ligne de C++ ni de CMakeLists (vérifié le 2026-11-06, commit 4484377). Tout
-# est QML et données. Rien à compiler, rien à reporter à chaque version de
-# Plasma — le risque d'ABI qui nous coûte si cher sur le style et la
-# décoration n'existe pas ici. Et ses identifiants sont préfixés
-# « tidewater.* » : aucune collision avec un applet de Plasma.
+# Ce script a repris de Tidewater (4484377, GPL-3.0) six pièces les
+# 2026-11-06 et 2026-11-07 : org.ankh.etat (paramètres rapides),
+# org.ankh.notifications, org.ankh.taches, org.ankh.vuetaches,
+# org.ankh.separateur et ankh-selecteur (Alt+Tab), plus leur module QML
+# partagé.
 #
-# Ce qu'on prend, et rien de plus :
-#   status         lot 6 — le volet unique : Wi-Fi, Bluetooth, volume, luminosité
-#   notifications  lot 6 — le centre de notifications
-#   tasks          lot 4 — les applications épinglées et ouvertes
-#   taskview       lot 4 — le bouton « Vue des tâches »
-#   switcher       lot 7 — Alt+Tab en rangées (KWin/WindowSwitcher)
+# TOUTES sont retirées, et la raison n'est ni la licence ni la qualité de
+# Tidewater — c'est que pas UNE n'a jamais été prouvée interactive. Trois
+# passages en VM de suite les ont trouvées « installées » et « chargées »,
+# jamais « qui répondent » (les cinq états de CLAUDE.md §0.2). Pendant ce
+# temps, Plasma livre pour chacune une pièce native qui marche, traduite,
+# accessible, et qui n'a rien à reporter à chaque version :
 #
-# Ce qu'on NE prend PAS, et pourquoi : « start » et « clock » feraient double
-# emploi avec les nôtres (DE-011 : on ne reprend pas deux fois la même
-# fonction) ; « power », « divider », « workspaces » et « search » n'ont pas
-# d'équivalent dans la barre de Windows 11.
-TIDEWATER_COMMIT=448437798230aee520c8873a14b84ec86fbde6b9
-recuperer https://github.com/addition-official/tidewater "${TIDEWATER_COMMIT}" \
-    "${travail}/tidewater" common shared plasmoids switcher
-tw="${travail}/tidewater"
-
-# La graine du moteur de couleurs. Tout le thème de Tidewater dérive d'UNE
-# couleur (common/Palette.qml, common/Scheme.js) : la recolorer suffit, et
-# c'est bien plus sûr que de poursuivre des hexadécimaux dans vingt fichiers.
-ANKH_GRAINE="#a78bfa"   # 167,139,250 — l'accent de src/colors/Ankh.colors
-
-ajuster_commun() { # $1 : dossier « common » copié
-    local c=$1
-    # 1. La graine : le bleu de leur dessin devient le violet d'Ankh.
-    remplacer_partout "#466fbd" "${c}" "s/#466fbd/${ANKH_GRAINE}/g"
-    # 2. L'épaisseur de la barre. Ils dessinent à 52 px ; Windows 11 est à 48,
-    #    et c'est notre jeton « barre.hauteur ». Tout le reste de leurs
-    #    dimensions en découle (« unit: thickness / 64 »), donc cette seule
-    #    ligne remet l'échelle entière aux mesures de Windows 11.
-    sed -i 's/readonly property int thickness: 52/readonly property int thickness: 48/' \
-        "${c}/Palette.qml"
-    grep -q "thickness: 48" "${c}/Palette.qml" \
-        || { echo "Tidewater : l'épaisseur de la barre n'a pas été reprise" >&2; exit 1; }
-    # 3. La police : Rubik devient Selawik, la nôtre.
-    sed -i 's/indexOf("Rubik")/indexOf("Selawik")/; s/? "Rubik"/? "Selawik"/' "${c}/Palette.qml"
-    grep -q 'indexOf("Selawik")' "${c}/Palette.qml" \
-        || { echo "Tidewater : la police n'a pas été reprise" >&2; exit 1; }
-    # 4. La police d'ICÔNES, et c'est un choix, pas un oubli.
-    #
-    #    Tidewater dessine ses icônes avec « Material Symbols Rounded », une
-    #    police de 15 Mo, et retombe sur Kirigami.Icon quand elle manque.
-    #    Vérifié le 2026-11-06, pièce par pièce : les cinq que nous prenons
-    #    ont un repli déclaré pour CHACUN de leurs glyphes (status 7,
-    #    notifications 2, tasks 1, switcher et taskview 0 — aucun sans repli).
-    #    Les trois glyphes sans repli du dépôt sont dans StartMenu.qml, que
-    #    nous ne prenons pas.
-    #
-    #    Donc on force le repli : les icônes passent par Kirigami.Icon, donc
-    #    par NOTRE thème Fluent-Ankh. C'est plus juste pour un sosie de
-    #    Windows 11 que des symboles de Google, c'est 15 Mo de moins, et une
-    #    licence de moins à porter. On fige la valeur plutôt que de compter
-    #    sur l'absence de la police : un utilisateur qui l'aurait installée
-    #    pour autre chose verrait sinon une interface mi-Fluent mi-Material.
-    sed -i 's/readonly property bool hasIconFont: families.indexOf("Material Symbols Rounded") >= 0/readonly property bool hasIconFont: false  \/\/ Ankh : les icônes passent par Fluent-Ankh/' \
-        "${c}/Palette.qml"
-    grep -q "hasIconFont: false" "${c}/Palette.qml" \
-        || { echo "Tidewater : le repli d'icônes n'a pas été posé" >&2; exit 1; }
-}
-
-reprendre_tidewater() { # $1 : chemin amont, $2 : notre identifiant, $3 : libellé
-    local amont="${tw}/$1" cible="${sortie}/applets/$2"
-    [[ -d "${amont}" ]] || { echo "Tidewater : ${amont} absent des sources" >&2; exit 1; }
-    rm -rf "${cible}"
-    install -d -m 0755 "$(dirname "${cible}")"
-    cp -a "${amont}" "${cible}"
-
-    # Leur installateur copie « common » DANS chaque applet
-    # (install.sh:148). On fait pareil : chaque applet est alors autonome,
-    # et un applet retiré n'emporte rien avec lui.
-    install -d -m 0755 "${cible}/contents/ui/common"
-    cp -a "${tw}"/common/. "${cible}/contents/ui/common/"
-    ajuster_commun "${cible}/contents/ui/common"
-
-    # Le module partagé est atteint par un chemin relatif qui compte cinq
-    # niveaux depuis contents/ui, soit le dossier de données, puis
-    # « tidewater/qml ». Le nôtre s'appelle « ankh-de/qml ».
-    remplacer_partout "tidewater/qml" "${cible}" "s|tidewater/qml|ankh-de/qml|g"
-
-    local ancien
-    ancien="$(python3 -I -c 'import json,sys;print(json.load(open(sys.argv[1]))["KPlugin"]["Id"])' \
-        "${cible}/metadata.json")"
-    remplacer_partout "${ancien}" "${cible}" "s/${ancien}/$2/g"
-    remplacer_partout "tidewater" "${cible}" -e "s/Tidewater/Ankh/g" -e "s/tidewater/ankh/g"
-    if grep -rqi 'tidewater' "${cible}"; then
-        echo "Applet $2 : « tidewater » est resté" >&2
-        grep -ril 'tidewater' "${cible}" | head -3 >&2
-        exit 1
-    fi
-
-    python3 -I - "${cible}/metadata.json" "$2" "$3" << 'META'
-import json, sys
-chemin, ident, libelle = sys.argv[1:4]
-with open(chemin, encoding="utf-8") as f:
-    d = json.load(f)
-k = d.setdefault("KPlugin", {})
-k["Id"] = ident
-k["Name"] = libelle
-for cle in [c for c in k if c.startswith("Name[")]:
-    del k[cle]
-k["License"] = "GPL-3.0-or-later"
-k["Website"] = "https://github.com/PatrickChoumi/Ankh-DE"
-with open(chemin, "w", encoding="utf-8") as f:
-    json.dump(d, f, indent=4, ensure_ascii=False)
-    f.write("\n")
-META
-    echo "$2 : $(find "${cible}" -type f | wc -l) fichiers"
-}
-
-reprendre_tidewater plasmoids/status        org.ankh.etat          "État du système"
-reprendre_tidewater plasmoids/notifications org.ankh.notifications "Notifications"
-reprendre_tidewater plasmoids/tasks         org.ankh.taches        "Barre des tâches"
-reprendre_tidewater plasmoids/taskview      org.ankh.vuetaches     "Vue des tâches"
-
-# Le séparateur, et il règle un défaut VU sur une capture : dans le passage
-# du 2026-11-06, l'icône de réseau de la zone système touchait le « 2 » de
-# « 2:10 PM ». Zéro pixel entre les deux. Tidewater pose à cet endroit un
-# « divider » de 9 px de large, et c'est exactement ce qui manquait.
+#   org.ankh.etat          -> org.kde.plasma.{volume,networkmanagement,
+#                             bluetooth,brightness} dans la zone système
+#   org.ankh.notifications -> org.kde.plasma.notifications
+#   org.ankh.taches        -> org.kde.plasma.icontasks
+#   org.ankh.vuetaches     -> l'effet Overview de KWin (Meta+W), DEFER
+#   org.ankh.separateur    -> org.kde.plasma.panelspacer, longueur fixe 9 px
+#   ankh-selecteur         -> « thumbnail_grid », le sélecteur natif de KWin
 #
-# Mais leur pièce dessine un TRAIT vertical, et la barre de Windows 11 n'en
-# a pas : elle sépare par de l'espace. On garde les 9 px et on rend le trait
-# invisible — plutôt que de couper la pièce en deux, parce que « showDividers »
-# à faux ramènerait la largeur à zéro, donc le chevauchement.
-reprendre_tidewater plasmoids/divider       org.ankh.separateur    "Séparateur"
-sed -i 's/^    color: pal.out$/    \/\/ Ankh : de l'"'"'espace, pas un trait — la barre de Windows 11 n'"'"'en a pas.\n    color: "transparent"/' \
-    "${sortie}/applets/org.ankh.separateur/contents/ui/common/Divider.qml"
-grep -q 'color: "transparent"' "${sortie}/applets/org.ankh.separateur/contents/ui/common/Divider.qml" \
-    || { echo "Séparateur : le trait n'a pas été rendu invisible" >&2; exit 1; }
-
-# Le module partagé, un seul pour tous les applets (leur install.sh:131).
-rm -rf "${sortie}/qml"
-install -d -m 0755 "${sortie}/qml"
-cp -a "${tw}"/shared/. "${sortie}/qml/"
-remplacer_partout "tidewater" "${sortie}/qml" -e "s/Tidewater/Ankh/g" -e "s/tidewater/ankh/g"
-echo "module partagé : $(find "${sortie}/qml" -type f | wc -l) fichiers"
-
-# Le sélecteur Alt+Tab (lot 7). Ce n'est pas un applet mais un paquet
-# « KWin/WindowSwitcher », qui s'installe ailleurs et que kwinrc désigne.
+# Le volet d'état était le plus coûteux des six : pour lui faire place, la
+# disposition MASQUAIT les cinq applets natives de la zone système. Ankh DE
+# retirait donc le contrôle du volume, du Wi-Fi, du Bluetooth et de la
+# luminosité pour les remplacer par un panneau qui pilotait le matériel par
+# « wpctl », « nmcli », « rfkill » et « bluetoothctl », et dont aucune tuile
+# n'avait jamais été pressée.
 #
-# ATTENTION, et ce n'est écrit nulle part dans leur README : KWin garde le
-# code d'un sélecteur en mémoire, PAR NOM DE PAQUET, jusqu'à la déconnexion.
-# Leur install.sh contourne la chose en renommant le paquet à chaque version
-# (tidewater-switcher-<empreinte>). Nous gardons un nom fixe, parce que notre
-# kwinrc le désigne statiquement : la contrepartie est qu'une MISE À JOUR du
-# sélecteur ne prend qu'à la déconnexion suivante. C'est dit dans
-# docs/INSTALL.md plutôt que caché.
-rm -rf "${sortie}/tabbox"
-install -d -m 0755 "${sortie}/tabbox"
-cp -a "${tw}/switcher/tidewater-switcher" "${sortie}/tabbox/ankh-selecteur"
-install -d -m 0755 "${sortie}/tabbox/ankh-selecteur/contents/ui/common"
-cp -a "${tw}"/common/. "${sortie}/tabbox/ankh-selecteur/contents/ui/common/"
-ajuster_commun "${sortie}/tabbox/ankh-selecteur/contents/ui/common"
-remplacer_partout "tidewater/qml" "${sortie}/tabbox/ankh-selecteur" "s|tidewater/qml|ankh-de/qml|g"
-remplacer_partout "tidewater" "${sortie}/tabbox/ankh-selecteur" \
-    -e "s/tidewater-switcher/ankh-selecteur/g" -e "s/Tidewater/Ankh/g" -e "s/tidewater/ankh/g"
-if grep -rqi 'tidewater' "${sortie}/tabbox/ankh-selecteur"; then
-    echo "Sélecteur : « tidewater » est resté" >&2; exit 1
-fi
-python3 -I - "${sortie}/tabbox/ankh-selecteur/metadata.json" << 'META'
-import json, sys
-chemin = sys.argv[1]
-with open(chemin, encoding="utf-8") as f:
-    d = json.load(f)
-k = d.setdefault("KPlugin", {})
-k["Id"] = "ankh-selecteur"
-k["Name"] = "Ankh"
-k["Description"] = "Alt+Tab aux mesures de Windows 11"
-k["License"] = "GPL-3.0-or-later"
-k["Website"] = "https://github.com/PatrickChoumi/Ankh-DE"
-assert d.get("KPackageStructure") == "KWin/WindowSwitcher", d.get("KPackageStructure")
-with open(chemin, "w", encoding="utf-8") as f:
-    json.dump(d, f, indent=4, ensure_ascii=False)
-    f.write("\n")
-META
-echo "ankh-selecteur : $(find "${sortie}/tabbox/ankh-selecteur" -type f | wc -l) fichiers"
+# Le module QML partagé (« ankh-de/qml ») disparaît avec eux : il n'existait
+# que pour ces applets. Rien d'autre ne le lisait.
+#
+# Ce qui vient de KDE-Windows-Modern reste : le menu Démarrer a été prouvé
+# interactif (09e4950), et le style Plasma porte notre identité.
 
 # --- Le fond d'écran : « Prismes d'Ankh » --------------------------------
 #

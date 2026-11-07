@@ -515,40 +515,63 @@ case "${demarrer_present}" in
     *)   grief "impossible de savoir ce que porte la barre : la requête à plasmashell a échoué" ;;
 esac
 
-# Les pièces des lots 4 et 6, reprises de Tidewater le 2026-11-06. Chacune
-# est demandée NOMMÉMENT : « la barre a sept applets » ne dit pas lesquels,
-# et c'est exactement le genre d'approximation qui m'a fait écrire qu'un
-# menu était là quand il n'y était pas.
-nouvelles=()
-for applet in org.ankh.taches org.ankh.vuetaches org.ankh.etat org.ankh.notifications \
-              org.ankh.separateur; do
+# Les applets NATIVES que la barre doit porter (DE-015). Chacune est
+# demandée NOMMÉMENT : « la barre a sept applets » ne dit pas lesquels, et
+# c'est exactement le genre d'approximation qui m'a fait écrire qu'un menu
+# était là quand il n'y était pas.
+natives=()
+for applet in org.kde.plasma.icontasks org.kde.plasma.systemtray \
+              org.kde.plasma.digitalclock org.kde.plasma.notifications \
+              org.kde.plasma.showdesktop org.kde.plasma.panelspacer; do
     if [[ -z "${applets}" ]]; then
-        nouvelles+=("${applet}=inconnu")
+        natives+=("${applet##org.kde.plasma.}=inconnu")
     elif [[ "${applets}" == *"${applet}"* ]]; then
-        nouvelles+=("${applet}=oui")
+        natives+=("${applet##org.kde.plasma.}=oui")
     else
-        nouvelles+=("${applet}=NON")
+        natives+=("${applet##org.kde.plasma.}=NON")
         grief "${applet} n'est pas dans la barre"
     fi
 done
-echo "   pièces des lots 4 et 6 : ${nouvelles[*]}"
+echo "   applets natives : ${natives[*]}"
 
-# Le sélecteur Alt+Tab (lot 7). KWin ne dit pas lequel il a chargé ; ce qu'on
-# peut établir, c'est que kwinrc demande le nôtre ET que le paquet existe.
-# Si l'un manque, KWin retombe en silence sur le sien — le repli muet qu'on
-# ne veut plus.
+# Et l'inverse : AUCUNE des pièces retirées par DE-015 ne doit reparaître.
+# Si l'une revenait, la barre porterait deux implémentations de la même
+# responsabilité — le doublon que DE-015 supprime (CLAUDE.md §0.3).
+for parti in org.ankh.taches org.ankh.vuetaches org.ankh.etat \
+             org.ankh.notifications org.ankh.separateur org.ankh.horloge \
+             org.ankh.bureau; do
+    [[ "${applets}" == *"${parti}"* ]] \
+        && grief "${parti} est de retour dans la barre alors que DE-015 l'a retiré"
+done
+
+# LA régression que DE-015 corrige, et le contrôle qui l'empêche de revenir.
+# Jusqu'au 2026-11-07 la disposition MASQUAIT les cinq applets natives de la
+# zone système pour faire place à org.ankh.etat : plus de volume, plus de
+# Wi-Fi, plus de Bluetooth, plus de luminosité. Seule la cloche peut être
+# masquée, parce qu'elle est ajoutée à part, à droite de l'horloge.
+# Lu dans tout le fichier, et non à un index d'applet : le numéro que
+# plasmashell donne à la zone système n'est pas prévisible, et un index
+# codé en dur aurait rendu « aucune » pour la mauvaise raison — un contrôle
+# qui passe parce qu'il regarde ailleurs.
+masquees="$(ssh_vm "grep -h '^hiddenItems=' /home/ankh/.config/plasma-org.kde.plasma.desktop-appletsrc 2>/dev/null | sed 's/^hiddenItems=//' | paste -sd, -" 2>/dev/null || true)"
+echo "   zone système, icônes masquées : « ${masquees:-aucune} »"
+for vital in networkmanagement bluetooth volume brightness; do
+    [[ "${masquees}" == *"${vital}"* ]] \
+        && grief "la zone système masque org.kde.plasma.${vital} : Ankh DE retire un réglage que Plasma nu offrait"
+done
+
+# Le sélecteur Alt+Tab : celui de KWin (DE-015). Ce qu'on établit, c'est que
+# kwinrc demande « thumbnail_grid » ET que nous n'installons PAS un paquet de
+# ce nom — sans quoi kwinrc en désignerait un et KWin en chargerait un autre.
 selecteur_voulu="$(dans_session 'kreadconfig6 --file kwinrc --group TabBox --key LayoutName' || true)"
-selecteur_present=non
-ssh_vm "test -f /usr/local/share/kwin/tabbox/${selecteur_voulu}/metadata.json" 2>/dev/null \
-    && selecteur_present=oui
-echo "   Alt+Tab : kwinrc demande « ${selecteur_voulu:-rien} », paquet présent : ${selecteur_present}"
-[[ "${selecteur_voulu}" == ankh-selecteur ]] \
-    || grief "kwinrc ne demande pas notre sélecteur Alt+Tab mais « ${selecteur_voulu:-rien} »"
-[[ "${selecteur_present}" == oui ]] \
-    || grief "le paquet du sélecteur « ${selecteur_voulu} » n'est pas installé : KWin retombera sur le sien"
+notre_paquet=non
+ssh_vm "test -e /usr/local/share/kwin/tabbox/${selecteur_voulu}" 2>/dev/null && notre_paquet=oui
+echo "   Alt+Tab : kwinrc demande « ${selecteur_voulu:-rien} », paquet à nous sous ce nom : ${notre_paquet}"
+[[ "${selecteur_voulu}" == thumbnail_grid ]] \
+    || grief "kwinrc ne demande pas le sélecteur natif de KWin mais « ${selecteur_voulu:-rien} »"
+[[ "${notre_paquet}" == non ]] \
+    || grief "nous installons un sélecteur nommé « ${selecteur_voulu} » : il masquerait celui de KWin"
 
-# Le module QML partagé : sans lui, les quatre applets repris démarrent sur
-# une erreur QML et la barre les affiche vides.
 fond_present=non
 ssh_vm 'test -s /usr/local/share/wallpapers/Ankh-Prismes/contents/images_dark/3840x2160.png' \
     2>/dev/null && fond_present=oui
@@ -556,10 +579,15 @@ fond_pose="$(dans_session 'kreadconfig6 --file plasma-org.kde.plasma.desktop-app
 echo "   fond d'écran : paquet ${fond_present}, posé « ${fond_pose:-?} »"
 [[ "${fond_present}" == oui ]] || grief "le fond d'écran Ankh-Prismes n'est pas installé"
 
-module_present=non
-ssh_vm 'test -f /usr/local/share/ankh-de/qml/Settings.qml' 2>/dev/null && module_present=oui
-echo "   module QML partagé : ${module_present}"
-[[ "${module_present}" == oui ]] || grief "le module QML partagé est absent de /usr/local/share/ankh-de/qml"
+# Plus de module QML partagé : « ankh-de/qml » n'existait que pour les
+# applets repris de Tidewater (DE-015). Ce qu'on vérifie désormais, c'est
+# qu'il ne traîne PAS — un reste de third_party/sortie réinstallerait des
+# pièces que la barre ne demande plus.
+module_reste=non
+ssh_vm 'test -e /usr/local/share/ankh-de/qml' 2>/dev/null && module_reste=oui
+echo "   reste du module QML partagé : ${module_reste}"
+[[ "${module_reste}" == non ]] \
+    || grief "/usr/local/share/ankh-de/qml existe encore alors que DE-015 l'a retiré"
 
 # Ce que la SESSION elle-même a constaté de ses pièces, au démarrage
 # (ANKH-PIECE, src/session/ankh-de-session.in). C'est le contrôle qui vaut

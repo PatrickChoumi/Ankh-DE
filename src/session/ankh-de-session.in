@@ -102,15 +102,15 @@ ankh_de_verifier_piece() { # $1 : libellé, $2 : chemin attendu
     fi
 }
 if [ -d "${ANKH_DE_DATADIR}" ]; then
+    # Depuis DE-015, UNE SEULE pièce de la barre nous appartient : Démarrer.
+    # Les cinq autres (taches, etat, separateur, module QML partagé,
+    # sélecteur Alt+Tab) ont été retirées au profit des applets natives de
+    # Plasma, qui sont livrées avec Plasma : les vérifier ici n'aurait aucun
+    # sens, et leur absence ne pourrait plus rien dire.
     ankh_de_verifier_piece "applet Démarrer"   "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.demarrer"
-    ankh_de_verifier_piece "applet barre"      "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.taches"
-    ankh_de_verifier_piece "applet état"       "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.etat"
-    ankh_de_verifier_piece "séparateur"        "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.separateur"
-    ankh_de_verifier_piece "module QML partagé" "${ANKH_DE_DATADIR}/ankh-de/qml/Settings.qml"
     ankh_de_verifier_piece "style Plasma"      "${ANKH_DE_DATADIR}/plasma/desktoptheme/ankh"
     ankh_de_verifier_piece "thème d'icônes"    "${ANKH_DE_DATADIR}/icons/Fluent-Ankh"
     ankh_de_verifier_piece "curseurs"          "${ANKH_DE_DATADIR}/icons/Ankh-curseurs"
-    ankh_de_verifier_piece "sélecteur Alt+Tab" "${ANKH_DE_DATADIR}/kwin/tabbox/ankh-selecteur"
     ankh_de_verifier_piece "fond d'écran"      "${ANKH_DE_DATADIR}/wallpapers/Ankh-Prismes"
 fi
 

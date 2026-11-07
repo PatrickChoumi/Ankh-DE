@@ -48,6 +48,12 @@ Pour toute fonctionnalité, une seule stratégie, choisie dans cet ordre :
 > **Ne développe pas une fonctionnalité avant d'avoir prouvé qu'elle n'existe ni dans Ankh DE,
 > ni dans KDE Plasma, ni dans un composant libre réutilisable.**
 
+Cette règle a été enfreinte dans les deux sens, et DE-015 l'a corrigé le 2026-11-07 : huit
+applets avaient été **importés** là où Plasma fournissait déjà la fonction. IMPORT était devenu
+le défaut, à la place de CONFIGURE. Deux de ces imports reposaient même sur une valeur écrite de
+mémoire et fausse (l'horloge de Plasma sait mettre la date sous l'heure ; `iconSpacing` est un
+entier, pas une énumération). **Avant d'importer : ouvrir le `main.xml` de l'applet natif.**
+
 ### 0.2 Les cinq états, qu'il ne faut jamais confondre
 
 C'est l'erreur que ce projet a commise le plus souvent, et la plus coûteuse :
@@ -103,6 +109,17 @@ Et une version n'est « stabilisée » que si **Construire, Banc et VM passent s
 
 ## 2. État actuel
 
+- **2026-11-07, DE-015 : la barre est devenue native, sauf Démarrer.** Huit applets repris
+  (`etat`, `notifications`, `taches`, `vuetaches`, `separateur`, `horloge`, `bureau`,
+  `ankh-selecteur`) sont remplacés par ceux de Plasma. Un seul avait été prouvé interactif, et
+  pour faire place au volet d'état la disposition **masquait** les cinq applets natives de la
+  zone système : Ankh DE retirait le volume, le Wi-Fi, le Bluetooth et la luminosité. Ce qui
+  reste à nous est ce qui fait Ankh : style Qt, décoration, style Plasma, couleurs, Selawik,
+  icônes, curseurs, fond d'écran et menu Démarrer.
+- **2026-11-07, DE-016 : la cible est Ubuntu 26.04 LTS, donc Plasma 6.6**, avec une plage
+  éprouvée de 6.6 à 6.8. Le CMake exigeait l'égalité avec 6.8 : Ankh DE refusait de se construire
+  sur sa propre cible, et la CI ne le voyait pas parce qu'elle passait
+  `-DANKH_DE_PLASMA_NON_TESTE=ON` partout.
 - **Lot en cours : 4 — le shell.** Le lot 0 est **fini** : le DE se compile sur trois
   distributions, s'installe, et sa session s'ouvre dans une VM. L'état complet, lot par lot, est
   dans [ROADMAP.md](ROADMAP.md).
@@ -144,7 +161,8 @@ Elles ne se contournent pas. Si une règle bloque, on ouvre une décision dans D
 ### Périmètre
 1. On ne remplace ni le compositeur, ni le gestionnaire de session, ni `plasmashell` (DE-001).
 2. **Reprendre du code libre est permis, et préféré à le réécrire** (DE-011, qui a remplacé
-   l'interdiction d'origine le 2026-11-06). Cinq conditions, toutes vérifiables : licence
+   l'interdiction d'origine le 2026-11-06) — mais **après** avoir prouvé que Plasma ne fournit
+   pas déjà la fonction (DE-015, 2026-11-07). Cinq conditions, toutes vérifiables : licence
    compatible GPL-3.0-or-later **portée par un fichier de licence** ; commit figé ; provenance
    tracée dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md) avec sa nature et ses modifications ; rien
    de Microsoft, ni aucun motif qui ressemble à un de ses logos (DE-013) ; et **aucune pièce qui

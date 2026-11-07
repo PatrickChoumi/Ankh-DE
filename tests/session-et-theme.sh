@@ -113,7 +113,12 @@ attendre "facteur d'animation"          "0.8333333"   "$(lire --group KDE --key 
 # 2026-11-06 sans qu'aucun test ne le voie, parce qu'aucun ne regardait ici.
 attendre "thème global de la session"   "org.ankh.de.desktop" \
     "$(lire --group KDE --key LookAndFeelPackage)"
-attendre "Alt+Tab"                      "ankh-selecteur" \
+# DE-015 : le sélecteur est « thumbnail_grid », celui que KWin livre
+# lui-même (src/tabbox/switchers de plasma/kwin). Il est donc présent partout
+# où KWin est présent, Plasma 6.6 de la cible Ubuntu comprise — ce qui n'est
+# pas vrai de tous les sélecteurs, dont certains viennent de
+# plasma-workspace.
+attendre "Alt+Tab"                      "thumbnail_grid" \
     "$(lire --file kwinrc --group TabBox --key LayoutName)"
 # Portés par la session depuis le 2026-11-05 : le thème global ne les écrit
 # jamais (vérifié).
@@ -258,9 +263,10 @@ fi
 applets="${prefixe}/share/plasma/plasmoids"
 if [[ -d "${applets}/org.ankh.demarrer" ]]; then
     echo "== Les applets"
-    for id in org.ankh.demarrer org.ankh.horloge org.ankh.bureau \
-              org.ankh.etat org.ankh.notifications org.ankh.taches org.ankh.vuetaches \
-              org.ankh.separateur; do
+    # DE-015 : un seul applet nous appartient désormais. Les sept autres ont
+    # été remplacés par les applets natives de Plasma, qui ne s'installent
+    # pas ici parce qu'elles arrivent avec Plasma.
+    for id in org.ankh.demarrer; do
         verifies=$((verifies + 1))
         if [[ -f "${applets}/${id}/metadata.json" ]]; then
             printf '  ok    %s\n' "${id}"
@@ -269,16 +275,17 @@ if [[ -d "${applets}/org.ankh.demarrer" ]]; then
             echecs=$((echecs + 1))
         fi
     done
-    # Le sélecteur Alt+Tab (lot 7) n'est pas un applet : c'est un paquet
-    # KWin/WindowSwitcher, et src/config/kwinrc le désigne par son nom.
-    # Si le nom et le paquet divergent, KWin retombe en silence sur le sien.
+    # Le sélecteur Alt+Tab ne s'installe plus chez nous (DE-015) : c'est
+    # celui de KWin. Ce qu'on vérifie ici, c'est qu'on n'en installe PAS un
+    # second sous ce nom — sans quoi kwinrc en désignerait un et KWin en
+    # chargerait un autre, en silence.
     verifies=$((verifies + 1))
     nom_voulu="$(lire --file kwinrc --group TabBox --key LayoutName)"
-    if [[ -f "${prefixe}/share/kwin/tabbox/${nom_voulu}/metadata.json" ]]; then
-        printf '  ok    %-44s %s\n' "le sélecteur Alt+Tab désigné est installé" "${nom_voulu}"
-    else
-        echo "  ECHEC kwinrc demande « ${nom_voulu} », absent de ${prefixe}/share/kwin/tabbox/" >&2
+    if [[ -e "${prefixe}/share/kwin/tabbox/${nom_voulu}" ]]; then
+        echo "  ECHEC nous installons un sélecteur « ${nom_voulu} » alors que celui de KWin est attendu" >&2
         echecs=$((echecs + 1))
+    else
+        printf '  ok    %-44s %s\n' "le sélecteur attendu est celui de KWin" "${nom_voulu}"
     fi
 
     # Le fond d'écran, et surtout ses DEUX variantes : un paquet qui n'a que
@@ -309,26 +316,23 @@ print(d.get('X-KDE-PlasmaImageWallpaper-AccentColor', {}).get('Dark', ''))
         echecs=$((echecs + 1))
     fi
 
-    # Le module QML partagé. Les applets repris de Tidewater l'atteignent par
-    # « ../../../../../ankh-de/qml » depuis leur contents/ui : cinq niveaux
-    # exactement. Un applet installé sans lui démarre sur une erreur QML, que
-    # rien d'autre ne verrait ici.
+    # Plus de module QML partagé à vérifier : « ankh-de/qml » n'existait que
+    # pour les applets repris de Tidewater, tous retirés (DE-015). En
+    # revanche, il ne doit plus RIEN rester de ces applets, sinon la barre en
+    # porterait deux de chaque — exactement le doublon que DE-015 supprime.
     verifies=$((verifies + 1))
-    if [[ -f "${prefixe}/share/ankh-de/qml/Settings.qml" ]]; then
-        printf '  ok    %s\n' "le module QML partagé est en place"
+    restes=""
+    for parti in org.ankh.etat org.ankh.notifications org.ankh.taches \
+                 org.ankh.vuetaches org.ankh.separateur org.ankh.horloge \
+                 org.ankh.bureau; do
+        [[ -e "${applets}/${parti}" ]] && restes="${restes} ${parti}"
+    done
+    [[ -e "${prefixe}/share/ankh-de/qml" ]] && restes="${restes} ankh-de/qml"
+    [[ -e "${prefixe}/share/kwin/tabbox/ankh-selecteur" ]] && restes="${restes} ankh-selecteur"
+    if [[ -z "${restes}" ]]; then
+        printf '  ok    %s\n' "aucune pièce retirée par DE-015 n'est installée"
     else
-        echo "  ECHEC ${prefixe}/share/ankh-de/qml/Settings.qml est absent" >&2
-        echecs=$((echecs + 1))
-    fi
-    # Et le chemin relatif doit TOMBER dessus. On le résout vraiment, depuis
-    # le dossier d'un applet qui l'importe, plutôt que de compter les niveaux
-    # à la main.
-    verifies=$((verifies + 1))
-    depuis="${applets}/org.ankh.etat/contents/ui"
-    if [[ -d "${depuis}" ]] && [[ -f "${depuis}/../../../../../ankh-de/qml/Settings.qml" ]]; then
-        printf '  ok    %s\n' "l'import relatif du module partagé aboutit"
-    else
-        echo "  ECHEC depuis ${depuis}, « ../../../../../ankh-de/qml » ne mène nulle part" >&2
+        echo "  ECHEC des pièces retirées par DE-015 sont encore installées :${restes}" >&2
         echecs=$((echecs + 1))
     fi
 
