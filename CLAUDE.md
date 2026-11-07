@@ -13,8 +13,79 @@
 > | Comment reporter sur une nouvelle version de Plasma | [docs/REBASE.md](docs/REBASE.md) |
 > | Comment c'est agencé, et le rapport avec Ankh | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
 >
+> | **Quoi reprendre, où, et pourquoi pas** | [docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) |
+> | **Ce qui existe déjà : ne pas le réécrire** | [docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md) |
+>
 > En cas de contradiction : **DECISIONS.md fait foi pour les choix**, **ANKH-DE-SPEC.md pour la
 > cible**. Ce fichier est alors à corriger.
+
+---
+
+## 0. Les deux consignes permanentes — à lire AVANT d'écrire quoi que ce soit
+
+Deux documents du propriétaire, déposés le 2026-11-07, sont **contraignants** et le restent :
+[docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) et
+[docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md). Ils sont dans le dépôt pour
+être relus, pas cités de mémoire : quand une décision d'intégration se pose, on les ouvre.
+
+Ce qui suit en est le noyau, répété ici parce que CE fichier est chargé à chaque session et
+qu'une règle qu'on ne relit pas est une règle qu'on oublie.
+
+### 0.1 L'ordre de choix, et BUILD n'est jamais le défaut
+
+Pour toute fonctionnalité, une seule stratégie, choisie dans cet ordre :
+
+| | |
+|---|---|
+| **KEEP** | c'est déjà là et correct — ne pas le réécrire |
+| **CONFIGURE** | KDE le fournit — configurer, exposer, habiller le natif |
+| **ADAPT** | un composant repris en est proche — l'adapter, sans en importer un second |
+| **IMPORT** | la fonction manque VRAIMENT — reprendre le minimum, après audit de licence |
+| **BUILD** | rien ne convient — écrire, et seulement là |
+| **DEFER** | hors périmètre ou risqué — ne pas faire dans cette version |
+
+> **Ne développe pas une fonctionnalité avant d'avoir prouvé qu'elle n'existe ni dans Ankh DE,
+> ni dans KDE Plasma, ni dans un composant libre réutilisable.**
+
+### 0.2 Les cinq états, qu'il ne faut jamais confondre
+
+C'est l'erreur que ce projet a commise le plus souvent, et la plus coûteuse :
+
+**code présent** → **installé** → **chargé dans la session** → **interactif** → **validé**
+
+Une compilation ne prouve pas qu'un greffon est chargé. Un applet installé ne prouve pas qu'il
+est dans la barre. Une capture ne prouve pas qu'un bouton répond. Tant qu'un critère manque, on
+écrit `PARTIEL`, `INTÉGRÉ-NON VÉRIFIÉ` ou `BLOQUÉ` — jamais `FINI`.
+
+### 0.3 Une seule implémentation par responsabilité
+
+Un seul lanceur, un seul gestionnaire de tâches, un seul hôte de zone système, un seul contrôleur
+de notifications, une seule horloge, un seul sélecteur Alt+Tab, un seul moteur de recherche, un
+seul gestionnaire clair/sombre, un seul gestionnaire réseau et énergie.
+
+Une interface d'Ankh peut remplacer l'APPARENCE d'une fonction native ; elle ne doit jamais
+démarrer un second service pour la même responsabilité.
+
+### 0.4 Ce qu'on ne fait pas, quoi qu'il arrive
+
+- ne pas remplacer `plasmashell`, KWin, le compositeur ou le gestionnaire de session ;
+- ne pas ajouter une deuxième barre, un deuxième menu, une deuxième horloge, un deuxième
+  gestionnaire de tâches ;
+- ne pas importer `icontasks` de KDE-Windows-Modern (identifiant `org.kde.plasma.icontasks`,
+  celui de l'applet standard, plus 11 fichiers C++) ni sa zone système (40 fichiers C++) ;
+- ne pas poser Kvantum à côté du QStyle d'Ankh ;
+- ne pas reprendre un installateur amont, qui réécrit la configuration de l'utilisateur ;
+- ne pas copier de code dont la licence n'est pas portée par un fichier (`menu-11-next`,
+  `quicksettings-plasma` : **STUDY ONLY**) ni d'actif Microsoft (sons de NeoWin, logos) ;
+- ne pas monter le plancher Qt/KF pour une fonction facultative (`PlasmaZones` exige Qt 6.10).
+
+### 0.5 La règle de CI, sans exception
+
+Tout contrôle qui échoue doit **sortir en code non nul**. Interdit : `|| true` sur un verdict,
+une assertion non bloquante, un script qui imprime « ÉCHEC » puis sort en 0. Ce dépôt l'a fait
+trois fois ; `bench/vm/essayer.sh` rassemble désormais ses griefs et c'est sa fin qui décide.
+
+Et une version n'est « stabilisée » que si **Construire, Banc et VM passent sur le MÊME SHA**.
 
 ---
 

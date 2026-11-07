@@ -141,6 +141,12 @@ fi
 # en charge » vers 6.8.x — et README.md:114 disait encore la même chose le
 # lendemain. Une correction qui vise un fichier à la main en manque un autre.
 #
+# docs/consignes/ est exclu, et pour une raison plus forte que les autres :
+# ce sont les documents du propriétaire, reproduits tels quels. On ne
+# réécrit pas le texte de quelqu'un d'autre pour faire taire un contrôle —
+# et leurs mentions de « Plasma 6.6 » sont justes : elles parlent de
+# Tidewater, pas de notre cible.
+#
 # La source de vérité est « plasma= » de src/decoration/VERSION-BREEZE, que le
 # CMake fait respecter (DE-008). Aucun document ne doit annoncer autre chose.
 # Deux lignes nomment légitimement une AUTRE version, et les taire en bloc
@@ -176,8 +182,33 @@ else
             && signaler "${fichier}:${ligne} annonce Plasma ${mauvaise}, mais VERSION-BREEZE vise ${plasma_vise}"
     done < <(grep -rnE 'Plasma \*{0,2}6\.[0-9]+' --include='*.md' . 2>/dev/null \
              | grep -v '^\./\.git' | grep -v '^\./AUDIT\.md' | grep -v '^\./AVANCEMENT\.md' \
-             | grep -v '^\./CHANGELOG\.md' | grep -v '^\./DECISIONS\.md')
+             | grep -v '^\./CHANGELOG\.md' | grep -v '^\./DECISIONS\.md' \
+             | grep -v '^\./docs/consignes/')
 fi
+
+# --- 6. Les consignes permanentes du propriétaire -------------------------
+# Deux documents déposés le 2026-11-07 sont contraignants. Ils ont déjà un
+# précédent fâcheux dans ce dépôt : une règle qui n'est pas contrôlée finit
+# par être contredite ailleurs sans que rien ne le dise (DE-011 contre
+# CLAUDE.md, l'interdiction du code tiers dans UPSTREAMS.md).
+#
+# On vérifie donc qu'ils existent, qu'ils ne sont pas vidés, et que CLAUDE.md
+# — le seul fichier lu à chaque session — y renvoie.
+CONSIGNES=(
+    "docs/consignes/INTEGRATION-SOURCES.md"
+    "docs/consignes/ANTI-DOUBLONS.md"
+)
+for consigne in "${CONSIGNES[@]}"; do
+    if [[ ! -s "${consigne}" ]]; then
+        signaler "la consigne permanente ${consigne} est absente ou vide"
+        continue
+    fi
+    lignes="$(wc -l < "${consigne}")"
+    (( lignes >= 100 )) \
+        || signaler "${consigne} ne fait que ${lignes} lignes : elle a été tronquée"
+    grep -qF -- "${consigne}" CLAUDE.md \
+        || signaler "CLAUDE.md ne renvoie pas à ${consigne}, qui ne sera donc jamais lue"
+done
 
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then
