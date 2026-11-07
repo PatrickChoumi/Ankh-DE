@@ -728,6 +728,26 @@ echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
 # Une barre en verre ne se mesure que sur un fond qui tranche avec elle.
 plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","255,255,255"); })' > /dev/null || true
 
+# Le menu Démarrer est resté ouvert depuis l'étape 10 : il couvre une partie
+# du bas de l'écran. On le referme avant de mesurer.
+dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu" \
+    > /dev/null 2>&1 || true
+sleep 2
+
+# La barre OPAQUE, le temps de la mesure — et c'est la correction qui compte.
+#
+# Capture du 2026-11-07 à l'appui : la barre est bien dessinée, mais son fond
+# est en verre. Sur un papier peint blanc elle devient blanche, et il ne
+# reste que les icônes. À l'abscisse 200 il n'y a donc rien à voir, et deux
+# passages ont conclu « colonne uniforme » — l'instrument avait raison, c'est
+# le protocole qui était faux.
+#
+# On mesure la GÉOMÉTRIE, pas la matière : rendue opaque, la barre tranche
+# sur le fond et sa hauteur se lit. L'opacité réelle, elle, a déjà été
+# relevée plus haut dans la configuration (« barre.opacite »), là où elle est
+# exacte.
+plasma_script 'panels().forEach(function(p){ p.opacity="opaque" })' > /dev/null || true
+
 # On ne photographie plus à l'aveugle après trois secondes. Changer le papier
 # peint fait recharger le conteneur, et la barre disparaît un instant : le
 # 2026-11-06 sur fond noir puis le 2026-11-07 sur fond blanc, le cliché a été
@@ -769,6 +789,10 @@ bande.resize((bande.width * 3, bande.height * 3), Image.NEAREST).save(sys.argv[2
 print('   vm-barre.png : les %d px du bas, à l\'échelle 3' % bande.height)
 " "${travail}/barre.ppm" "${sortie}/vm-barre.png" 2>/dev/null || true
 fi
+
+# La barre retrouve son verre : le passage ne doit pas laisser la session
+# dans un état qu'il a lui-même fabriqué pour mesurer.
+plasma_script 'panels().forEach(function(p){ p.opacity="translucent" })' > /dev/null || true
 
 python3 -I - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
     "${barre_flottante}" "${horloge_date}" "${notif_position}" "${mesure_barre}" \
