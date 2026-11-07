@@ -160,7 +160,16 @@ def barre(image, x, fond=(255, 255, 255)):
     while y >= 0 and ecart(image.px(x, y), fond) >= SEUIL_FOND:
         y -= 1
     hauteur = bas - y
-    couleur = image.px(x, (bas + y) // 2 + 1) if hauteur else fond
+    # Aucune barre trouvée : la colonne est de la couleur du fond de bout en
+    # bout. Deux passages l'ont déjà rencontré — sur fond noir le 2026-11-06,
+    # sur fond blanc le 2026-11-07 — et le relevé annonçait chaque fois
+    # « marge 800, hauteur 0 », c'est-à-dire l'écran entier pris pour du vide.
+    #
+    # On rend None plutôt qu'un nombre. Un appelant qui écrit « 800 » là où
+    # rien n'a été vu ment deux fois : sur la mesure, et sur l'instrument.
+    if hauteur == 0:
+        return None, None, None
+    couleur = image.px(x, (bas + y) // 2 + 1)
     return espace, hauteur, hexa(couleur)
 
 
@@ -270,7 +279,12 @@ def main(arguments):
         z = zone_rouge(lire_ppm(reste[0]), *map(int, reste[1:]))
         print("? ? ?" if z is None else "%d %d %s" % z)
     elif commande == "barre" and len(reste) == 2:
-        print("%d %d %s" % barre(lire_ppm(reste[0]), int(reste[1])))
+        releve = barre(lire_ppm(reste[0]), int(reste[1]))
+        if releve[0] is None:
+            # « ? ? ? » : l'appelant sait alors qu'il n'y a rien à écrire.
+            print("? ? ?")
+        else:
+            print("%d %d %s" % releve)
     elif commande == "couleur" and len(reste) == 3:
         print(hexa(lire_ppm(reste[0]).px(int(reste[1]), int(reste[2]))))
     elif commande == "rapport" and len(reste) == 3:

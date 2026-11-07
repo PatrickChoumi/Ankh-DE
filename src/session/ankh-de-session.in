@@ -74,11 +74,31 @@ fi
 #
 # C'est un avertissement, jamais un refus : une session dégradée reste une
 # session, et laisser l'utilisateur dehors serait pire.
+# Où écrire pour être LU. Un « echo » depuis ce script part dans la sortie
+# standard de la session, que le gestionnaire de connexion range où il veut —
+# sur Fedora, dans ~/.local/share/sddm/wayland-session.log, et PAS dans le
+# journal. Constaté le 2026-11-07 : le passage en VM n'a trouvé aucune ligne
+# ANKH-PIECE, ni dans le journal utilisateur ni dans celui du système, alors
+# que le contrôle avait bien tourné.
+#
+# « systemd-cat » les y met pour de bon. À défaut, « logger ». À défaut des
+# deux, un echo : la sortie standard vaut mieux que rien.
+ankh_de_journal() { # $1 : la ligne
+    if command -v systemd-cat > /dev/null 2>&1; then
+        printf '%s\n' "$1" | systemd-cat -t ankh-de -p info
+    elif command -v logger > /dev/null 2>&1; then
+        logger -t ankh-de -p user.info -- "$1"
+    fi
+    # Toujours sur la sortie standard aussi : elle finit dans le journal de
+    # session du gestionnaire de connexion, qui est consultable lui aussi.
+    printf '%s\n' "$1"
+}
+
 ankh_de_verifier_piece() { # $1 : libellé, $2 : chemin attendu
     if [ -e "$2" ]; then
-        echo "ANKH-PIECE ok      $1"
+        ankh_de_journal "ANKH-PIECE ok      $1"
     else
-        echo "ANKH-PIECE ABSENTE $1 ($2) : Plasma retombera sur la sienne, sans le dire"
+        ankh_de_journal "ANKH-PIECE ABSENTE $1 ($2) : Plasma retombera sur la sienne, sans le dire"
     fi
 }
 if [ -d "${ANKH_DE_DATADIR}" ]; then

@@ -564,10 +564,20 @@ echo "   module QML partagé : ${module_present}"
 # (ANKH-PIECE, src/session/ankh-de-session.in). C'est le contrôle qui vaut
 # pour tous les modes d'installation — y compris le RPM seul, qui ne porte
 # pas les pièces fabriquées par preparer.sh.
-pieces="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-PIECE.*' | sort -u" || true)"
+# Trois endroits, parce que la destination dépend du gestionnaire de
+# connexion : le journal utilisateur, le journal du système (systemd-cat y
+# écrit sous l'étiquette « ankh-de »), et le journal de session que SDDM
+# tient à part — c'est là que partait tout, le 2026-11-07, et le harnais
+# n'y regardait pas.
+pieces="$(ssh_vm "{ journalctl --user --no-pager -b 2>/dev/null
+                    sudo journalctl --no-pager -b -t ankh-de 2>/dev/null
+                    cat ~/.local/share/sddm/wayland-session.log 2>/dev/null
+                    sudo cat /var/log/sddm.log 2>/dev/null
+                  } | grep -o 'ANKH-PIECE.*' | sort -u" || true)"
 if [[ -n "${pieces}" ]]; then
     printf '%s\n' "${pieces}" | sed 's/^/   /'
     absentes="$(grep -c 'ABSENTE' <<< "${pieces}" || true)"
+    absentes="${absentes:-0}"
     (( absentes == 0 )) \
         || grief "${absentes} pièce(s) désignée(s) par le thème sont absentes : Plasma retombe sur les siennes"
 else
@@ -677,7 +687,7 @@ fi
     echo "- Alt+Tab : kwinrc demande \`${selecteur_voulu:-rien}\`, paquet présent : ${selecteur_present}"
     echo "- module QML partagé : ${module_present}"
     echo "- fond d'écran : paquet ${fond_present}, posé \`${fond_pose:-?}\`"
-    echo "- pièces désignées absentes : $(grep -c 'ABSENTE' <<< "${pieces}" 2>/dev/null || echo '?')"
+    echo "- pièces désignées absentes : ${absentes:-inconnu}"
     echo "- erreurs sur nos pièces : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
 
@@ -717,15 +727,34 @@ echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
 # « marge_bas=800, hauteur_visible=0 » — l'écran entier pris pour du vide.
 # Une barre en verre ne se mesure que sur un fond qui tranche avec elle.
 plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","255,255,255"); })' > /dev/null || true
-sleep 3
-printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
-    "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
 
-mesure_barre="?"
+# On ne photographie plus à l'aveugle après trois secondes. Changer le papier
+# peint fait recharger le conteneur, et la barre disparaît un instant : le
+# 2026-11-06 sur fond noir puis le 2026-11-07 sur fond blanc, le cliché a été
+# pris pendant ce trou et le relevé annonçait « 800 / 0 » — l'écran entier
+# pris pour du vide, deux fois de suite, sur deux fonds opposés.
+#
+# On reprend donc le cliché jusqu'à ce que la barre y SOIT, et on dit au bout
+# de combien de temps. Si elle n'y est jamais, c'est un grief : soit la barre
+# ne se redessine pas, soit l'instrument est aveugle, et les deux méritent
+# qu'on le sache.
+mesure_barre="? ? ?"
+attente_barre=0
+for essai in $(seq 12); do          # 12 × 3 s = 36 secondes
+    sleep 3
+    attente_barre=$((essai * 3))
+    printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+        "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+    [[ -s "${travail}/barre.ppm" ]] || continue
+    mesure_barre="$(python3 -I "${racine}/bench/mesurer.py" barre "${travail}/barre.ppm" 200 2>/dev/null || echo '? ? ?')"
+    [[ "${mesure_barre}" == "? ? ?" ]] || break
+done
+
 if [[ -s "${travail}/barre.ppm" ]]; then
-    # mesurer.py rend « espace_sous hauteur couleur » à l'abscisse donnée.
-    mesure_barre="$(python3 "${racine}/bench/mesurer.py" barre "${travail}/barre.ppm" 200 2>/dev/null || echo '? ? ?')"
-    echo "   sur l'image (espace sous, hauteur, couleur) : ${mesure_barre}"
+    if [[ "${mesure_barre}" == "? ? ?" ]]; then
+        grief "la barre est introuvable sur l'image après ${attente_barre} s : la colonne est uniforme"
+    fi
+    echo "   sur l'image après ${attente_barre} s (espace sous, hauteur, couleur) : ${mesure_barre}"
     # « vm-barre.png » portait un nom de recadrage et montrait tout l'écran :
     # elle faisait exactement les mêmes octets que vm-bureau.png. On recadre
     # vraiment sur le bas de l'écran, pour que l'image montre ce que son nom
