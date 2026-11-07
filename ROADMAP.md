@@ -31,7 +31,8 @@ standard de Plasma et 11 fichiers C++ ; sa zone système est un fork du conteneu
 fichiers C++ et 6 585 lignes de QML. Le relevé complet, avec ce que leur README ne dit pas, est
 dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
 
-**Compte des mesures : 18 jetons sur 53.** Le détail est dans
+**Compte des mesures : 25 jetons sur 53, mesurés ET conformes.** Deux autres jetons de la barre
+sont relevés faux et ne comptent pas. Le détail est dans
 [docs/FIDELITE.md](docs/FIDELITE.md), généré depuis `bench/jetons.toml`.
 
 **Ce qui livre quoi** : `bench/captures.sh` mesure le style sans VM, à chaque PR ;
@@ -113,9 +114,17 @@ section « Mise en œuvre : onze lots ». Résumé des pièces à écrire :
   réglé par `org.ankh.separateur`, 9 px sans trait.
   **Reste à mesurer** : la taille des icônes de la barre, leur espacement, l'écart que ce
   séparateur produit vraiment à l'écran, et `volet.rayon`.
-- **Lot 5** — `src/applets/org.ankh.demarrer/` : Démarrer en QML, dérivé de Kickoff. Recherche en
-  haut, 6 × 3 épingles de 32 px, « Toutes les applications », « Recommandé », compte et
-  alimentation en bas. Dépend de `org.kde.plasma.private.kicker` : fragile (SPEC §4.3).
+- **Lot 5** — `org.ankh.demarrer`, repris de KDE-Windows-Modern. **Il s'ouvre**, vérifié en VM
+  le 2026-11-06 (`a71432e`) : disposition d'Ankh évaluée, applet présent dans la barre, 9,48 %
+  de l'écran qui change en une boîte centrée de 662×696 — donc pas Kickoff, qui serait collé à
+  gauche.
+  **Ce qui n'est pas vérifié** : qu'on puisse y taper une recherche, lancer une application,
+  naviguer au clavier ou refermer par Échap. Le harnais ne sait pas encore cliquer — c'est
+  `À VALIDER MANUELLEMENT`, et ce n'est pas la même chose que « testé ».
+  **Ce qui manque au dessin** : la grille 6 × 3 d'épingles et la section « Recommandé ». La
+  capture n'en montre qu'une seule, et une colonne de dossiers à la place du « Recommandé » —
+  c'est le menu de KDE-Windows-Modern, pas encore celui de Windows 11.
+  Dépend de `org.kde.plasma.private.kicker` : fragile (SPEC §4.3).
 - **Lot 6** — **repris de Tidewater le 2026-11-06** (`org.ankh.etat`, `org.ankh.notifications`) :
   un seul volet (Wi-Fi, Bluetooth, volume, luminosité) et un centre de notifications, en QML,
   sans une ligne à compiler. Il appelle `wpctl`, `nmcli`, `rfkill`, `bluetoothctl` et `busctl` :

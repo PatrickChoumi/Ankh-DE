@@ -38,11 +38,26 @@
   s'ouvre, `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
   `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
   fontconfig, et les vérifications de `tests/session-et-theme.sh` passent *dans la session*.
-- **18 jetons sur 53 mesurés** : 12 pour les contrôles (lot 3, sans VM, à chaque PR) et 6 pour
-  les fenêtres (lot 2, par un vrai KWin en backend `--virtual`).
-- **Le menu Démarrer est livré mais n'a pas encore été ouvert.** Au passage du 2026-11-06 il
-  n'était même pas chargé : la session n'annonçait pas `XDG_DATA_DIRS`. Corrigé ; la preuve
-  reste à faire.
+- **25 jetons sur 53 mesurés ET conformes** : 12 pour les contrôles (lot 3, sans VM, à chaque
+  PR), 6 pour les fenêtres (lot 2, par un vrai KWin en backend `--virtual`) et 7 pour la barre
+  (lot 4, lus dans la configuration de la session en VM le 2026-11-06 : hauteur 48, position
+  `bottom`, non flottante, alignement `center`, longueur `fill`, masquage `none`, décalage 0).
+  Deux autres jetons du lot 4 — `barre.marge_bas` et `barre.hauteur_visible` — ont été relevés
+  FAUX (800 et 0) : la mesure posait un fond noir sous une barre translucide sombre, et les
+  deux se confondaient. Corrigé le 2026-11-07, pas encore rejoué. Compter un relevé faux parmi
+  les mesures serait mentir deux fois.
+- **Le menu Démarrer s'ouvre**, vérifié en VM le 2026-11-06 (`a71432e`) par trois sondes
+  indépendantes : `plasmashell` journalise avoir évalué NOTRE disposition, `org.ankh.demarrer`
+  est dans la barre, et 9,48 % de l'écran change à l'ouverture, en une boîte de 662×696 centrée.
+  Deux diagnostics faux ont précédé le bon — `XDG_DATA_DIRS` ne manquait pas, et le silence du
+  script venait d'une catégorie de journal muette. La cause était
+  `kdeglobals [KDE] LookAndFeelPackage`, écrit nulle part (DE-014).
+- **Ce qui n'est PAS établi, et qu'il ne faut pas confondre** : une pièce *installée*, une pièce
+  *chargée dans la barre* et une pièce *qui répond*. Les applets repris de Tidewater
+  (`org.ankh.etat`, `notifications`, `taches`, `vuetaches`, `separateur`) sont installés et
+  chargés ; **aucune de leurs interactions n'est testée** — ni Wi-Fi, ni Bluetooth, ni volume,
+  ni Alt+Tab entre deux fenêtres. Et `icontasks` reste celui de Plasma pour les fenêtres
+  ouvertes : la barre est mixte, et le dire autrement serait faux.
 - Ne jamais présenter une mesure d'Ankh comme une mesure d'Ankh DE : citer le dépôt et le run.
 - **Version de Plasma visée : 6.8** (`src/*/VERSION-BREEZE`). La source reste Breeze 6.7.5, qui
   compile tel quel contre 6.8. Monter de version est **notre** décision de release, pas une

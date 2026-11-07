@@ -31,7 +31,9 @@ sans modifier un seul fichier de la distribution, et se retire d'un geste.
 > ([DE-014](DECISIONS.md)). Ce déguisement a tenu le défaut caché plusieurs jours, et trois
 > constats du harnais s'affichaient en « ÉCHEC » dans un passage vert. Les deux sont corrigés.
 >
-> **18 jetons sur 53 mesurés.** Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
+> **25 jetons sur 53 mesurés et conformes** — 12 contrôles, 6 fenêtres, 7 pour la barre. Deux
+> autres jetons de la barre ont été relevés **faux** (l'instrument posait un fond noir sous une
+> barre translucide sombre) : corrigé, pas encore rejoué. Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
 > [ROADMAP.md](ROADMAP.md), [DECISIONS.md](DECISIONS.md).
 
 ## Le menu Démarrer, ouvert dans une vraie session

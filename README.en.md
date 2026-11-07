@@ -33,7 +33,7 @@ modifying a single file belonging to your distribution, and it uninstalls in one
 >
 > Metrics for batches 1–3 are **measured in a VM on Fedora 44**: 32 px title bar, `#C42B1C`
 > close button at 46×32, 8.2 px corners, 32 px controls, 40×20 toggle, 12 px scrollbar, Selawik
-> at 14 px. **18 of 53 tokens measured.**
+> at 14 px. **25 of 53 tokens measured and conforming** — 12 controls, 6 windows, 7 for the bar. Two more bar tokens came back **wrong** (the probe put a black background under a dark translucent bar): fixed, not yet re-run.
 > Still unproven: the installer on Arch and Ubuntu, and the Arch and Debian packages.
 > What is verified and what is not: [AVANCEMENT.md](AVANCEMENT.md) (French).
 

@@ -187,6 +187,7 @@ ssh_vm 'sudo dnf install -y \
     kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
     kf6-frameworkintegration-devel kdecoration-devel \
     fontmake librsvg2-tools xcursorgen sassc fontconfig git \
+    python3-pillow \
     > /tmp/dnf.log 2>&1' || {
         echo "L'installation de Plasma a échoué :" >&2
         ssh_vm 'tail -30 /tmp/dnf.log' >&2 || true

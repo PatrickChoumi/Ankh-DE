@@ -34,6 +34,7 @@ jobs:
             plasma-integration plasma-breeze-qt6 \
             xorg-x11-server-Xvfb ImageMagick \
             fontmake librsvg2-tools xcursorgen sassc fontconfig \
+            python3-pillow \
             git findutils
 
       - uses: actions/checkout@v5
@@ -84,6 +85,7 @@ jobs:
             kf6-frameworkintegration-devel kdecoration-devel \
             plasma-workspace plasma-integration \
             fontmake librsvg2-tools xcursorgen sassc fontconfig \
+            python3-pillow \
             git findutils
 
       - uses: actions/checkout@v5

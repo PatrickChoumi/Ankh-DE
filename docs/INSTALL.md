@@ -24,14 +24,14 @@ sudo dnf install cmake gcc-c++ extra-cmake-modules qt6-qtbase-devel \
   kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
   kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
   kf6-frameworkintegration-devel kdecoration-devel \
-  git fontmake librsvg2-tools xcursorgen sassc fontconfig
+  git fontmake librsvg2-tools xcursorgen sassc fontconfig python3-pillow
 ```
 
 **Arch**
 ```bash
 sudo pacman -S cmake gcc extra-cmake-modules qt6-base kconfig kcoreaddons \
   kguiaddons kiconthemes kwindowsystem kcolorscheme frameworkintegration \
-  kdecoration git python-fontmake librsvg xorg-xcursorgen sassc fontconfig
+  kdecoration git python-fontmake librsvg xorg-xcursorgen sassc fontconfig python-pillow
 ```
 
 **Ubuntu / Kubuntu**
@@ -40,7 +40,7 @@ sudo apt install cmake g++ extra-cmake-modules qt6-base-dev \
   libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev \
   libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \
   libkf6style-dev libkdecorations3-dev \
-  git fontmake librsvg2-bin x11-apps sassc fontconfig
+  git fontmake librsvg2-bin x11-apps sassc fontconfig python3-pil
 ```
 
 ## Installer
