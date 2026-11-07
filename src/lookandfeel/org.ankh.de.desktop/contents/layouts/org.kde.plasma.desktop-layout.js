@@ -66,6 +66,22 @@ function ajouter(notre, celuiDePlasma) {
 // Démarrer : le nôtre (DE-011, repris de KDE-Windows-Modern), sinon Kickoff.
 ajouter("org.ankh.demarrer", "org.kde.plasma.kickoff")
 
+// « Vue des tâches » : le bouton qui ouvre la vue d'ensemble, à droite de
+// Démarrer comme dans Windows 11 (lot 4, repris de Tidewater). Plasma n'a
+// pas d'équivalent à un seul bouton : sans le nôtre, on n'en met aucun
+// plutôt qu'un applet qui ferait autre chose.
+try {
+    var vue = panel.addWidget("org.ankh.vuetaches")
+    if (vue && vue.type === "org.ankh.vuetaches") {
+        print("ANKH-LAYOUT org.ankh.vuetaches : installé")
+    } else {
+        print("ANKH-LAYOUT org.ankh.vuetaches : absent, aucun remplaçant")
+        if (vue) vue.remove()
+    }
+} catch (e) {
+    print("ANKH-LAYOUT org.ankh.vuetaches : absent, aucun remplaçant")
+}
+
 // Applications épinglées : seulement celles que toute installation de KDE
 // possède, et les applications par défaut du système (preferred://,
 // applets/taskmanager/main.xml de plasma-desktop). Ankh DE n'épingle rien
@@ -82,8 +98,10 @@ for (var i = 0; i < terminal.length; i++) {
 if (applicationExists("systemsettings.desktop")) {
     epinglees.push("applications:systemsettings.desktop")
 }
-// icontasks : des icônes seules, sans texte, comme Windows 11.
-var taches = panel.addWidget("org.kde.plasma.icontasks")
+// Des icônes seules, sans texte, comme Windows 11. La nôtre est reprise de
+// Tidewater (DE-011) ; à défaut, icontasks de Plasma. Les deux lisent la
+// même clé « launchers », donc les épingles suivent dans les deux cas.
+var taches = ajouter("org.ankh.taches", "org.kde.plasma.icontasks")
 taches.currentConfigGroup = ["General"]
 taches.writeConfig("launchers", epinglees)
 // Les 8 px autour de chaque icône (valeur relevée sur AnduinOS) se règlent
@@ -104,7 +122,56 @@ if (langIds.indexOf(languageId) != -1) {
 }
 
 // Zone de notification : icônes à 16 px, comme Windows 11.
-panel.addWidget("org.kde.plasma.systemtray")
+//
+// Elle est GARDÉE, et c'est un choix. Notre volet d'état (ci-dessous)
+// affiche déjà réseau, Bluetooth, volume et luminosité — mais les éteindre
+// dans la zone, comme le fait Tidewater, couperait aussi les invites de
+// mot de passe Wi-Fi et les touches de volume, qui passent par ces
+// services. On les REND DISCRÈTES au lieu de les supprimer : elles restent
+// vivantes, derrière le chevron, comme les icônes masquées de Windows 11.
+var zone = panel.addWidget("org.kde.plasma.systemtray")
+zone.currentConfigGroup = ["General"]
+zone.writeConfig("hiddenItems", [
+    "org.kde.plasma.networkmanagement",
+    "org.kde.plasma.bluetooth",
+    "org.kde.plasma.brightness",
+    "org.kde.plasma.volume",
+    "org.kde.plasma.notifications"
+])
+
+// Le volet unique : Wi-Fi, Bluetooth, volume, luminosité en un bouton, comme
+// les « Paramètres rapides » de Windows 11 (lot 6, repris de Tidewater).
+// Pas de remplaçant chez Plasma : ses équivalents sont justement les cinq
+// icônes qu'on vient de ranger.
+try {
+    var etat = panel.addWidget("org.ankh.etat")
+    if (etat && etat.type === "org.ankh.etat") {
+        print("ANKH-LAYOUT org.ankh.etat : installé")
+    } else {
+        print("ANKH-LAYOUT org.ankh.etat : absent, aucun remplaçant")
+        if (etat) etat.remove()
+        // Sans notre volet, les cinq icônes rangées seraient introuvables :
+        // on les ressort.
+        zone.writeConfig("hiddenItems", [])
+        print("ANKH-LAYOUT zone système : icônes ressorties, faute de volet d'état")
+    }
+} catch (e) {
+    zone.writeConfig("hiddenItems", [])
+    print("ANKH-LAYOUT org.ankh.etat : absent, zone système laissée entière")
+}
+
+// Les notifications, à gauche de l'horloge (lot 6, repris de Tidewater).
+try {
+    var notifs = panel.addWidget("org.ankh.notifications")
+    if (notifs && notifs.type === "org.ankh.notifications") {
+        print("ANKH-LAYOUT org.ankh.notifications : installé")
+    } else {
+        print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
+        if (notifs) notifs.remove()
+    }
+} catch (e) {
+    print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
+}
 
 // Horloge : la nôtre dispose déjà l'heure au-dessus de la date, comme
 // Windows 11. Avec celle de Plasma, on s'en approche par ses réglages —

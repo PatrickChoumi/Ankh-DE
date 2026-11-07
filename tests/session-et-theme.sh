@@ -113,7 +113,7 @@ attendre "facteur d'animation"          "0.8333333"   "$(lire --group KDE --key 
 # 2026-11-06 sans qu'aucun test ne le voie, parce qu'aucun ne regardait ici.
 attendre "thème global de la session"   "org.ankh.de.desktop" \
     "$(lire --group KDE --key LookAndFeelPackage)"
-attendre "Alt+Tab"                      "org.kde.breeze.desktop" \
+attendre "Alt+Tab"                      "ankh-selecteur" \
     "$(lire --file kwinrc --group TabBox --key LayoutName)"
 # Portés par la session depuis le 2026-11-05 : le thème global ne les écrit
 # jamais (vérifié).
@@ -258,7 +258,8 @@ fi
 applets="${prefixe}/share/plasma/plasmoids"
 if [[ -d "${applets}/org.ankh.demarrer" ]]; then
     echo "== Les applets"
-    for id in org.ankh.demarrer org.ankh.horloge org.ankh.bureau; do
+    for id in org.ankh.demarrer org.ankh.horloge org.ankh.bureau \
+              org.ankh.etat org.ankh.notifications org.ankh.taches org.ankh.vuetaches; do
         verifies=$((verifies + 1))
         if [[ -f "${applets}/${id}/metadata.json" ]]; then
             printf '  ok    %s\n' "${id}"
@@ -267,6 +268,41 @@ if [[ -d "${applets}/org.ankh.demarrer" ]]; then
             echecs=$((echecs + 1))
         fi
     done
+    # Le sélecteur Alt+Tab (lot 7) n'est pas un applet : c'est un paquet
+    # KWin/WindowSwitcher, et src/config/kwinrc le désigne par son nom.
+    # Si le nom et le paquet divergent, KWin retombe en silence sur le sien.
+    verifies=$((verifies + 1))
+    nom_voulu="$(lire --file kwinrc --group TabBox --key LayoutName)"
+    if [[ -f "${prefixe}/share/kwin/tabbox/${nom_voulu}/metadata.json" ]]; then
+        printf '  ok    %-44s %s\n' "le sélecteur Alt+Tab désigné est installé" "${nom_voulu}"
+    else
+        echo "  ECHEC kwinrc demande « ${nom_voulu} », absent de ${prefixe}/share/kwin/tabbox/" >&2
+        echecs=$((echecs + 1))
+    fi
+
+    # Le module QML partagé. Les applets repris de Tidewater l'atteignent par
+    # « ../../../../../ankh-de/qml » depuis leur contents/ui : cinq niveaux
+    # exactement. Un applet installé sans lui démarre sur une erreur QML, que
+    # rien d'autre ne verrait ici.
+    verifies=$((verifies + 1))
+    if [[ -f "${prefixe}/share/ankh-de/qml/Settings.qml" ]]; then
+        printf '  ok    %s\n' "le module QML partagé est en place"
+    else
+        echo "  ECHEC ${prefixe}/share/ankh-de/qml/Settings.qml est absent" >&2
+        echecs=$((echecs + 1))
+    fi
+    # Et le chemin relatif doit TOMBER dessus. On le résout vraiment, depuis
+    # le dossier d'un applet qui l'importe, plutôt que de compter les niveaux
+    # à la main.
+    verifies=$((verifies + 1))
+    depuis="${applets}/org.ankh.etat/contents/ui"
+    if [[ -d "${depuis}" ]] && [[ -f "${depuis}/../../../../../ankh-de/qml/Settings.qml" ]]; then
+        printf '  ok    %s\n' "l'import relatif du module partagé aboutit"
+    else
+        echo "  ECHEC depuis ${depuis}, « ../../../../../ankh-de/qml » ne mène nulle part" >&2
+        echecs=$((echecs + 1))
+    fi
+
     # DE-011 : aucune pièce ne doit écraser une pièce de la distribution.
     verifies=$((verifies + 1))
     etrangers="$(python3 -I - "${applets}" << 'PYEOF'

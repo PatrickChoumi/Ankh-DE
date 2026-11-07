@@ -173,6 +173,23 @@ if(ANKH_DE_DATA)
     else()
         message(STATUS "Ankh DE : applets absents ; lancer third_party/preparer.sh")
     endif()
+
+    # Le module QML partagé des applets repris de Tidewater (DE-011). Ils
+    # l'atteignent par « ../../../../../ankh-de/qml » depuis leur
+    # contents/ui : cinq niveaux, soit le dossier de données, puis ce
+    # chemin-ci. Déplacer l'un sans l'autre casse l'import en silence.
+    if(EXISTS "${ANKH_DE_PREPARE}/qml")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/qml/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/ankh-de/qml
+        )
+    endif()
+    # Le sélecteur Alt+Tab (lot 7) : un paquet KWin/WindowSwitcher, que
+    # src/config/kwinrc désigne par son nom.
+    if(EXISTS "${ANKH_DE_PREPARE}/tabbox")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/tabbox/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/kwin/tabbox
+        )
+    endif()
     file(GLOB ANKH_DE_KWIN "${CMAKE_CURRENT_SOURCE_DIR}/src/kwin/*")
     if(ANKH_DE_KWIN)
         install(DIRECTORY src/kwin/

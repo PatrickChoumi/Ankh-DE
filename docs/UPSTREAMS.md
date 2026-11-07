@@ -32,6 +32,12 @@
 | Curseurs | [Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), `cursors/` | `c8a244f` | GPL-3.0 | images | Variante blanche, bleu d'accent → violet d'Ankh |
 | Icônes `Fluent-Ankh` | Fluent-icon-theme | `c8a244f` | GPL-3.0 | images | Variante « purple » (rose-magenta) recolorée en trois teintes |
 | Thème GTK `Fluent-Ankh` | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) | `7a49a46` | GPL-3.0 | feuilles de style | Variante ronde et sans bord, violets d'Ankh |
+| `org.ankh.etat` (lot 6) | [Tidewater](https://github.com/addition-official/tidewater), `plasmoids/status` | `4484377` | GPL-3.0-or-later | QML | Volet unique Wi-Fi / Bluetooth / volume / luminosité. Identifiant renommé, graine de couleur `#466fbd` → `#a78bfa`, épaisseur 52 → 48 px, Rubik → Selawik, police d'icônes forcée au repli Fluent-Ankh |
+| `org.ankh.notifications` (lot 6) | idem, `plasmoids/notifications` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
+| `org.ankh.taches` (lot 4) | idem, `plasmoids/tasks` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations. Lit la même clé `launchers` qu'`icontasks`, donc les épingles suivent |
+| `org.ankh.vuetaches` (lot 4) | idem, `plasmoids/taskview` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
+| `ankh-selecteur` (lot 7) | idem, `switcher/tidewater-switcher` | `4484377` | GPL-3.0-or-later | QML | Paquet `KWin/WindowSwitcher`, désigné par `src/config/kwinrc`. **Une mise à jour ne prend qu'à la déconnexion** : KWin garde le code en mémoire par nom de paquet |
+| module QML partagé, et le `common/` de chaque applet repris | idem, `shared/` et `common/` | `4484377` | GPL-3.0-or-later | QML | Installé dans `share/ankh-de/qml` ; les applets l'atteignent par cinq niveaux relatifs, ce que `tests/session-et-theme.sh` résout vraiment plutôt que de le compter |
 
 ## Examiné, et écarté — avec la raison
 
@@ -41,14 +47,14 @@
 | [Klassy](https://github.com/paulmcauley/klassy), Lightly, KDE-Rounded-Corners | diverses | SPEC §5.6 : un seul mainteneur chacun, à recompiler à chaque version de Plasma — le même problème que le nôtre, en double |
 | [PlasmaZones](https://github.com/fuddlesworth/PlasmaZones) | GPL-3.0-or-later | Exige **Qt 6.10+**, au-dessus de notre plancher (Qt 6.6+) : exclurait des distributions visées. À citer comme extension facultative |
 
-## Choisi pour les lots 4, 6 et 7 — reconnaissance du 2026-11-06
+## La reconnaissance qui a conduit à ces choix — 2026-11-06
 
 Les deux candidats ont été **clonés et inventoriés**, pas lus de loin. Ce qui suit est relevé
 dans les dépôts, aux commits indiqués.
 
 ### [Tidewater](https://github.com/addition-official/tidewater) — `4484377`, 2026-10-11, GPL-3.0
 
-**C'est la base retenue**, et la raison est nette : **aucune ligne de C++, aucun `CMakeLists.txt`**
+**C'est la base retenue, et elle est intégrée depuis le 2026-11-06.** La raison est nette : **aucune ligne de C++, aucun `CMakeLists.txt`**
 dans tout le dépôt. Tout est QML et données. Donc rien à compiler, rien à reporter à chaque
 version de Plasma, et le risque d'ABI qui nous coûte si cher sur le style et la décoration
 n'existe pas ici. Ses onze identifiants sont tous préfixés `tidewater.*` : **aucune collision**

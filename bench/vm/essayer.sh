@@ -513,6 +513,44 @@ case "${demarrer_present}" in
     *)   grief "impossible de savoir ce que porte la barre : la requête à plasmashell a échoué" ;;
 esac
 
+# Les pièces des lots 4 et 6, reprises de Tidewater le 2026-11-06. Chacune
+# est demandée NOMMÉMENT : « la barre a sept applets » ne dit pas lesquels,
+# et c'est exactement le genre d'approximation qui m'a fait écrire qu'un
+# menu était là quand il n'y était pas.
+nouvelles=()
+for applet in org.ankh.taches org.ankh.vuetaches org.ankh.etat org.ankh.notifications; do
+    if [[ -z "${applets}" ]]; then
+        nouvelles+=("${applet}=inconnu")
+    elif [[ "${applets}" == *"${applet}"* ]]; then
+        nouvelles+=("${applet}=oui")
+    else
+        nouvelles+=("${applet}=NON")
+        grief "${applet} n'est pas dans la barre"
+    fi
+done
+echo "   pièces des lots 4 et 6 : ${nouvelles[*]}"
+
+# Le sélecteur Alt+Tab (lot 7). KWin ne dit pas lequel il a chargé ; ce qu'on
+# peut établir, c'est que kwinrc demande le nôtre ET que le paquet existe.
+# Si l'un manque, KWin retombe en silence sur le sien — le repli muet qu'on
+# ne veut plus.
+selecteur_voulu="$(dans_session 'kreadconfig6 --file kwinrc --group TabBox --key LayoutName' || true)"
+selecteur_present=non
+ssh_vm "test -f /usr/local/share/kwin/tabbox/${selecteur_voulu}/metadata.json" 2>/dev/null \
+    && selecteur_present=oui
+echo "   Alt+Tab : kwinrc demande « ${selecteur_voulu:-rien} », paquet présent : ${selecteur_present}"
+[[ "${selecteur_voulu}" == ankh-selecteur ]] \
+    || grief "kwinrc ne demande pas notre sélecteur Alt+Tab mais « ${selecteur_voulu:-rien} »"
+[[ "${selecteur_present}" == oui ]] \
+    || grief "le paquet du sélecteur « ${selecteur_voulu} » n'est pas installé : KWin retombera sur le sien"
+
+# Le module QML partagé : sans lui, les quatre applets repris démarrent sur
+# une erreur QML et la barre les affiche vides.
+module_present=non
+ssh_vm 'test -f /usr/local/share/ankh-de/qml/Settings.qml' 2>/dev/null && module_present=oui
+echo "   module QML partagé : ${module_present}"
+[[ "${module_present}" == oui ]] || grief "le module QML partagé est absent de /usr/local/share/ankh-de/qml"
+
 # Ouvrir le menu par le chemin que Plasma emploie lui-même pour la touche
 # Meta. S'il s'ouvre, l'applet se charge et répond.
 #
@@ -612,6 +650,9 @@ fi
     echo "- applets de la barre : \`${applets:-inconnus}\`"
     echo "- notre applet est dans la barre : ${demarrer_present}"
     echo "- l'écran a changé à l'ouverture : ${ecran_change} (\`${mesure_menu}\`)"
+    echo "- pièces des lots 4 et 6 : ${nouvelles[*]}"
+    echo "- Alt+Tab : kwinrc demande \`${selecteur_voulu:-rien}\`, paquet présent : ${selecteur_present}"
+    echo "- module QML partagé : ${module_present}"
     echo "- erreurs sur nos pièces : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
 

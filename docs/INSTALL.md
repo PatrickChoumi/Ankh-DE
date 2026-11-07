@@ -119,6 +119,9 @@ liste des chemins à retirer à la main.
 | Les contrôles gardent l'allure de Breeze | le style n'est pas trouvé. Même cause |
 | La police reste celle de la distribution | fontconfig n'a pas vu Selawik. Lancez `fc-cache -f`, puis `fc-match Selawik` : il doit répondre `Selawik`. C'est le défaut exact qui a fait échouer le premier passage du lot 1 dans Ankh |
 | Le texte paraît trop fin ou coloré sur les bords | `29-ankh-rendu.conf` n'est pas lu. Vérifiez `fc-match -f '%{rgba} %{hintstyle}' Selawik` : attendu `5 1` |
+| Alt+Tab garde l'allure de Plasma après une mise à jour | KWin garde le code d'un sélecteur **en mémoire, par nom de paquet, jusqu'à la déconnexion**. Déconnectez-vous et reconnectez-vous : ce n'est pas un défaut d'installation |
+| Le volet d'état s'affiche mais ne répond pas | il appelle `wpctl`, `nmcli`, `rfkill`, `bluetoothctl` et `busctl`. L'installateur dit lesquels manquent ; chaque outil absent ne coupe que sa propre tuile |
+| Les applets de la barre sont vides | le module QML partagé manque. Vérifiez `<préfixe>/share/ankh-de/qml/Settings.qml` : les applets l'atteignent par un chemin relatif de cinq niveaux depuis leur `contents/ui` |
 | Les coins sont à 5 px, pas 8 | c'est Breeze qui dessine : la décoration d'Ankh n'est pas active |
 | « Plasma non testé » à la construction | votre Plasma n'est pas 6.8.x. `-DANKH_DE_PLASMA_NON_TESTE=ON` passe outre, à vos risques ([DE-008](../DECISIONS.md)) |
 

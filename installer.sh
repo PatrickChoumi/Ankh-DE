@@ -69,6 +69,40 @@ AIDE
     exit 1
 fi
 
+# --- 2bis. Ce dont le volet d'état a besoin pour PARLER -------------------
+# Le volet « État du système » (lot 6, repris de Tidewater) ne passe pas par
+# un module QML de réseau : il appelle ces outils en ligne de commande. Sans
+# eux, il s'affiche et ne répond pas — un volet muet, le pire des deux
+# mondes. On le DIT à l'installation, plutôt que de laisser l'utilisateur
+# le découvrir.
+#
+# Ce n'est pas bloquant : le reste du DE n'en dépend pas, et chaque outil ne
+# désactive que sa propre tuile.
+muets=()
+command -v wpctl        > /dev/null || muets+=("wpctl (volume)")
+command -v nmcli        > /dev/null || muets+=("nmcli (Wi-Fi)")
+command -v rfkill       > /dev/null || muets+=("rfkill (mode avion)")
+command -v bluetoothctl > /dev/null || muets+=("bluetoothctl (Bluetooth)")
+command -v busctl       > /dev/null || muets+=("busctl (luminosité)")
+if (( ${#muets[@]} )); then
+    cat >&2 << MUETS
+
+Le volet d'état sera partiellement muet : ${muets[*]}
+
+  Fedora  : sudo dnf install wireplumber NetworkManager util-linux bluez systemd
+  Arch    : sudo pacman -S wireplumber networkmanager util-linux bluez-utils systemd
+  Ubuntu  : sudo apt install wireplumber network-manager util-linux bluez systemd
+
+Les noms de paquets ci-dessus ne sont VÉRIFIÉS que pour Fedora, où la session
+tourne en VM à chaque changement. Sur Arch et Ubuntu, ce sont les noms usuels :
+si l'un est faux, dites-le dans une issue.
+
+L'installation continue : rien d'autre n'en dépend.
+MUETS
+else
+    echo "== Volet d'état : les cinq outils sont là"
+fi
+
 # --- 3. Pièces venues d'ailleurs -----------------------------------------
 if [[ "${tiers}" == oui ]]; then
     echo "== Police, curseurs et thème GTK"

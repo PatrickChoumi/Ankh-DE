@@ -17,6 +17,10 @@
 | `src/colors/` | dérivé de `colors/BreezeDark.colors` de Breeze — mêmes rôles, couleurs d'Ankh | 6.7.5 | LGPL-2.0-or-later |
 | `src/qqc2/` | adaptations de `org.kde.desktop` de [qqc2-desktop-style](https://invent.kde.org/frameworks/qqc2-desktop-style) | 6.31 | LGPL-2.0-or-later |
 | `third_party/sortie/desktoptheme/ankh*` | [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern), `plasma/desktoptheme/` — commit `7ef6bfe` | 2026-07-19 | GPL-3.0 | Images SVG, jamais versionnées : fabriquées par `third_party/preparer.sh`. Accents de Windows et bleus de Breeze remplacés par les violets d'Ankh. Provenance détaillée : [docs/UPSTREAMS.md](../docs/UPSTREAMS.md) |
+| `third_party/sortie/applets/org.ankh.{etat,notifications,taches,vuetaches}` | [Tidewater](https://github.com/addition-official/tidewater), `plasmoids/{status,notifications,tasks,taskview}` — commit `4484377` | 2026-10-11 | GPL-3.0-or-later |
+| `third_party/sortie/tabbox/ankh-selecteur` | [Tidewater](https://github.com/addition-official/tidewater), `switcher/tidewater-switcher` — commit `4484377` | 2026-10-11 | GPL-3.0-or-later |
+| `third_party/sortie/qml/` et le `common/` de chaque applet repris | [Tidewater](https://github.com/addition-official/tidewater), `shared/` et `common/` — commit `4484377` | 2026-10-11 | GPL-3.0-or-later |
+| — dont `common/Scheme.js` | [remapprShell](https://github.com/Wolffyx/remapprShell), repris par Tidewater et modifié par lui | via `4484377` | GPL-3.0-or-later |
 | `src/lookandfeel/.../layouts/` | dérivé de `layout-templates/org.kde.plasma.desktop.defaultPanel` de [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop) | 6.7 | LGPL-2.0-or-later |
 
 Tous ces fichiers gardent l'en-tête de licence de KDE. L'ensemble du dépôt est distribué sous

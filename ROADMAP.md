@@ -104,13 +104,30 @@ section « Mise en œuvre : onze lots ». Résumé des pièces à écrire :
   l'application active). Le reste vient de Breeze (`FallbackTheme`). Plus la barre collée de 48 px
   (déjà dans le thème global), la zone de notification à 16 px, l'horloge sur deux lignes, les
   notifications en bas à droite.
+  **Le 2026-11-06**, `org.ankh.taches` et `org.ankh.vuetaches` sont repris de Tidewater : la
+  barre des tâches et le bouton « Vue des tâches », en QML, qui remplacent le repli sur
+  `icontasks`. La zone système de Plasma est **gardée** — l'éteindre couperait les invites de
+  mot de passe Wi-Fi et les touches de volume — mais les cinq icônes que notre volet d'état
+  reprend passent derrière le chevron. **Reste à mesurer** : la taille des icônes de la barre et
+  leur espacement, et `volet.rayon`.
 - **Lot 5** — `src/applets/org.ankh.demarrer/` : Démarrer en QML, dérivé de Kickoff. Recherche en
   haut, 6 × 3 épingles de 32 px, « Toutes les applications », « Recommandé », compte et
   alimentation en bas. Dépend de `org.kde.plasma.private.kicker` : fragile (SPEC §4.3).
-- **Lot 6** — `src/applets/org.ankh.parametres/` : un seul volet (Wi-Fi, Bluetooth, volume,
+- **Lot 6** — **repris de Tidewater le 2026-11-06** (`org.ankh.etat`, `org.ankh.notifications`) :
+  un seul volet (Wi-Fi, Bluetooth, volume, luminosité) et un centre de notifications, en QML,
+  sans une ligne à compiler. Il appelle `wpctl`, `nmcli`, `rfkill`, `bluetoothctl` et `busctl` :
+  l'installateur dit lesquels manquent. **Reste à vérifier en session** que chaque tuile
+  répond vraiment — être dans la barre n'est pas répondre.
+- *(l'ancien plan, pour mémoire)* `src/applets/org.ankh.parametres/` : un seul volet (Wi-Fi, Bluetooth, volume,
   luminosité), dérivé des applets de Plasma. Dépend de trois modules privés : fragile.
-- **Lot 7** — `src/kwin/` : script de dispositions par Windows+Z (l'idée du « Tiling Assistant »
-  d'AnduinOS) ; Alt+Tab, vue d'ensemble, déconnexion et écran de verrouillage dans le thème global.
+- **Lot 7** — **Alt+Tab repris de Tidewater le 2026-11-06** : `ankh-selecteur`, un paquet
+  `KWin/WindowSwitcher` en QML qui montre des vignettes en rangées au lieu de la liste verticale
+  de Breeze. `src/config/kwinrc` le désigne. **Piège, écrit dans aucun README amont** : KWin
+  garde le code d'un sélecteur en mémoire, par nom de paquet, jusqu'à la déconnexion — une mise
+  à jour ne prend donc qu'à la session suivante, et c'est dit dans `docs/INSTALL.md`.
+  **Reste** : le script de dispositions par Windows+Z (l'idée du « Tiling Assistant » d'AnduinOS),
+  la vue d'ensemble, la déconnexion et l'écran de verrouillage — ce dernier ne bougera qu'après
+  un déverrouillage réel en VM (`contents/defaults` dit pourquoi).
 - **Lot 8** — réglages par application, livrés comme fichiers de configuration par défaut.
 - **Lot 9** — thème d'icônes Fluent recoloré, dans `third_party/preparer.sh` (le même mécanisme
   que les curseurs ; sa variante « violette » est en fait rose-magenta `#dc63ee` et doit être
