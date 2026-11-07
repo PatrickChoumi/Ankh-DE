@@ -590,6 +590,36 @@ META
 }
 
 reprendre_applet startmenu    org.ankh.demarrer "Démarrer"
+
+# Le menu s'ouvrait sans jamais recevoir le clavier — ni la saisie, ni Échap
+# (passage en VM du 2026-11-07, deux captures identiques avant et après
+# Échap, champ de recherche resté sur son texte d'invite).
+#
+# La cause est dans libplasma, src/plasmaquick/dialog.cpp, applyType() :
+#
+#     if (q->flags() & Qt::WindowStaysOnTopHint) {
+#         // If the AppletPopup type is not explicitly requested, then use
+#         // the Dock type in this case to avoid bug #454635.
+#         if (type != Dialog::AppletPopup && type != Dialog::Tooltip) {
+#             type = Dialog::Dock;
+#
+# Le menu pose « flags: Qt.WindowStaysOnTopHint » et ne déclare AUCUN type.
+# Le défaut étant « Normal », libplasma le bascule donc en « Dock » et lui
+# donne le rôle Wayland « role_panel ». Un panneau ne prend pas le focus
+# clavier : le menu s'affiche, reste au-dessus, et n'entend rien.
+#
+# Le correctif est celui que ce commentaire amont désigne lui-même :
+# demander AppletPopup explicitement. La branche garde alors le type, pose
+# « role_appletpopup », et la surface redevient un popup qui reçoit les
+# touches.
+#
+# C'est un ADAPT sur une pièce déjà reprise, pas un import (CLAUDE.md §0.1).
+menu_rep="${sortie}/applets/org.ankh.demarrer/contents/ui/MenuRepresentation.qml"
+sed -i 's|^\( *\)flags: Qt.WindowStaysOnTopHint$|\1flags: Qt.WindowStaysOnTopHint\n\1// Ankh : sans type explicite, libplasma bascule ce dialogue en Dock\n\1// (dialog.cpp, applyType) et un panneau ne reçoit pas le clavier.\n\1type: PlasmaCore.Dialog.AppletPopup|' \
+    "${menu_rep}"
+grep -q "type: PlasmaCore.Dialog.AppletPopup" "${menu_rep}" \
+    || { echo "Menu : le type AppletPopup n'a pas été posé" >&2; exit 1; }
+echo "org.ankh.demarrer : type AppletPopup posé (focus clavier)"
 reprendre_applet digitalclock org.ankh.horloge  "Horloge"
 reprendre_applet showdesktop  org.ankh.bureau   "Afficher le bureau"
 

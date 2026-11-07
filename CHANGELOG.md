@@ -25,7 +25,7 @@ de connexion (workflow `VM — session réelle`).
 
 | | |
 |---|---|
-| Jetons mesurés | **18 sur 53** à la rédaction ; **25** depuis le 2026-11-06 (lot 4) |
+| Jetons mesurés | 18 à la rédaction de cette entrée ; **27 sur 53** depuis le 2026-11-07 (les 9 du lot 4) |
 | Contrôles (lot 3) | 12, tous conformes, rejoués à chaque PR |
 | Fenêtres (lot 2) | 6, dont la **barre de titre de 32 px** et les bords à 0 |
 

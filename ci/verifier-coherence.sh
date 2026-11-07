@@ -210,6 +210,25 @@ for consigne in "${CONSIGNES[@]}"; do
         || signaler "CLAUDE.md ne renvoie pas à ${consigne}, qui ne sera donc jamais lue"
 done
 
+# --- 7. Le compte des jetons MESURÉS, et non plus seulement le total ------
+# Le contrôle n° 4 vérifie le dénominateur (« sur 53 »). Il ne regardait pas
+# le numérateur, et c'est par là que la dérive est revenue le 2026-11-07 :
+# README et CLAUDE.md disaient 25, ROADMAP et AVANCEMENT 27, CHANGELOG 25.
+# Cinq documents, trois chiffres, pour une seule question.
+#
+# On ne peut pas calculer ce nombre ici — il vient d'un passage en VM, pas
+# d'un fichier. Mais on peut exiger que tous les documents en citent UN
+# SEUL. Le désaccord est l'erreur ; la valeur, c'est au passage de la dire.
+mesures_citees="$(grep -rhoE '[0-9]+ (jetons |tokens )?(sur|of) 53' --include='*.md' . 2>/dev/null \
+    --exclude-dir=.git --exclude=AUDIT.md \
+    | grep -oE '^[0-9]+' | sort -u || true)"
+nb_valeurs="$(grep -c . <<< "${mesures_citees}" || true)"
+if [[ -n "${mesures_citees}" ]] && (( nb_valeurs > 1 )); then
+    signaler "les documents citent $(tr '\n' ' ' <<< "${mesures_citees}")jetons mesurés sur 53 : un seul chiffre pour une seule question"
+    grep -rnE '[0-9]+ (jetons |tokens )?(sur|of) 53' --include='*.md' . 2>/dev/null \
+        --exclude-dir=.git --exclude=AUDIT.md | sed 's/^/        /' | cut -c1-120 >&2
+fi
+
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then
     echo >&2
