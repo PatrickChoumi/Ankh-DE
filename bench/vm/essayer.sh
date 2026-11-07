@@ -100,6 +100,23 @@ scp_vm() {
         -o LogLevel=ERROR "$@"
 }
 
+# La version de Plasma de l'invité, relevée par le GESTIONNAIRE DE PAQUETS.
+#
+# « plasmashell --version » a l'air plus direct, et c'est un piège : lancé par
+# ssh, sans affichage, il ne rend rien du tout. Le 2026-11-07 ce passage a
+# échoué pour cette seule raison, après avoir pourtant ouvert une session
+# parfaitement saine — la ligne vide du rapport a été prise pour un réglage
+# non appliqué. Le paquet, lui, répond toujours.
+version_plasma_invite() {
+    if [[ "${DISTRIB}" == ubuntu ]]; then
+        # dpkg rend « 4:6.6.6-0ubuntu0.1 » : on retire l'époque et la révision.
+        ssh_vm "dpkg-query -W -f '\${Version}' plasma-workspace 2>/dev/null" 2>/dev/null \
+            | sed 's/^[0-9]*://; s/-.*$//' || true
+    else
+        ssh_vm "rpm -q --qf '%{VERSION}' plasma-workspace 2>/dev/null" 2>/dev/null || true
+    fi
+}
+
 # --- 0. Ce dont on a besoin ----------------------------------------------
 etape "0. Outils et accélération"
 manquants=()
@@ -487,23 +504,6 @@ uid="$(ssh_vm 'id -u')"
 env_session="$(ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ \
     | grep -E '^(XDG_CONFIG_DIRS|XDG_CONFIG_HOME|XDG_DATA_DIRS|QT_PLUGIN_PATH)=' \
     | sed 's/^/export /' | tr '\n' ';'")"
-# La version de Plasma de l'invité, relevée par le GESTIONNAIRE DE PAQUETS.
-#
-# « plasmashell --version » a l'air plus direct, et c'est un piège : lancé par
-# ssh, sans affichage, il ne rend rien du tout. Le 2026-11-07 ce passage a
-# échoué pour cette seule raison, après avoir pourtant ouvert une session
-# parfaitement saine — la ligne vide du rapport a été prise pour un réglage
-# non appliqué. Le paquet, lui, répond toujours.
-version_plasma_invite() {
-    if [[ "${DISTRIB}" == ubuntu ]]; then
-        # dpkg rend « 4:6.6.6-0ubuntu0.1 » : on retire l'époque et la révision.
-        ssh_vm "dpkg-query -W -f '\${Version}' plasma-workspace 2>/dev/null" 2>/dev/null \
-            | sed 's/^[0-9]*://; s/-.*$//' || true
-    else
-        ssh_vm "rpm -q --qf '%{VERSION}' plasma-workspace 2>/dev/null" 2>/dev/null || true
-    fi
-}
-
 dans_session() {
     ssh_vm "${env_session} \
             export XDG_RUNTIME_DIR=/run/user/${uid}; \

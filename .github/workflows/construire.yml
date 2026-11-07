@@ -196,6 +196,13 @@ jobs:
             bash -n "${script}" && echo "ok  ${script}"
           done < <(git ls-files '*.sh')
 
+      # « bash -n » ne voit PAS un appel de fonction placé avant sa
+      # définition : il échoue en « command not found » à l'exécution. Le
+      # 2026-11-07, bench/vm/essayer.sh a perdu un passage en VM complet pour
+      # cette seule faute d'ordre — vingt minutes de machine.
+      - name: Aucune fonction appelée avant d'être définie
+        run: python3 tests/ordre-des-fonctions.py $(git ls-files '*.sh')
+
       - name: Syntaxe du Python
         run: |
           set -euo pipefail
