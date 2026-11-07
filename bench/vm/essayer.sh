@@ -1035,7 +1035,7 @@ cliquer() { # $1 : x, $2 : y
     evenement "{\"type\":\"btn\",\"data\":{\"down\":false,\"button\":\"left\"}}"
 }
 
-touche() { # $1 : un qcode QEMU — esc, ret, tab, spc, a…z, 0…9
+touche() { # $1 : un qcode QEMU — esc, ret, tab, spc, up, down, a…z, 0…9
     evenement "{\"type\":\"key\",\"data\":{\"down\":true,\"key\":{\"type\":\"qcode\",\"data\":\"$1\"}}}"
     sleep 0.05
     evenement "{\"type\":\"key\",\"data\":{\"down\":false,\"key\":{\"type\":\"qcode\",\"data\":\"$1\"}}}"
@@ -1239,6 +1239,20 @@ if (( champ_x > 0 )) && (( avant_saisie == interactions_ok )); then
 else
     echo "   saisie directe réussie : le discriminant par clic est inutile, il est sauté"
 fi
+
+# La navigation au clavier dans les résultats. Demandé : « navigation
+# clavier ». Une flèche Bas doit déplacer la surbrillance — donc changer
+# l'écran, un peu : quelques dizaines de pixels de fond sur deux lignes, pas
+# un panneau entier. Le seuil est bas pour cette raison, et c'est aussi ce
+# qui le rend fragile : on le dit plutôt que de le cacher.
+#
+# CE QU'ON NE TESTE PAS, et c'est délibéré : les actions d'alimentation du
+# menu. Cliquer « Éteindre » dans la VM mettrait fin au passage et à tout ce
+# qui reste à mesurer. Leur présence se vérifie en lisant le QML, pas en
+# appuyant dessus.
+essai_interaction demarrer-navigation \
+    "la flèche Bas déplace la surbrillance" oui 0.05 \
+    touche down
 
 # Échap. Dans Windows 11, un premier Échap vide la recherche et un second
 # ferme le menu : on en envoie donc deux, et on juge sur le résultat.
@@ -1457,6 +1471,25 @@ essai_interaction notification \
     "une notification envoyée s'affiche" oui 0.3 \
     dans_session "notify-send --app-name='Ankh DE' 'Essai' 'Le harnais a envoyé cette notification' || true"
 sleep 6
+
+# « Ne pas déranger », et c'est un essai NÉGATIF : la notification ne doit
+# PAS s'afficher. Demandé : « tester Ne pas déranger ».
+#
+# Un essai négatif est le plus facile à faire mentir — il « réussit » aussi
+# quand rien ne marche du tout. Il ne vaut donc que parce que l'essai
+# précédent vient de prouver qu'une notification S'AFFICHE dans les mêmes
+# conditions. Les deux ensemble disent quelque chose ; séparément, non.
+#
+# La clé est celle de Plasma : plasmanotifyrc, groupe DoNotDisturb, « Until »
+# à une date lointaine (c'est ainsi que Plasma exprime « jusqu'à nouvel
+# ordre » dans son propre réglage).
+dans_session "kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until '2099-01-01T00:00:00'" > /dev/null 2>&1 || true
+sleep 4
+essai_interaction notification-ne-pas-deranger \
+    "sous « Ne pas déranger », elle ne s'affiche pas" non 0.3 \
+    dans_session "notify-send --app-name='Ankh DE' 'Essai muet' 'Celle-ci ne doit pas apparaître' || true"
+dans_session "kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --delete" > /dev/null 2>&1 || true
+sleep 3
 
 # --- 12.5 Verrouiller, puis déverrouiller -------------------------------
 # Demandé : « tester verrouillage et déverrouillage ». loginctl les commande
