@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fait passer un fond d'écran du bleu de Fluent aux violets d'Ankh.
 
-    recolorer-fond.py <source> <destination> [tour] [saturation]
+    recolorer-fond.py <source> <destination> [tour en degrés] [saturation]
 
 Par défaut : tour de +52° et saturation × 0,85.
 
@@ -17,49 +17,41 @@ est un indigo électrique qui n'a rien d'Ankh ; au-delà de +58° il glisse vers
 le magenta ; sous × 0,70 il se délave. × 0,85 donne le lavande du dépôt.
 
 C'est une rotation de TEINTE, pas un filtre : les valeurs — donc le modelé
-des facettes, les arêtes, la profondeur — sont conservées intactes. C'est ce
-qui permet de reprendre une image qu'on n'a pas dessinée sans l'abîmer.
+des facettes, les arêtes, la profondeur — sont conservées. C'est ce qui
+permet de reprendre une image qu'on n'a pas dessinée sans l'abîmer.
+
+Pourquoi ce fichier n'importe que Pillow
+----------------------------------------
+Sa première version employait numpy, et elle a cassé la CI et la VM le
+2026-11-07 : `ModuleNotFoundError: No module named 'numpy'` dans le conteneur
+Fedora comme dans l'invité. Une pièce fabriquée à l'installation ne doit
+dépendre que de ce qui est DÉJÀ exigé — et Pillow l'est, le banc s'en sert.
+
+Pillow fait le travail seul : son mode « HSV » donne trois bandes de 0 à 255,
+et `Image.point()` applique une table de correspondance à chacune. Une
+rotation de teinte devient une addition modulo 256 sur la bande H, et la
+saturation une multiplication sur la bande S. Pas de boucle sur les pixels :
+les tables sont appliquées en C.
 """
 
 from __future__ import annotations
 
 import sys
 
-import numpy as np
 from PIL import Image
 
 
 def recolorer(source: str, destination: str, tour: float, saturation: float) -> None:
     image = Image.open(source).convert("RGB")
-    a = np.asarray(image, dtype=np.float64) / 255.0
 
-    mx = a.max(2)
-    mn = a.min(2)
-    d = mx - mn
-    v = mx
-    s = np.where(mx > 0, d / np.where(mx > 0, mx, 1.0), 0.0)
+    # En HSV de Pillow, la teinte couvre 0–255 pour 0–360°.
+    decalage = round(tour * 256.0 / 360.0)
 
-    r, g, b = a[..., 0], a[..., 1], a[..., 2]
-    nz = d > 1e-9
-    h = np.zeros_like(mx)
-    h = np.where(nz & (mx == r), ((g - b) / np.where(nz, d, 1.0)) % 6, h)
-    h = np.where(nz & (mx == g), (b - r) / np.where(nz, d, 1.0) + 2, h)
-    h = np.where(nz & (mx == b), (r - g) / np.where(nz, d, 1.0) + 4, h)
-    h = (h * 60.0 + tour) % 360.0
-    s = np.clip(s * saturation, 0.0, 1.0)
+    h, s, v = image.convert("HSV").split()
+    h = h.point(lambda t, d=decalage: (t + d) % 256)
+    s = s.point(lambda t, k=saturation: min(255, int(t * k + 0.5)))
 
-    c = v * s
-    x2 = c * (1 - np.abs((h / 60.0) % 2 - 1))
-    m = v - c
-    z = np.zeros_like(h)
-    seg = (h // 60).astype(int) % 6
-    choix = [seg == i for i in range(6)]
-    rr = np.select(choix, [c, x2, z, z, x2, c])
-    gg = np.select(choix, [x2, c, c, x2, z, z])
-    bb = np.select(choix, [z, z, x2, c, c, x2])
-
-    sortie = np.clip(np.stack([rr + m, gg + m, bb + m], -1), 0.0, 1.0)
-    Image.fromarray((sortie * 255 + 0.5).astype(np.uint8)).save(destination, optimize=True)
+    Image.merge("HSV", (h, s, v)).convert("RGB").save(destination, optimize=True)
 
 
 def main() -> int:

@@ -81,6 +81,30 @@ AIDE
     exit 1
 fi
 
+# Les modules Python, contrôlés comme les outils — et pour la même raison.
+#
+# Le 2026-11-07, la recoloration du fond d'écran importait « numpy », absent
+# du conteneur Fedora de la CI et de l'invité de la VM : les workflows Banc
+# et « VM — session réelle » ont échoué tous les deux, sur un
+# « ModuleNotFoundError » survenu APRÈS vingt minutes de travail. Mon
+# conteneur, lui, avait numpy — donc rien ne l'avait signalé ici.
+#
+# La dépendance a été supprimée (Pillow fait la rotation de teinte seul),
+# mais le contrôle reste : il échoue en deux secondes au lieu de vingt
+# minutes, et il nomme le paquet à installer.
+modules=()
+python3 -I -c "import PIL" 2> /dev/null || modules+=("PIL (Pillow)")
+if (( ${#modules[@]} )); then
+    cat >&2 << PYAIDE
+Modules Python manquants : ${modules[*]}
+
+  Fedora  : sudo dnf install python3-pillow
+  Arch    : sudo pacman -S python-pillow
+  Ubuntu  : sudo apt install python3-pil
+PYAIDE
+    exit 1
+fi
+
 # Récupère un dépôt à un commit, seulement les dossiers demandés.
 #
 # ANKH_DE_SOURCES=/chemin fait travailler le script SANS RÉSEAU, sur des
