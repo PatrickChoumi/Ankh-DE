@@ -277,10 +277,11 @@ done
 # La version de Plasma que l'invité livre VRAIMENT, contre celle que la
 # plage de DE-016 annonce. Si elles divergent, les mesures portent sur autre
 # chose que ce qu'on croit.
-plasma_invite="$(ssh_vm 'plasmashell --version 2>/dev/null | grep -oE "[0-9]+\.[0-9]+" | head -1' || true)"
-echo "   Plasma dans l'invité : ${plasma_invite:-inconnue} (attendu ${DISTRIB_PLASMA_ATTENDU})"
-[[ "${plasma_invite}" == "${DISTRIB_PLASMA_ATTENDU}" ]] \
-    || grief "l'invité livre Plasma ${plasma_invite:-inconnue}, pas ${DISTRIB_PLASMA_ATTENDU} : ce passage ne prouve pas ce qu'il annonce"
+PLASMA_INVITE="$(version_plasma_invite)"
+plasma_mineur="$(grep -oE '^[0-9]+\.[0-9]+' <<< "${PLASMA_INVITE}" || true)"
+echo "   Plasma dans l'invité : ${PLASMA_INVITE:-inconnue} (attendu ${DISTRIB_PLASMA_ATTENDU}.x)"
+[[ "${plasma_mineur}" == "${DISTRIB_PLASMA_ATTENDU}" ]] \
+    || grief "l'invité livre Plasma ${PLASMA_INVITE:-inconnue}, pas ${DISTRIB_PLASMA_ATTENDU}.x : ce passage ne prouve pas ce qu'il annonce"
 
 # --- 5. Ankh DE dans l'invité --------------------------------------------
 etape "5. Installation d'Ankh DE"
@@ -486,6 +487,23 @@ uid="$(ssh_vm 'id -u')"
 env_session="$(ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ \
     | grep -E '^(XDG_CONFIG_DIRS|XDG_CONFIG_HOME|XDG_DATA_DIRS|QT_PLUGIN_PATH)=' \
     | sed 's/^/export /' | tr '\n' ';'")"
+# La version de Plasma de l'invité, relevée par le GESTIONNAIRE DE PAQUETS.
+#
+# « plasmashell --version » a l'air plus direct, et c'est un piège : lancé par
+# ssh, sans affichage, il ne rend rien du tout. Le 2026-11-07 ce passage a
+# échoué pour cette seule raison, après avoir pourtant ouvert une session
+# parfaitement saine — la ligne vide du rapport a été prise pour un réglage
+# non appliqué. Le paquet, lui, répond toujours.
+version_plasma_invite() {
+    if [[ "${DISTRIB}" == ubuntu ]]; then
+        # dpkg rend « 4:6.6.6-0ubuntu0.1 » : on retire l'époque et la révision.
+        ssh_vm "dpkg-query -W -f '\${Version}' plasma-workspace 2>/dev/null" 2>/dev/null \
+            | sed 's/^[0-9]*://; s/-.*$//' || true
+    else
+        ssh_vm "rpm -q --qf '%{VERSION}' plasma-workspace 2>/dev/null" 2>/dev/null || true
+    fi
+}
+
 dans_session() {
     ssh_vm "${env_session} \
             export XDG_RUNTIME_DIR=/run/user/${uid}; \
@@ -496,10 +514,8 @@ dans_session() {
     echo "## Session Ankh DE, dans une VM"
     echo
     echo "- système : $(ssh_vm 'sed -n "s/^PRETTY_NAME=//p" /etc/os-release')"
-    # « plasmashell --version » marche sur les deux distributions, là où
-    # « rpm -q » ne marchait que sur Fedora.
-    echo "- Plasma : $(ssh_vm 'plasmashell --version 2>/dev/null | head -1' || echo inconnue)"
-    echo "- cible de ce passage : ${DISTRIB_NOM}, Plasma ${DISTRIB_PLASMA_ATTENDU} attendu"
+    echo "- Plasma : ${PLASMA_INVITE:-inconnue}"
+    echo "- cible de ce passage : ${DISTRIB_NOM}, Plasma ${DISTRIB_PLASMA_ATTENDU}.x attendu"
     echo "- c'est bien notre session : ANKH_DE_SESSION=$(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^ANKH_DE_SESSION=//p'")"
     echo "- XDG_CONFIG_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_CONFIG_DIRS=//p'")"
     echo "- XDG_DATA_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_DATA_DIRS=//p'")"
@@ -527,11 +543,22 @@ while IFS= read -r ligne; do
     esac
 done < "${sortie}/vm-rapport.md"
 if (( ${#manquants[@]} )); then
-    echo "Réglages NON appliqués dans la session :" >&2
+    # Un grief, PAS un « exit 1 ». Ce contrôle a bien fait son travail le
+    # 2026-11-07 — une ligne vide du rapport trahissait une sonde fautive —
+    # mais en sortant tout de suite il a emporté les étapes 8 à 13 : aucune
+    # interaction essayée, aucune capture, pour une ligne de rapport. Or ce
+    # script a pour règle de tout rassembler et de décider à la fin
+    # (« les journaux d'un passage qui échoue sont les plus utiles de tous »).
+    # Le passage échoue toujours, mais il échoue en ayant tout appris.
+    printf 'Réglages NON appliqués dans la session :\n' >&2
     printf '  %s\n' "${manquants[@]}" >&2
-    exit 1
+    for absent in "${manquants[@]}"; do
+        grief "réglage non appliqué dans la session : ${absent%%:*}"
+    done
 fi
-echo "   tous les réglages du rapport sont renseignés"
+if (( ${#manquants[@]} == 0 )); then
+    echo "   tous les réglages du rapport sont renseignés"
+fi
 
 # Pas de nombre dans le titre : le total dépend des outils présents dans
 # l'invité (qmllint, par exemple, n'est pas partout). Un nombre figé ici
@@ -1361,6 +1388,101 @@ fi
     echo "- amas repérés dans la barre : \`${reperes:-aucun}\`"
     echo "- ce qui N'EST PAS établi : quel amas correspond à quel applet. Le repérage rend une"
     echo "  abscisse, pas un identifiant."
+} >> "${sortie}/vm-rapport.md"
+
+# --- 13. Le désinstallateur ramène-t-il à Plasma standard ? -------------
+# CLAUDE.md §3.8 : « desinstaller.sh doit ramener à l'état de départ. Une
+# pièce qu'on ne sait pas retirer ne s'installe pas. » C'était la dernière
+# promesse du dépôt que rien n'éprouvait dans une vraie session :
+# tests/barres.sh fait le tour des barres sur un faux HOME, sans Plasma.
+#
+# Et le tour complet passe par une DÉCONNEXION-RECONNEXION, ce qui l'éprouve
+# du même coup : le style d'Ankh reste chargé en mémoire dans la session en
+# cours, donc une vérification faite sans redémarrer ne prouverait rien.
+etape "13. Désinstallation, et retour à Plasma standard"
+
+avant_style="$(dans_session 'kreadconfig6 --group KDE --key widgetStyle' || true)"
+avant_theme="$(dans_session 'kreadconfig6 --group KDE --key LookAndFeelPackage' || true)"
+echo "   avant : style « ${avant_style:-?} », thème global « ${avant_theme:-?} »"
+
+if ! ssh_vm 'cd ~/ankh-de && ./desinstaller.sh --barre > /tmp/desinstaller.log 2>&1'; then
+    grief "desinstaller.sh a échoué"
+    ssh_vm 'tail -25 /tmp/desinstaller.log' | sed 's/^/     /' >&2 || true
+else
+    echo "   $(ssh_vm 'grep -c . /tmp/desinstaller.log' || echo '?') lignes de journal, sans erreur"
+fi
+
+# 13.1 Les fichiers doivent être PARTIS. Nommés un par un : « le dossier est
+# plus petit » ne dit pas lesquels restent.
+restes=""
+for chemin in \
+    /usr/local/share/plasma/look-and-feel/org.ankh.de.desktop \
+    /usr/local/share/plasma/plasmoids/org.ankh.demarrer \
+    /usr/local/share/plasma/desktoptheme/ankh \
+    /usr/local/share/color-schemes/Ankh.colors \
+    /usr/local/share/kstyle/themes/ankh.themerc \
+    /usr/local/share/icons/Fluent-Ankh \
+    /usr/local/share/wallpapers/Ankh-Prismes \
+    /usr/local/share/wayland-sessions/ankh-de.desktop; do
+    ssh_vm "test -e ${chemin}" 2>/dev/null && restes="${restes} ${chemin##*/}"
+done
+if [[ -z "${restes}" ]]; then
+    echo "   ok    les huit pièces nommées ont bien disparu"
+else
+    grief "le désinstallateur a laissé des pièces :${restes}"
+fi
+
+# 13.2 La configuration doit désigner Breeze, et non plus nous.
+apres_theme="$(dans_session 'kreadconfig6 --group KDE --key LookAndFeelPackage' || true)"
+echo "   après : thème global « ${apres_theme:-vide} »"
+case "${apres_theme}" in
+    *ankh*) grief "après désinstallation, kdeglobals désigne encore « ${apres_theme} »" ;;
+    "")     grief "après désinstallation, LookAndFeelPackage est vide : plasmashell reprendra Breeze par défaut, mais ce n'est pas écrit" ;;
+    *)      echo "   ok    le thème global est revenu à « ${apres_theme} »" ;;
+esac
+
+# 13.3 Et surtout : une session NEUVE doit s'ouvrir, et être celle de Plasma.
+# C'est ici qu'on éprouve la déconnexion et la reconnexion.
+echo "   redémarrage de SDDM : déconnexion puis reconnexion"
+ssh_vm 'sudo systemctl restart sddm' > /dev/null 2>&1 || true
+session2=non
+for _ in $(seq 90); do
+    if ssh_vm 'pgrep -u ankh plasmashell > /dev/null && pgrep -u ankh kwin_wayland > /dev/null' 2>/dev/null; then
+        session2=oui; break
+    fi
+    sleep 2
+done
+if [[ "${session2}" != oui ]]; then
+    grief "après désinstallation, aucune session ne se rouvre : le retour à Plasma standard n'est pas tenu"
+    ssh_vm 'sudo journalctl -u sddm --no-pager | tail -25' >&2 || true
+else
+    echo "   ok    une session se rouvre après désinstallation"
+    sleep 12
+    # Dans cette session neuve, plus rien d'Ankh ne doit être chargé.
+    style2="$(dans_session 'kreadconfig6 --group KDE --key widgetStyle' || true)"
+    marque="$(ssh_vm "tr '\0' '\n' < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ 2>/dev/null | sed -n 's/^ANKH_DE_SESSION=//p'" || true)"
+    echo "   session neuve : style « ${style2:-vide} », ANKH_DE_SESSION « ${marque:-absent} »"
+    case "${style2}" in
+        *[Aa]nkh*) grief "la session rouverte emploie encore le style « ${style2} »" ;;
+        *) echo "   ok    le style d'Ankh n'est plus appliqué" ;;
+    esac
+    [[ -z "${marque}" ]] \
+        || grief "la session rouverte porte encore ANKH_DE_SESSION=${marque} : le fichier de session n'a pas été retiré"
+    cliche "apres-desinstallation.ppm"
+    python3 -I -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" \
+        "${travail}/apres-desinstallation.ppm" "${sortie}/vm-apres-desinstallation.png" 2>/dev/null || true
+fi
+
+{
+    echo
+    echo "### Désinstallation"
+    echo
+    echo "- pièces restantes : \`${restes:-aucune}\`"
+    echo "- thème global après : \`${apres_theme:-vide}\`"
+    echo "- une session se rouvre : ${session2}"
 } >> "${sortie}/vm-rapport.md"
 
 # Journaux, quoi qu'il arrive.
