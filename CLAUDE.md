@@ -15,6 +15,7 @@
 >
 > | **Quoi reprendre, où, et pourquoi pas** | [docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) |
 > | **Ce qui existe déjà : ne pas le réécrire** | [docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md) |
+> | **La matrice : qui fait quoi, et dans quel état** | [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
 >
 > En cas de contradiction : **DECISIONS.md fait foi pour les choix**, **ANKH-DE-SPEC.md pour la
 > cible**. Ce fichier est alors à corriger.
