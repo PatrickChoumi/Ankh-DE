@@ -188,6 +188,7 @@ ssh_vm 'sudo dnf install -y \
     kf6-frameworkintegration-devel kdecoration-devel \
     fontmake librsvg2-tools xcursorgen sassc fontconfig git \
     python3-pillow \
+    konsole \
     > /tmp/dnf.log 2>&1' || {
         echo "L'installation de Plasma a échoué :" >&2
         ssh_vm 'tail -30 /tmp/dnf.log' >&2 || true
@@ -922,6 +923,12 @@ alt_tab_fermer() {
     evenement "{\"type\":\"key\",\"data\":{\"down\":false,\"key\":{\"type\":\"qcode\",\"data\":\"alt_l\"}}}"
 }
 
+deux_echap() {
+    touche esc
+    sleep 1.2
+    touche esc
+}
+
 cliche() { # $1 : nom du fichier .ppm dans le dossier de travail
     qmp "{\"execute\":\"screendump\",\"arguments\":{\"filename\":\"${travail}/$1\"}}"
 }
@@ -1014,14 +1021,44 @@ fi
 essai_interaction demarrer-ouvert "le menu Démarrer s'ouvre" oui 2 \
     dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu"
 
-# Seuil bas : quelques lettres dans un champ ne changent que peu de pixels,
-# mais elles en changent — et le champ doit avoir le clavier sans qu'on ait
-# eu à cliquer dedans, comme dans Windows 11.
-essai_interaction demarrer-recherche "le menu prend le clavier et affiche la saisie" oui 0.15 \
+# Où est le champ de recherche ? On ne le code pas en dur : la boîte du
+# changement, mesurée à l'ouverture, donne le cadre du menu, et le champ est
+# à une place fixe dedans — en bas à gauche. Relevé sur la capture du
+# 2026-11-07 : 39 % de la largeur, 85 % de la hauteur de la boîte.
+boite="$(python3 -I "${racine}/bench/vm/comparer.py" "${travail}/av.ppm" "${travail}/ap.ppm" 2>/dev/null || true)"
+champ_x=0; champ_y=0
+if [[ -n "${boite}" ]]; then
+    champ_x=$(awk '{printf "%d", $2 + 0.39 * $4}' <<< "${boite}")
+    champ_y=$(awk '{printf "%d", $3 + 0.85 * $5}' <<< "${boite}")
+    echo "   cadre du menu : ${boite} → champ de recherche vers ${champ_x},${champ_y}"
+fi
+
+# Premier essai : taper SANS cliquer. C'est le comportement de Windows 11 —
+# touche Windows, puis on tape. Un échec ici n'est pas un échec du clavier,
+# c'est un menu qui ne prend pas le focus, et les deux ne se corrigent pas
+# au même endroit.
+essai_interaction demarrer-saisie-directe \
+    "le menu prend le clavier sans qu'on clique dedans" oui 0.15 \
     taper "konsole"
 
+# Second essai, et c'est lui qui DÉPARTAGE : on clique dans le champ, puis
+# on tape. Si le texte apparaît maintenant, les touches arrivent bien à la
+# VM et c'est le focus qui manquait. Si rien n'apparaît non plus, c'est
+# l'injection clavier qui est en cause, et l'essai précédent n'accusait pas
+# la bonne pièce.
+if (( champ_x > 0 )); then
+    essai_interaction demarrer-saisie-apres-clic \
+        "le champ de recherche répond après un clic dedans" oui 0.15 \
+        cliquer "${champ_x}" "${champ_y}"
+    essai_interaction demarrer-saisie-clavier \
+        "la saisie s'affiche une fois le champ cliqué" oui 0.1 \
+        taper "konsole"
+fi
+
+# Échap. Dans Windows 11, un premier Échap vide la recherche et un second
+# ferme le menu : on en envoie donc deux, et on juge sur le résultat.
 essai_interaction demarrer-ferme "le menu se referme sur Échap" oui 2 \
-    touche esc
+    deux_echap
 
 # --- 12.2 Les applets de droite -----------------------------------------
 # On clique chaque amas de la moitié droite, un par un, avec Échap entre
