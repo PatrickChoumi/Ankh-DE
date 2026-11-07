@@ -59,6 +59,40 @@ if [ -d "${ANKH_DE_DATADIR}" ]; then
     export XDG_DATA_DIRS
 fi
 
+# --- Les pièces que le thème DÉSIGNE existent-elles ? --------------------
+#
+# Notre thème global nomme un thème d'icônes, un style Plasma, des curseurs
+# et des applets. Plasma ne dit rien quand l'un manque : il retombe sur le
+# sien, et l'écran a l'air juste. C'est exactement ce qui a caché, plusieurs
+# jours, que la barre affichée était celle de Breeze.
+#
+# Le cas n'est pas théorique : le paquet RPM ne porte PAS les pièces
+# fabriquées par third_party/preparer.sh (applets, thème Plasma, icônes,
+# curseurs, police). Qui installe le seul RPM obtient donc une session qui
+# désigne des pièces absentes. On le DIT, une ligne par pièce, dans le
+# journal de la session.
+#
+# C'est un avertissement, jamais un refus : une session dégradée reste une
+# session, et laisser l'utilisateur dehors serait pire.
+ankh_de_verifier_piece() { # $1 : libellé, $2 : chemin attendu
+    if [ -e "$2" ]; then
+        echo "ANKH-PIECE ok      $1"
+    else
+        echo "ANKH-PIECE ABSENTE $1 ($2) : Plasma retombera sur la sienne, sans le dire"
+    fi
+}
+if [ -d "${ANKH_DE_DATADIR}" ]; then
+    ankh_de_verifier_piece "applet Démarrer"   "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.demarrer"
+    ankh_de_verifier_piece "applet barre"      "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.taches"
+    ankh_de_verifier_piece "applet état"       "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.etat"
+    ankh_de_verifier_piece "séparateur"        "${ANKH_DE_DATADIR}/plasma/plasmoids/org.ankh.separateur"
+    ankh_de_verifier_piece "module QML partagé" "${ANKH_DE_DATADIR}/ankh-de/qml/Settings.qml"
+    ankh_de_verifier_piece "style Plasma"      "${ANKH_DE_DATADIR}/plasma/desktoptheme/ankh"
+    ankh_de_verifier_piece "thème d'icônes"    "${ANKH_DE_DATADIR}/icons/Fluent-Ankh"
+    ankh_de_verifier_piece "curseurs"          "${ANKH_DE_DATADIR}/icons/Ankh-curseurs"
+    ankh_de_verifier_piece "sélecteur Alt+Tab" "${ANKH_DE_DATADIR}/kwin/tabbox/ankh-selecteur"
+fi
+
 # Repère pour nos propres scripts et pour le signalement de bogues. Il ne
 # remplace pas XDG_CURRENT_DESKTOP, qui reste « KDE » (voir ankh-de.desktop).
 ANKH_DE_SESSION=1

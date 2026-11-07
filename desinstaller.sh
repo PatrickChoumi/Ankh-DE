@@ -22,7 +22,18 @@ if command -v plasma-apply-lookandfeel > /dev/null; then
         fi
     }
     if [[ "${barre}" == oui ]]; then
-        appliquer -a "${sombre}" --resetLayout
+        # Remettre les barres de l'UTILISATEUR, et non celles de Plasma.
+        # « --resetLayout » donne la disposition par défaut de Breeze : ce
+        # n'est pas un retour à l'état de départ, c'est un autre état.
+        # shellcheck source=lib/barres.sh
+        . "${racine}/lib/barres.sh"
+        if ankh_barres_remettre; then
+            appliquer -a "${sombre}"
+        else
+            echo "  Aucune sauvegarde de barre trouvée : on remet celle de Plasma." >&2
+            echo "  (Une installation faite sans « --barre » n'en crée pas.)" >&2
+            appliquer -a "${sombre}" --resetLayout
+        fi
     else
         appliquer -a "${sombre}"
     fi

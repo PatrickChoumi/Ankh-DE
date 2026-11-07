@@ -139,6 +139,22 @@ zone.writeConfig("hiddenItems", [
     "org.kde.plasma.notifications"
 ])
 
+// Neuf pixels entre la zone système et ce qui suit. Sur la capture du
+// 2026-11-06, l'icône de réseau TOUCHAIT le « 2 » de « 2:10 PM » : zéro
+// pixel entre les deux. Notre séparateur ne dessine pas de trait — la barre
+// de Windows 11 n'en a pas — il ne fait que de l'espace.
+try {
+    var sep = panel.addWidget("org.ankh.separateur")
+    if (sep && sep.type === "org.ankh.separateur") {
+        print("ANKH-LAYOUT org.ankh.separateur : installé")
+    } else {
+        print("ANKH-LAYOUT org.ankh.separateur : absent, la zone système touchera l'horloge")
+        if (sep) sep.remove()
+    }
+} catch (e) {
+    print("ANKH-LAYOUT org.ankh.separateur : absent, la zone système touchera l'horloge")
+}
+
 // Le volet unique : Wi-Fi, Bluetooth, volume, luminosité en un bouton, comme
 // les « Paramètres rapides » de Windows 11 (lot 6, repris de Tidewater).
 // Pas de remplaçant chez Plasma : ses équivalents sont justement les cinq
@@ -160,18 +176,6 @@ try {
     print("ANKH-LAYOUT org.ankh.etat : absent, zone système laissée entière")
 }
 
-// Les notifications, à gauche de l'horloge (lot 6, repris de Tidewater).
-try {
-    var notifs = panel.addWidget("org.ankh.notifications")
-    if (notifs && notifs.type === "org.ankh.notifications") {
-        print("ANKH-LAYOUT org.ankh.notifications : installé")
-    } else {
-        print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
-        if (notifs) notifs.remove()
-    }
-} catch (e) {
-    print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
-}
 
 // Horloge : la nôtre dispose déjà l'heure au-dessus de la date, comme
 // Windows 11. Avec celle de Plasma, on s'en approche par ses réglages —
@@ -182,6 +186,20 @@ if (horloge.type === "org.kde.plasma.digitalclock") {
     horloge.currentConfigGroup = ["Appearance"]
     horloge.writeConfig("dateDisplayFormat", "BesideTime")
     horloge.writeConfig("showSeconds", "Never")
+}
+
+// Les notifications, APRÈS l'horloge : dans Windows 11 la cloche est à
+// droite de la date, pas à sa gauche (lot 6, repris de Tidewater).
+try {
+    var notifs = panel.addWidget("org.ankh.notifications")
+    if (notifs && notifs.type === "org.ankh.notifications") {
+        print("ANKH-LAYOUT org.ankh.notifications : installé")
+    } else {
+        print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
+        if (notifs) notifs.remove()
+    }
+} catch (e) {
+    print("ANKH-LAYOUT org.ankh.notifications : absent, aucun remplaçant")
 }
 
 // Bande « Afficher le bureau » au coin droit, comme Windows 11.

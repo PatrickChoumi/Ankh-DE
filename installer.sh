@@ -204,6 +204,13 @@ appliquer() {
 }
 
 if [[ "${barre}" == oui ]]; then
+    # On SAUVEGARDE avant d'effacer. Les deux gestes vivent dans
+    # lib/barres.sh, où tests/barres.sh les éprouve sur un faux HOME : du
+    # code de sauvegarde qu'on ne peut pas essayer ne vaut pas mieux que
+    # l'avertissement qu'il remplace.
+    # shellcheck source=lib/barres.sh
+    . "${racine}/lib/barres.sh"
+    ankh_barres_sauver
     appliquer -a org.ankh.de.desktop --resetLayout
 else
     # Sans --resetLayout, vos barres ne sont pas touchées.

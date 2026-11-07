@@ -259,7 +259,8 @@ applets="${prefixe}/share/plasma/plasmoids"
 if [[ -d "${applets}/org.ankh.demarrer" ]]; then
     echo "== Les applets"
     for id in org.ankh.demarrer org.ankh.horloge org.ankh.bureau \
-              org.ankh.etat org.ankh.notifications org.ankh.taches org.ankh.vuetaches; do
+              org.ankh.etat org.ankh.notifications org.ankh.taches org.ankh.vuetaches \
+              org.ankh.separateur; do
         verifies=$((verifies + 1))
         if [[ -f "${applets}/${id}/metadata.json" ]]; then
             printf '  ok    %s\n' "${id}"

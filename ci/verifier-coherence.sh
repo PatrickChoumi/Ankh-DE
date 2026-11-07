@@ -136,6 +136,49 @@ else
              | grep -v '^\./\.git' | grep -v '^\./AUDIT\.md' | grep -v '^\./docs/FIDELITE\.md')
 fi
 
+# --- 5. La version de Plasma annoncée -------------------------------------
+# Le 2026-11-06, docs/INSTALL.md a été corrigé de « 6.7.x, 6.8 pas encore pris
+# en charge » vers 6.8.x — et README.md:114 disait encore la même chose le
+# lendemain. Une correction qui vise un fichier à la main en manque un autre.
+#
+# La source de vérité est « plasma= » de src/decoration/VERSION-BREEZE, que le
+# CMake fait respecter (DE-008). Aucun document ne doit annoncer autre chose.
+# Deux lignes nomment légitimement une AUTRE version, et les taire en bloc
+# reviendrait à désarmer le contrôle. Elles sont donc nommées une à une, avec
+# la raison, comme ABROGEES plus haut : fichier | fragment qui la justifie.
+PLASMA_EXCEPTIONS=(
+    # Tidewater est développé et testé sur 6.6 : c'est un fait sur EUX.
+    "docs/UPSTREAMS.md|ils développent et testent sur"
+    # La rupture KDecoration2 -> 3 de 6.3 est un précédent historique.
+    "docs/REBASE.md|KDecoration2 à KDecoration3"
+)
+plasma_vise="$(sed -n 's/^plasma=//p' src/decoration/VERSION-BREEZE 2>/dev/null | head -1)"
+if [[ -z "${plasma_vise}" ]]; then
+    signaler "src/decoration/VERSION-BREEZE ne dit pas quelle version de Plasma est visée"
+else
+    while IFS=: read -r fichier ligne texte; do
+        [[ -n "${fichier}" ]] || continue
+        # « Plasma 6.x », hors de la version visée. On ignore « Plasma 6 »
+        # tout court, qui nomme la génération et reste juste.
+        # « || true » : sous « set -e », un grep qui ne trouve rien (code 1)
+        # tue l'affectation, donc le script — en silence. C'est le piège que
+        # ce dépôt a déjà rencontré dans preparer.sh, et j'y suis retombé ici.
+        exemptee=non
+        for regle in "${PLASMA_EXCEPTIONS[@]}"; do
+            IFS='|' read -r ex_fichier ex_phrase <<< "${regle}"
+            [[ "${fichier}" == "./${ex_fichier}" || "${fichier}" == "${ex_fichier}" ]] || continue
+            grep -qF -- "${ex_phrase}" <<< "${texte}" && { exemptee=oui; break; }
+        done
+        [[ "${exemptee}" == non ]] || continue
+        mauvaise="$(grep -oE 'Plasma \*{0,2}6\.[0-9]+' <<< "${texte}" \
+                    | grep -oE '6\.[0-9]+' | grep -v "^${plasma_vise}$" | head -1 || true)"
+        [[ -n "${mauvaise}" ]] \
+            && signaler "${fichier}:${ligne} annonce Plasma ${mauvaise}, mais VERSION-BREEZE vise ${plasma_vise}"
+    done < <(grep -rnE 'Plasma \*{0,2}6\.[0-9]+' --include='*.md' . 2>/dev/null \
+             | grep -v '^\./\.git' | grep -v '^\./AUDIT\.md' | grep -v '^\./AVANCEMENT\.md' \
+             | grep -v '^\./CHANGELOG\.md' | grep -v '^\./DECISIONS\.md')
+fi
+
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then
     echo >&2

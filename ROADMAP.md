@@ -108,8 +108,11 @@ section « Mise en œuvre : onze lots ». Résumé des pièces à écrire :
   barre des tâches et le bouton « Vue des tâches », en QML, qui remplacent le repli sur
   `icontasks`. La zone système de Plasma est **gardée** — l'éteindre couperait les invites de
   mot de passe Wi-Fi et les touches de volume — mais les cinq icônes que notre volet d'état
-  reprend passent derrière le chevron. **Reste à mesurer** : la taille des icônes de la barre et
-  leur espacement, et `volet.rayon`.
+  reprend passent derrière le chevron. Le **chevauchement zone système / horloge**
+  vu sur la capture du 2026-11-06 — l'icône de réseau touchait le « 2 » de « 2:10 PM » — est
+  réglé par `org.ankh.separateur`, 9 px sans trait.
+  **Reste à mesurer** : la taille des icônes de la barre, leur espacement, l'écart que ce
+  séparateur produit vraiment à l'écran, et `volet.rayon`.
 - **Lot 5** — `src/applets/org.ankh.demarrer/` : Démarrer en QML, dérivé de Kickoff. Recherche en
   haut, 6 × 3 épingles de 32 px, « Toutes les applications », « Recommandé », compte et
   alimentation en bas. Dépend de `org.kde.plasma.private.kicker` : fragile (SPEC §4.3).

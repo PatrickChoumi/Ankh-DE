@@ -145,6 +145,13 @@ jobs:
       - name: Cohérence des décisions et des règles
         run: ./ci/verifier-coherence.sh
 
+      # CLAUDE.md §3.8 : on doit pouvoir revenir à l'état de départ.
+      # « installer.sh --barre » détruisait les barres de l'utilisateur sans
+      # retour possible jusqu'au 2026-11-07 ; ce test fait le tour complet
+      # sur un faux HOME, sans Plasma, et compare les octets.
+      - name: Les barres de l'utilisateur reviennent intactes
+        run: ./tests/barres.sh
+
       # DE-007 : le tableau de fidélité est généré, jamais écrit à la main.
       - name: docs/FIDELITE.md est à jour avec bench/jetons.toml
         run: python3 bench/fidelite.py --verifier

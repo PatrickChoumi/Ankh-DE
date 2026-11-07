@@ -111,8 +111,10 @@ Ces planches sont **produites par la CI à chaque changement**, pas prises à la
 
 ## Installation
 
-**Prérequis** : KDE Plasma **6.7.x**, session Wayland, Qt 6.6+, KDE Frameworks 6+.
-Plasma 6.8 n'est pas encore pris en charge ([DE-008](DECISIONS.md#de-008--le-code-dérivé-de-kde-est-reporté-à-chaque-version-de-plasma-et-la-construction-échoue-tant-que-ce-nest-pas-fait)).
+**Prérequis** : KDE Plasma **6.8.x**, session Wayland, Qt 6.6+, KDE Frameworks 6+.
+Toutes les preuves de ce dépôt sont faites sur **6.8.2** (Fedora 44). Une autre version arrête
+la construction, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON`
+([DE-008](DECISIONS.md), `src/decoration/VERSION-BREEZE`).
 
 ```bash
 git clone https://github.com/PatrickChoumi/Ankh-DE

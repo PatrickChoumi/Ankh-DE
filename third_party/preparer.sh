@@ -691,6 +691,21 @@ reprendre_tidewater plasmoids/notifications org.ankh.notifications "Notification
 reprendre_tidewater plasmoids/tasks         org.ankh.taches        "Barre des tâches"
 reprendre_tidewater plasmoids/taskview      org.ankh.vuetaches     "Vue des tâches"
 
+# Le séparateur, et il règle un défaut VU sur une capture : dans le passage
+# du 2026-11-06, l'icône de réseau de la zone système touchait le « 2 » de
+# « 2:10 PM ». Zéro pixel entre les deux. Tidewater pose à cet endroit un
+# « divider » de 9 px de large, et c'est exactement ce qui manquait.
+#
+# Mais leur pièce dessine un TRAIT vertical, et la barre de Windows 11 n'en
+# a pas : elle sépare par de l'espace. On garde les 9 px et on rend le trait
+# invisible — plutôt que de couper la pièce en deux, parce que « showDividers »
+# à faux ramènerait la largeur à zéro, donc le chevauchement.
+reprendre_tidewater plasmoids/divider       org.ankh.separateur    "Séparateur"
+sed -i 's/^    color: pal.out$/    \/\/ Ankh : de l'"'"'espace, pas un trait — la barre de Windows 11 n'"'"'en a pas.\n    color: "transparent"/' \
+    "${sortie}/applets/org.ankh.separateur/contents/ui/common/Divider.qml"
+grep -q 'color: "transparent"' "${sortie}/applets/org.ankh.separateur/contents/ui/common/Divider.qml" \
+    || { echo "Séparateur : le trait n'a pas été rendu invisible" >&2; exit 1; }
+
 # Le module partagé, un seul pour tous les applets (leur install.sh:131).
 rm -rf "${sortie}/qml"
 install -d -m 0755 "${sortie}/qml"

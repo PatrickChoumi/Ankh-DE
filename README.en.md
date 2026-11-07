@@ -65,7 +65,8 @@ modifying a single file belonging to your distribution, and it uninstalls in one
 
 ## Install
 
-**Requirements**: KDE Plasma **6.7.x**, Wayland session, Qt 6.6+, KDE Frameworks 6+.
+**Requirements**: KDE Plasma **6.8.x**, Wayland session, Qt 6.6+, KDE Frameworks 6+.
+Every proof in this repository is made on **6.8.2** (Fedora 44).
 Plasma 6.8 is not supported yet.
 
 ```bash

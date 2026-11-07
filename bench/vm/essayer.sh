@@ -518,7 +518,8 @@ esac
 # et c'est exactement le genre d'approximation qui m'a fait écrire qu'un
 # menu était là quand il n'y était pas.
 nouvelles=()
-for applet in org.ankh.taches org.ankh.vuetaches org.ankh.etat org.ankh.notifications; do
+for applet in org.ankh.taches org.ankh.vuetaches org.ankh.etat org.ankh.notifications \
+              org.ankh.separateur; do
     if [[ -z "${applets}" ]]; then
         nouvelles+=("${applet}=inconnu")
     elif [[ "${applets}" == *"${applet}"* ]]; then
@@ -550,6 +551,20 @@ module_present=non
 ssh_vm 'test -f /usr/local/share/ankh-de/qml/Settings.qml' 2>/dev/null && module_present=oui
 echo "   module QML partagé : ${module_present}"
 [[ "${module_present}" == oui ]] || grief "le module QML partagé est absent de /usr/local/share/ankh-de/qml"
+
+# Ce que la SESSION elle-même a constaté de ses pièces, au démarrage
+# (ANKH-PIECE, src/session/ankh-de-session.in). C'est le contrôle qui vaut
+# pour tous les modes d'installation — y compris le RPM seul, qui ne porte
+# pas les pièces fabriquées par preparer.sh.
+pieces="$(ssh_vm "journalctl --user --no-pager -b 2>/dev/null | grep -o 'ANKH-PIECE.*' | sort -u" || true)"
+if [[ -n "${pieces}" ]]; then
+    printf '%s\n' "${pieces}" | sed 's/^/   /'
+    absentes="$(grep -c 'ABSENTE' <<< "${pieces}" || true)"
+    (( absentes == 0 )) \
+        || grief "${absentes} pièce(s) désignée(s) par le thème sont absentes : Plasma retombe sur les siennes"
+else
+    grief "la session n'a rien dit de ses pièces : le contrôle ANKH-PIECE n'a pas tourné"
+fi
 
 # Ouvrir le menu par le chemin que Plasma emploie lui-même pour la touche
 # Meta. S'il s'ouvre, l'applet se charge et répond.
@@ -653,6 +668,7 @@ fi
     echo "- pièces des lots 4 et 6 : ${nouvelles[*]}"
     echo "- Alt+Tab : kwinrc demande \`${selecteur_voulu:-rien}\`, paquet présent : ${selecteur_present}"
     echo "- module QML partagé : ${module_present}"
+    echo "- pièces désignées absentes : $(grep -c 'ABSENTE' <<< "${pieces}" 2>/dev/null || echo '?')"
     echo "- erreurs sur nos pièces : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
 

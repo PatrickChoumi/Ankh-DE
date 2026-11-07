@@ -220,7 +220,7 @@ personne ne soit déçu.
 
 C'est précisément la raison d'être de `src/style` et `src/decoration`.
 
-### 4.2 Impossible tout court en Plasma 6.7 — `À VALIDER` à chaque version
+### 4.2 Impossible tout court en Plasma 6.8 — `À VALIDER` à chaque version
 
 | Quoi | Pourquoi |
 |---|---|
@@ -282,7 +282,7 @@ C'est précisément la raison d'être de `src/style` et `src/decoration`.
 | # | Question | Statut |
 |---|---|---|
 | 1 | Les 20 clés de `contents/defaults` sont-elles toutes prises par une session fraîche, sur les trois distributions ? | `À VALIDER` — premier test du lot 0 |
-| 2 | `panel.lengthMode = "fill"` existe-t-il dans le moteur de script de Plasma 6.7 ? | `À VALIDER` — lot 4 |
+| 2 | `panel.lengthMode = "fill"` existe-t-il dans le moteur de script de Plasma 6.8 ? | **OUI** — `shell/scripting/panel.h:39` l'expose, valeurs `fill`, `fit`, `custom` (`panel.cpp`), et la disposition l'emploie depuis le 2026-11-06 |
 | 3 | Les 8 px autour des icônes de la barre : quelle clé exactement ? | `À DÉCIDER` — lot 4, à mesurer |
 | 4 | Le thème clair doit-il aussi suivre le fond d'écran, ou garder le violet ? | `À DÉCIDER` — lot 10 |
 | 5 | Faut-il la variante « clone littéral » de DE-003, par un réglage ? | `À DÉCIDER` — après le lot 10 |

@@ -36,6 +36,7 @@
 | `org.ankh.notifications` (lot 6) | idem, `plasmoids/notifications` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
 | `org.ankh.taches` (lot 4) | idem, `plasmoids/tasks` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations. Lit la même clé `launchers` qu'`icontasks`, donc les épingles suivent |
 | `org.ankh.vuetaches` (lot 4) | idem, `plasmoids/taskview` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
+| `org.ankh.separateur` (lot 4) | idem, `plasmoids/divider` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations, **plus une** : son trait est rendu transparent. Il donne 9 px entre la zone système et l'horloge — sur la capture du 2026-11-06, l'icône de réseau touchait le « 2 » de « 2:10 PM ». Windows 11 sépare par de l'espace, pas par un trait |
 | `ankh-selecteur` (lot 7) | idem, `switcher/tidewater-switcher` | `4484377` | GPL-3.0-or-later | QML | Paquet `KWin/WindowSwitcher`, désigné par `src/config/kwinrc`. **Une mise à jour ne prend qu'à la déconnexion** : KWin garde le code en mémoire par nom de paquet |
 | module QML partagé, et le `common/` de chaque applet repris | idem, `shared/` et `common/` | `4484377` | GPL-3.0-or-later | QML | Installé dans `share/ankh-de/qml` ; les applets l'atteignent par cinq niveaux relatifs, ce que `tests/session-et-theme.sh` résout vraiment plutôt que de le compter |
 
@@ -115,6 +116,33 @@ l'autre de ces projets n'aurait réglées, et elle l'a fait en quelques minutes 
 
 C'est la source à lire **avant** un projet tiers quand la question est « comment Plasma
 fait-il ? ».
+
+## La filiation du menu Démarrer, et pourquoi ce n'est pas une contradiction
+
+On me l'a objecté le 2026-11-07, et l'objection méritait d'être vérifiée plutôt que balayée :
+le dépôt **écarte** `menu-11-next` faute de fichier `LICENSE`, et **reprend** un menu Démarrer
+qui en descend. Voici la chaîne, relevée dans l'`ATTRIBUTION.md` de KDE-Windows-Modern au
+commit `7ef6bfe` :
+
+| Maillon | Licence qu'il déclare | Rôle, selon eux |
+|---|---|---|
+| [OnzeMenuKDE](https://github.com/adhec/OnzeMenuKDE) | GPL-3.0 / GPL-2.0-or-later | « Start menu ancestor » |
+| [menu-11-next](https://github.com/Eisteed/menu-11-next) | GPL-2.0-or-later | « Start menu reference / design basis » |
+| KDE-Windows-Modern, `startmenu` | GPL-3.0-or-later, **fichier `LICENSE` à la racine** | ce que nous reprenons |
+| `org.ankh.demarrer` | GPL-3.0-or-later | notre dérivé |
+
+**Pourquoi les deux positions tiennent ensemble.** Ce que nous refusions n'était pas la
+*lignée* de menu-11-next, c'était de **copier depuis un dépôt dont la licence n'est portée par
+aucun fichier** — une mention dans `metadata.json` n'est pas le texte de la licence, et c'est le
+texte qui fait foi. Nous copions depuis KDE-Windows-Modern, qui porte bien son `LICENSE`, et
+GPL-2.0-or-later autorise expressément la redistribution sous GPL-3.0 : la chaîne est donc
+licite de bout en bout, et notre dérivé est en GPL-3.0-or-later comme il se doit.
+
+**Ce que nous ne savons pas**, et qu'il serait malhonnête de passer sous silence : leur
+`ATTRIBUTION.md` dit « ancêtre » et « référence de conception » sans dire **quelle part du code**
+vient de quel maillon. Nous reprenons leur déclaration ; nous ne l'avons pas vérifiée ligne à
+ligne, et nous n'en avons pas les moyens. Si l'un des auteurs cités conteste cette filiation,
+c'est leur déclaration qu'il faut corriger, et la nôtre suivra.
 
 ## Rappel de licence
 
