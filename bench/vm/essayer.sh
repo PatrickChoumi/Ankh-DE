@@ -834,6 +834,239 @@ json.dump({k: v for k, v in m.items() if v is not None}, open(sortie, "w"),
 print(f"   {sortie} : {len(m)} mesure(s)")
 PYEOF
 
+
+# =========================================================================
+# ÉTAPE 12 — LES INTERACTIONS
+# =========================================================================
+#
+# Jusqu'au 2026-11-07, ce harnais savait répondre à « la pièce est-elle
+# là ? » et « l'écran a-t-il changé ? ». Il ne savait pas poser la seule
+# question qui compte pour un bureau : « est-ce que ça RÉPOND ? »
+#
+# Douze responsabilités étaient chargées, zéro interaction essayée
+# (docs/ANTI_DOUBLONS.md). C'était le plus grand écart entre ce que le dépôt
+# montrait et ce qu'il prouvait.
+#
+# Comment on clique, et pourquoi ainsi
+# ------------------------------------
+# Par QEMU, pas par l'invité. « input-send-event » injecte les événements au
+# niveau du matériel virtuel : rien à installer dans la VM, rien qui dépende
+# de Wayland, et aucun outil (ydotool, wtype, xdotool) dont l'absence
+# ferait passer un test pour un échec du bureau. La VM a déjà
+# « -device virtio-tablet », donc le pointeur ABSOLU fonctionne : on vise un
+# pixel, pas un déplacement relatif.
+#
+# L'échelle de QEMU pour un axe absolu va de 0 à 32767 sur toute la largeur.
+
+# La taille de l'écran est LUE, pas supposée : un nombre en dur ici
+# enverrait tous les clics à côté le jour où la VM change de résolution, et
+# les essais échoueraient en accusant le bureau.
+ECRAN_L=1280
+ECRAN_H=800
+
+qmp() { # $@ : une ou plusieurs commandes QMP, en JSON, dans l'ordre
+    {
+        printf '{ "execute": "qmp_capabilities" }\n'
+        printf '%s\n' "$@"
+    } | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1
+}
+
+evenement() { # $1 : le tableau d'événements, en JSON
+    qmp "{\"execute\":\"input-send-event\",\"arguments\":{\"events\":[$1]}}"
+}
+
+pointer() { # $1 : x, $2 : y, en pixels écran
+    local ax=$(( $1 * 32767 / (ECRAN_L - 1) ))
+    local ay=$(( $2 * 32767 / (ECRAN_H - 1) ))
+    evenement "{\"type\":\"abs\",\"data\":{\"axis\":\"x\",\"value\":${ax}}},
+               {\"type\":\"abs\",\"data\":{\"axis\":\"y\",\"value\":${ay}}}"
+}
+
+cliquer() { # $1 : x, $2 : y
+    pointer "$1" "$2"
+    sleep 0.3
+    evenement "{\"type\":\"btn\",\"data\":{\"down\":true,\"button\":\"left\"}}"
+    sleep 0.1
+    evenement "{\"type\":\"btn\",\"data\":{\"down\":false,\"button\":\"left\"}}"
+}
+
+touche() { # $1 : un qcode QEMU — esc, ret, tab, spc, a…z, 0…9
+    evenement "{\"type\":\"key\",\"data\":{\"down\":true,\"key\":{\"type\":\"qcode\",\"data\":\"$1\"}}}"
+    sleep 0.05
+    evenement "{\"type\":\"key\",\"data\":{\"down\":false,\"key\":{\"type\":\"qcode\",\"data\":\"$1\"}}}"
+}
+
+taper() { # $1 : du texte en minuscules et chiffres
+    local i c
+    for (( i = 0; i < ${#1}; i++ )); do
+        c="${1:i:1}"
+        case "${c}" in
+            " ") touche spc ;;
+            [a-z0-9]) touche "${c}" ;;
+            *) echo "   (caractère « ${c} » ignoré : pas de qcode)" >&2 ;;
+        esac
+        sleep 0.08
+    done
+}
+
+# Alt+Tab en deux temps, et c'est obligatoire : le sélecteur de KWin ne
+# s'affiche QUE tant qu'Alt est maintenu. Un « appui-relâche » atomique
+# le ferait apparaître et disparaître entre deux clichés, et on conclurait
+# qu'il ne marche pas.
+alt_tab_ouvrir() {
+    evenement "{\"type\":\"key\",\"data\":{\"down\":true,\"key\":{\"type\":\"qcode\",\"data\":\"alt_l\"}}}"
+    sleep 0.2
+    touche tab
+}
+alt_tab_fermer() {
+    evenement "{\"type\":\"key\",\"data\":{\"down\":false,\"key\":{\"type\":\"qcode\",\"data\":\"alt_l\"}}}"
+}
+
+cliche() { # $1 : nom du fichier .ppm dans le dossier de travail
+    qmp "{\"execute\":\"screendump\",\"arguments\":{\"filename\":\"${travail}/$1\"}}"
+}
+
+# Combien l'écran a-t-il changé entre deux clichés ? Rend la part en %.
+# C'est la même mesure que pour l'ouverture du menu, et le même seuil : une
+# minute d'horloge change 0,02 % de l'écran, un panneau qui s'ouvre en
+# change plusieurs pour cent.
+change() { # $1 : avant.ppm, $2 : après.ppm
+    [[ -s "${travail}/$1" && -s "${travail}/$2" ]] || { echo "0"; return; }
+    python3 -I "${racine}/bench/vm/comparer.py" "${travail}/$1" "${travail}/$2" 2>/dev/null \
+        | awk '{print ($6 == "" ? 0 : $6)}'
+}
+
+# Un essai d'interaction : on photographie, on agit, on rephotographie, et
+# on compare. « attendu » dit si l'écran DOIT changer ou non — refermer un
+# panneau est aussi une réponse, et un panneau qui ne se referme pas est un
+# défaut qu'on ne verrait pas en ne cherchant que des changements.
+essai_interaction() { # $1 : nom court (sert au fichier), $2 : libellé,
+                      # $3 : oui|non (l'écran doit-il changer), $4 : seuil %,
+                      # $5… : la commande à exécuter
+    local nom="$1" libelle="$2" attendu="$3" seuil="$4"
+    shift 4
+    cliche "av.ppm"
+    "$@"
+    sleep 2.5
+    cliche "ap.ppm"
+    local part obtenu
+    part="$(change av.ppm ap.ppm)"
+    if awk "BEGIN{exit !(${part:-0} >= ${seuil})}"; then obtenu=oui; else obtenu=non; fi
+    if [[ "${obtenu}" == "${attendu}" ]]; then
+        printf '   ok    %-46s %s %% de l écran\n' "${libelle}" "${part}"
+        interactions_ok=$((interactions_ok + 1))
+    else
+        grief "${libelle} : l'écran a changé de ${part} %, on attendait « ${attendu} »"
+    fi
+    # La capture d'après est la preuve, et son nom dit ce qu'elle montre.
+    python3 -I -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/ap.ppm" "${sortie}/vm-i-${nom}.png" 2>/dev/null || true
+}
+
+etape "12. Les interactions — est-ce que ça RÉPOND ?"
+interactions_ok=0
+
+cliche "taille.ppm"
+if [[ -s "${travail}/taille.ppm" ]]; then
+    lue="$(python3 -I -c "
+from PIL import Image
+import sys
+print('%d %d' % Image.open(sys.argv[1]).size)" "${travail}/taille.ppm" 2>/dev/null || true)"
+    if [[ -n "${lue}" ]]; then
+        ECRAN_L="${lue%% *}"
+        ECRAN_H="${lue##* }"
+    fi
+fi
+echo "   écran : ${ECRAN_L}x${ECRAN_H}"
+
+# Où cliquer. On ne devine pas, on repère sur l'image.
+#
+# Plasma n'expose pas la géométrie d'un applet par son moteur de script :
+# containment.h donne les identifiants, panel.h la taille du panneau, jamais
+# la place d'un widget dedans. bench/vm/reperer.py lit donc la bande du bas
+# et rend le centre de chaque amas de pixels.
+#
+# La barre est rendue OPAQUE pour ce repérage, pour la même raison qu'à
+# l'étape 11 : en verre, sur le fond uni, elle se confond avec lui et le
+# repérage ne trouve qu'un seul amas (essayé le 2026-11-07 : « 640 », soit
+# l'écran entier pris pour un bloc). Opaque, il en trouve sept.
+plasma_script 'panels().forEach(function(p){ p.opacity="opaque" })' > /dev/null || true
+sleep 3
+cliche "barre-reperes.ppm"
+reperes="$(python3 -I "${racine}/bench/vm/reperer.py" "${travail}/barre-reperes.ppm" 48 2>/dev/null || true)"
+plasma_script 'panels().forEach(function(p){ p.opacity="translucent" })' > /dev/null || true
+sleep 2
+if [[ -z "${reperes}" ]]; then
+    grief "aucun applet repéré dans la barre : impossible de cliquer dessus"
+else
+    echo "   amas repérés dans la barre (x du centre) : ${reperes}"
+fi
+
+# --- 12.1 Le menu Démarrer ----------------------------------------------
+# Trois questions, dans l'ordre : s'ouvre-t-il, accepte-t-il le clavier, se
+# referme-t-il ? La troisième compte autant que les deux premières : un menu
+# qui ne se ferme pas sur Échap piège l'utilisateur.
+#
+# L'ouverture passe par D-Bus, pas par un clic : c'est le chemin qu'emploie
+# la touche Windows, et il ne dépend pas d'un repérage.
+essai_interaction demarrer-ouvert "le menu Démarrer s'ouvre" oui 2 \
+    dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu"
+
+# Seuil bas : quelques lettres dans un champ ne changent que peu de pixels,
+# mais elles en changent — et le champ doit avoir le clavier sans qu'on ait
+# eu à cliquer dedans, comme dans Windows 11.
+essai_interaction demarrer-recherche "le menu prend le clavier et affiche la saisie" oui 0.15 \
+    taper "konsole"
+
+essai_interaction demarrer-ferme "le menu se referme sur Échap" oui 2 \
+    touche esc
+
+# --- 12.2 Les applets de droite -----------------------------------------
+# On clique chaque amas de la moitié droite, un par un, avec Échap entre
+# deux. On ne dit PAS lequel est lequel : le repérage donne une abscisse,
+# pas un identifiant, et affirmer « c'est le volet d'état » serait inventer.
+# Ce que cet essai établit, et c'est déjà beaucoup : la zone de droite
+# répond au clic.
+#
+# Le dernier amas est écarté : « Afficher le bureau » occupe le coin, et le
+# presser réduirait toutes les fenêtres au milieu des essais.
+if [[ -n "${reperes}" ]]; then
+    # shellcheck disable=SC2206
+    amas=( ${reperes} )
+    droite=()
+    for x in "${amas[@]}"; do (( x > ECRAN_L / 2 + 100 )) && droite+=("${x}"); done
+    if (( ${#droite[@]} >= 2 )); then
+        for (( k = 0; k < ${#droite[@]} - 1; k++ )); do
+            essai_interaction "applet-droite-${droite[k]}" \
+                "un clic à x=${droite[k]} ouvre quelque chose" oui 0.5 \
+                cliquer "${droite[k]}" $(( ECRAN_H - 24 ))
+            touche esc
+            sleep 1.5
+        done
+    else
+        grief "moins de deux amas dans la moitié droite : les applets n'y sont pas repérables"
+    fi
+fi
+
+# --- 12.3 Alt+Tab --------------------------------------------------------
+# Il faut deux fenêtres pour que le sélecteur ait quelque chose à montrer.
+dans_session 'setsid konsole > /dev/null 2>&1 &' > /dev/null 2>&1 || true
+sleep 6
+essai_interaction alt-tab "Alt+Tab montre le sélecteur, Alt maintenu" oui 1 alt_tab_ouvrir
+essai_interaction alt-tab-ferme "le sélecteur disparaît au relâchement" oui 1 alt_tab_fermer
+
+{
+    echo
+    echo "### Interactions"
+    echo
+    echo "- essais réussis : ${interactions_ok}"
+    echo "- amas repérés dans la barre : \`${reperes:-aucun}\`"
+    echo "- ce qui N'EST PAS établi : quel amas correspond à quel applet. Le repérage rend une"
+    echo "  abscisse, pas un identifiant."
+} >> "${sortie}/vm-rapport.md"
+
 # Journaux, quoi qu'il arrive.
 ssh_vm 'sudo journalctl --no-pager -b' > "${sortie}/vm-journal.log" 2>/dev/null || true
 cp "${travail}/console.log" "${sortie}/vm-console.log" 2>/dev/null || true
