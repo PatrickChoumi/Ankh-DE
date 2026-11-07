@@ -12,12 +12,26 @@ on:
 
 jobs:
   session:
-    name: Installer et ouvrir Ankh DE dans une VM
+    name: ${{ matrix.nom }}
     runs-on: ubuntu-latest
     timeout-minutes: 90
     defaults:
       run:
         shell: bash
+    strategy:
+      # fail-fast à faux : si Ubuntu échoue, on veut SAVOIR si Fedora passe.
+      # C'est la différence entre « Ankh DE est cassé » et « Ankh DE est
+      # cassé sur Plasma 6.6 », et elle vaut les dix minutes du second job.
+      fail-fast: false
+      matrix:
+        include:
+          # La CIBLE d'abord (DE-016) : la machine de l'utilisateur est en
+          # Ubuntu 26.04 LTS, donc en Plasma 6.6.
+          - nom: Ubuntu 26.04 — la cible (Plasma 6.6)
+            distrib: ubuntu
+          # L'autre bout de la plage éprouvée : Plasma 6.8.
+          - nom: Fedora 44 — l'autre bout de la plage (Plasma 6.8)
+            distrib: fedora
     steps:
       - uses: actions/checkout@v5
 
@@ -28,13 +42,15 @@ jobs:
             qemu-system-x86 qemu-utils cloud-image-utils socat jq python3-pil
 
       - name: Essayer Ankh DE dans la VM
+        env:
+          ANKH_VM_DISTRIB: ${{ matrix.distrib }}
         run: ./bench/vm/essayer.sh
 
       - name: Rapport
         if: always()
         run: |
           {
-            echo "## Session réelle"
+            echo "## Session réelle — ${{ matrix.nom }}"
             echo
             [[ -f bench/sortie/vm-rapport.md ]] && cat bench/sortie/vm-rapport.md
             echo
@@ -50,7 +66,9 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: vm-session
+          # Un nom par distribution : deux jobs qui livrent « vm-session »
+          # se refusent l'un l'autre, et on perdrait les journaux du second.
+          name: vm-session-${{ matrix.distrib }}
           path: |
             bench/sortie/vm-*
             bench/sortie/mesures-barre.json

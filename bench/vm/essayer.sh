@@ -9,6 +9,11 @@
 # accessible en écriture par l'utilisateur du runner.
 #
 #   bench/vm/essayer.sh [dossier de travail]
+#   ANKH_VM_DISTRIB=ubuntu|fedora bench/vm/essayer.sh
+#
+# La CIBLE est Ubuntu 26.04 LTS (DE-016) : c'est la machine de l'utilisateur,
+# et elle livre Plasma 6.6. Fedora 44 reste la seconde épreuve, parce qu'elle
+# livre 6.8 et prouve donc l'autre bout de la plage. Par défaut : ubuntu.
 #
 # Chaque étape dit ce qu'elle fait et laisse ses journaux : un passage qui
 # échoue doit apprendre quelque chose, pas seulement échouer.
@@ -23,6 +28,28 @@ PORT_SSH=2222
 MEMOIRE=6G
 PROCESSEURS=4
 qemu_pid=""
+
+# Quelle distribution dans l'invité. Tout ce qui diffère entre les deux est
+# rassemblé ici et aux étapes 1 et 4 — nulle part ailleurs.
+DISTRIB="${ANKH_VM_DISTRIB:-ubuntu}"
+case "${DISTRIB}" in
+    ubuntu)
+        DISTRIB_NOM="Ubuntu 26.04 LTS"
+        DISTRIB_IMAGE="https://cloud-images.ubuntu.com/releases/26.04/release/ubuntu-26.04-server-cloudimg-amd64.img"
+        DISTRIB_GROUPE=sudo
+        DISTRIB_PLASMA_ATTENDU=6.6
+        ;;
+    fedora)
+        DISTRIB_NOM="Fedora 44"
+        DISTRIB_IMAGE=""   # demandé à releases.json, le nom change à chaque compilation
+        DISTRIB_GROUPE=wheel
+        DISTRIB_PLASMA_ATTENDU=6.8
+        ;;
+    *)
+        echo "ANKH_VM_DISTRIB vaut « ${DISTRIB} » : attendu « ubuntu » ou « fedora »." >&2
+        exit 1
+        ;;
+esac
 
 nettoyer() {
     if [[ -n "${qemu_pid}" ]] && kill -0 "${qemu_pid}" 2>/dev/null; then
@@ -92,31 +119,39 @@ qemu-system-x86_64 -accel help 2>&1 | grep -qw kvm || { echo "qemu ne propose pa
 echo "kvm disponible, $(nproc) cœurs, $(free -g | awk '/^Mem:/{print $2}') Gio"
 
 # --- 1. L'image invitée ---------------------------------------------------
-etape "1. Image Fedora Cloud"
-# Le nom du fichier change à chaque compilation : on le demande à l'index
-# publié par Fedora plutôt que de le deviner.
-if [[ ! -f "${travail}/base.qcow2" ]]; then
-    curl -fsSL -o "${travail}/releases.json" https://fedoraproject.org/releases.json
-    url="$(jq -r '
-        [ .[] | select(.arch == "x86_64")
-              | select(.variant == "Cloud")
-              | select(.link | endswith(".qcow2"))
-              | select(.version == "44") ]
-        | first | .link // empty' "${travail}/releases.json")"
-    if [[ -z "${url}" ]]; then
-        echo "Aucune image Cloud x86_64 pour Fedora 44 dans releases.json." >&2
-        echo "Versions proposées :" >&2
-        jq -r '[.[] | select(.variant=="Cloud") | .version] | unique | join(", ")' \
-            "${travail}/releases.json" >&2
-        exit 1
+etape "1. Image de ${DISTRIB_NOM}"
+# Le dossier de travail est partagé entre les deux distributions : l'image
+# porte donc le nom de la sienne, sinon un passage Ubuntu réutiliserait
+# l'image Fedora déjà là et prouverait quelque chose sur la mauvaise cible.
+base="${travail}/base-${DISTRIB}.qcow2"
+if [[ ! -f "${base}" ]]; then
+    if [[ -n "${DISTRIB_IMAGE}" ]]; then
+        url="${DISTRIB_IMAGE}"
+    else
+        # Fedora : le nom du fichier change à chaque compilation, on le
+        # demande à l'index publié plutôt que de le deviner.
+        curl -fsSL -o "${travail}/releases.json" https://fedoraproject.org/releases.json
+        url="$(jq -r '
+            [ .[] | select(.arch == "x86_64")
+                  | select(.variant == "Cloud")
+                  | select(.link | endswith(".qcow2"))
+                  | select(.version == "44") ]
+            | first | .link // empty' "${travail}/releases.json")"
+        if [[ -z "${url}" ]]; then
+            echo "Aucune image Cloud x86_64 pour Fedora 44 dans releases.json." >&2
+            echo "Versions proposées :" >&2
+            jq -r '[.[] | select(.variant=="Cloud") | .version] | unique | join(", ")' \
+                "${travail}/releases.json" >&2
+            exit 1
+        fi
     fi
     echo "   ${url}"
-    curl -fL --retry 3 -o "${travail}/base.qcow2" "${url}"
+    curl -fL --retry 3 -o "${base}" "${url}"
 fi
-echo "   image : $(du -h "${travail}/base.qcow2" | cut -f1)"
+echo "   image : $(du -h "${base}" | cut -f1)"
 
 rm -f "${travail}/disque.qcow2"
-qemu-img create -f qcow2 -b "${travail}/base.qcow2" -F qcow2 "${travail}/disque.qcow2" 40G > /dev/null
+qemu-img create -f qcow2 -b "${base}" -F qcow2 "${travail}/disque.qcow2" 40G > /dev/null
 
 # --- 2. cloud-init : un compte et une clé éphémère -----------------------
 etape "2. Préparation du premier démarrage"
@@ -126,7 +161,7 @@ cat > "${travail}/user-data" << CLOUD
 #cloud-config
 users:
   - name: ankh
-    groups: [wheel]
+    groups: [${DISTRIB_GROUPE}]
     sudo: "ALL=(ALL) NOPASSWD:ALL"
     shell: /bin/bash
     ssh_authorized_keys:
@@ -176,25 +211,76 @@ ssh_vm 'sudo cloud-init status --wait' > /dev/null 2>&1 || true
 echo "   cloud-init : $(ssh_vm 'sudo cloud-init status' | head -1)"
 
 # --- 4. Plasma dans l'invité ---------------------------------------------
-etape "4. Installation de Plasma"
-ssh_vm 'sudo dnf install -y \
-    plasma-desktop plasma-workspace kwin sddm \
-    kf6-kconfig kf6-kirigami plasma-integration \
-    xorg-x11-server-Xwayland dbus-daemon \
-    cmake gcc-c++ extra-cmake-modules \
-    qt6-qtbase-devel qt6-qtdeclarative-devel \
-    kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
-    kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
-    kf6-frameworkintegration-devel kdecoration-devel \
-    fontmake librsvg2-tools xcursorgen sassc fontconfig git \
-    python3-pillow \
-    konsole \
-    > /tmp/dnf.log 2>&1' || {
-        echo "L'installation de Plasma a échoué :" >&2
-        ssh_vm 'tail -30 /tmp/dnf.log' >&2 || true
-        exit 1
-    }
-echo "   $(ssh_vm 'rpm -q --qf "%{NAME} %{VERSION}\n" plasma-workspace kwin kdecoration-devel | tr "\n" " "')"
+etape "4. Installation de Plasma (${DISTRIB_NOM})"
+if [[ "${DISTRIB}" == ubuntu ]]; then
+    # cloud-init a déjà fait un « update », mais pas forcément avant que
+    # l'image ait fini de s'installer : on le refait, sinon apt refuse des
+    # paquets qu'il croit absents.
+    ssh_vm 'sudo DEBIAN_FRONTEND=noninteractive apt-get update -qq' > /dev/null 2>&1 || true
+    # kde-plasma-desktop tire plasmashell, KWin, la zone système et les
+    # applets natives — c'est-à-dire, depuis DE-015, presque toute notre
+    # barre. Les noms de paquets de développement sont ceux de docs/INSTALL.md.
+    ssh_vm 'sudo DEBIAN_FRONTEND=noninteractive apt-get install -y \
+        kde-plasma-desktop plasma-workspace kwin-wayland sddm \
+        xwayland dbus \
+        cmake g++ extra-cmake-modules \
+        qt6-base-dev qt6-declarative-dev \
+        libkf6config-dev libkf6coreaddons-dev libkf6guiaddons-dev \
+        libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \
+        libkf6style-dev libkdecorations3-dev \
+        fontmake librsvg2-bin x11-apps sassc fontconfig git \
+        python3-pil \
+        konsole dolphin systemsettings \
+        > /tmp/paquets.log 2>&1' || {
+            echo "L'installation de Plasma a échoué :" >&2
+            ssh_vm 'tail -30 /tmp/paquets.log' >&2 || true
+            exit 1
+        }
+    echo "   $(ssh_vm 'dpkg-query -W -f "\${binary:Package} \${Version}\n" plasma-workspace kwin-wayland libkdecorations3-dev 2>/dev/null | tr "\n" " "')"
+else
+    ssh_vm 'sudo dnf install -y \
+        plasma-desktop plasma-workspace kwin sddm \
+        kf6-kconfig kf6-kirigami plasma-integration \
+        xorg-x11-server-Xwayland dbus-daemon \
+        cmake gcc-c++ extra-cmake-modules \
+        qt6-qtbase-devel qt6-qtdeclarative-devel \
+        kf6-kconfig-devel kf6-kcoreaddons-devel kf6-kguiaddons-devel \
+        kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
+        kf6-frameworkintegration-devel kdecoration-devel \
+        fontmake librsvg2-tools xcursorgen sassc fontconfig git \
+        python3-pillow \
+        konsole dolphin plasma-systemsettings \
+        > /tmp/paquets.log 2>&1' || {
+            echo "L'installation de Plasma a échoué :" >&2
+            ssh_vm 'tail -30 /tmp/paquets.log' >&2 || true
+            exit 1
+        }
+    echo "   $(ssh_vm 'rpm -q --qf "%{NAME} %{VERSION}\n" plasma-workspace kwin kdecoration-devel | tr "\n" " "')"
+fi
+
+# Les applications dont les essais d'interaction ont BESOIN, vérifiées ici,
+# là où leur absence a une cause lisible.
+#
+# Le 2026-11-07, « konsole » figurait dans la liste d'installation et l'essai
+# Alt+Tab concluait pourtant « konsole lancé : NON » sans rien expliquer : le
+# lancement était enterré sous « > /dev/null 2>&1 || true » trois cents
+# lignes plus bas. Un outil manquant doit faire échouer l'étape qui
+# l'installe, pas l'essai qui s'en sert.
+for appli in konsole dolphin systemsettings; do
+    chemin="$(ssh_vm "command -v ${appli} 2>/dev/null" || true)"
+    if [[ -n "${chemin}" ]]; then
+        echo "   ${appli} : ${chemin}"
+    else
+        grief "${appli} n'est pas installé dans l'invité : les essais qui s'en servent ne prouveront rien"
+    fi
+done
+# La version de Plasma que l'invité livre VRAIMENT, contre celle que la
+# plage de DE-016 annonce. Si elles divergent, les mesures portent sur autre
+# chose que ce qu'on croit.
+plasma_invite="$(ssh_vm 'plasmashell --version 2>/dev/null | grep -oE "[0-9]+\.[0-9]+" | head -1' || true)"
+echo "   Plasma dans l'invité : ${plasma_invite:-inconnue} (attendu ${DISTRIB_PLASMA_ATTENDU})"
+[[ "${plasma_invite}" == "${DISTRIB_PLASMA_ATTENDU}" ]] \
+    || grief "l'invité livre Plasma ${plasma_invite:-inconnue}, pas ${DISTRIB_PLASMA_ATTENDU} : ce passage ne prouve pas ce qu'il annonce"
 
 # --- 5. Ankh DE dans l'invité --------------------------------------------
 etape "5. Installation d'Ankh DE"
@@ -410,7 +496,10 @@ dans_session() {
     echo "## Session Ankh DE, dans une VM"
     echo
     echo "- système : $(ssh_vm 'sed -n "s/^PRETTY_NAME=//p" /etc/os-release')"
-    echo "- Plasma : $(ssh_vm 'rpm -q --qf "%{VERSION}" plasma-workspace')"
+    # « plasmashell --version » marche sur les deux distributions, là où
+    # « rpm -q » ne marchait que sur Fedora.
+    echo "- Plasma : $(ssh_vm 'plasmashell --version 2>/dev/null | head -1' || echo inconnue)"
+    echo "- cible de ce passage : ${DISTRIB_NOM}, Plasma ${DISTRIB_PLASMA_ATTENDU} attendu"
     echo "- c'est bien notre session : ANKH_DE_SESSION=$(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^ANKH_DE_SESSION=//p'")"
     echo "- XDG_CONFIG_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_CONFIG_DIRS=//p'")"
     echo "- XDG_DATA_DIRS : $(ssh_vm "tr \"\\0\" \"\\n\" < /proc/\$(pgrep -u ankh -f plasmashell | head -1)/environ | sed -n 's/^XDG_DATA_DIRS=//p'")"
@@ -1000,6 +1089,36 @@ import sys
 Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/ap.ppm" "${sortie}/vm-i-${nom}.png" 2>/dev/null || true
 }
 
+# Un essai qui se juge sur un FAIT du système, et non sur des pixels.
+#
+# Le changement d'écran est une bonne sonde pour « quelque chose s'est
+# ouvert », et une mauvaise pour « l'application tourne » : beaucoup de
+# choses changent l'écran, et une fenêtre peut tarder à être dessinée alors
+# que le processus est déjà là. Quand une question a une réponse franche
+# dans l'invité, on la pose à l'invité.
+essai_fait() { # $1 : nom court, $2 : libellé, $3 : commande de verdict
+               # lancée dans l'invité, $4… : l'action à exécuter
+    local nom="$1" libelle="$2" verdict_cmd="$3"
+    shift 3
+    "$@"
+    local atteint=0 i
+    for (( i = 0; i < 20; i++ )); do
+        ssh_vm "${verdict_cmd}" > /dev/null 2>&1 && { atteint=1; break; }
+        sleep 1
+    done
+    cliche "ap.ppm"
+    if (( atteint == 1 )); then
+        printf '   ok    %-46s %s\n' "${libelle}" "constaté"
+        interactions_ok=$((interactions_ok + 1))
+    else
+        grief "${libelle} : « ${verdict_cmd} » n'a jamais répondu vrai en 20 s"
+    fi
+    python3 -I -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/ap.ppm" "${sortie}/vm-i-${nom}.png" 2>/dev/null || true
+}
+
 etape "12. Les interactions — est-ce que ça RÉPOND ?"
 interactions_ok=0
 
@@ -1099,6 +1218,51 @@ fi
 essai_interaction demarrer-ferme "le menu se referme sur Échap" oui 2 \
     deux_echap
 
+# --- 12.1bis Démarrer lance VRAIMENT une application --------------------
+#
+# C'est LE test qui décide si org.ankh.demarrer méritait d'être gardé quand
+# tous les autres applets repris ont été remplacés par ceux de Plasma
+# (DE-015). On avait prouvé qu'il s'ouvre, qu'il prend le clavier et qu'il
+# cherche. Chercher sans pouvoir lancer, c'est une vitrine.
+#
+# Le verdict est rendu par pgrep, pas par un pourcentage de pixels : la
+# question « est-ce que l'application tourne » a une réponse franche.
+#
+# Échap vient de fermer le menu, donc on le rouvre. Et on vérifie d'abord
+# qu'aucun konsole ne tourne déjà : sinon le pgrep d'après répondrait vrai
+# sans que Démarrer y soit pour quoi que ce soit — un essai qui ne peut que
+# réussir ne prouve rien.
+konsole_avant=0
+ssh_vm 'pgrep -u ankh -x konsole > /dev/null' 2>/dev/null && konsole_avant=1
+if (( konsole_avant == 1 )); then
+    grief "konsole tournait déjà avant l'essai : le lancement depuis Démarrer n'est pas testable"
+else
+    lancer_depuis_demarrer() {
+        dans_session "${QDBUS} org.kde.plasmashell /PlasmaShell org.kde.PlasmaShell.activateLauncherMenu" \
+            > /dev/null 2>&1 || true
+        sleep 2.5
+        taper "konsole"
+        # Le menu doit avoir le temps de filtrer avant qu'Entrée choisisse.
+        sleep 2.5
+        touche ret
+    }
+    essai_fait demarrer-lancement \
+        "Entrée dans Démarrer lance l'application" \
+        'pgrep -u ankh -x konsole > /dev/null' \
+        lancer_depuis_demarrer
+fi
+
+# Konsole sert maintenant de SECONDE FENÊTRE au reste des essais. S'il n'a
+# pas démarré par le menu, on le lance directement : l'essai d'Alt+Tab porte
+# sur le sélecteur, pas sur le lanceur, et il ne doit pas hériter de l'échec
+# du précédent. Le 2026-11-07, faute de cette séparation, Alt+Tab accusait
+# le sélecteur pour une fenêtre qui n'existait pas.
+if ! ssh_vm 'pgrep -u ankh -x konsole > /dev/null' 2>/dev/null; then
+    echo "   konsole n'a pas été lancé par le menu : on le lance directement pour la suite"
+    dans_session 'setsid konsole > /tmp/konsole.log 2>&1 &' > /dev/null 2>&1 || true
+    sleep 8
+fi
+
 # --- 12.2 Les applets de droite -----------------------------------------
 # On clique chaque amas de la moitié droite, un par un, avec Échap entre
 # deux. On ne dit PAS lequel est lequel : le repérage donne une abscisse,
@@ -1126,27 +1290,67 @@ if [[ -n "${reperes}" ]]; then
     fi
 fi
 
-# --- 12.3 Alt+Tab --------------------------------------------------------
+# --- 12.3 Alt+Tab, et le sélecteur est celui de KWin --------------------
 # Il faut deux fenêtres pour que le sélecteur ait quelque chose à montrer.
-# Une seconde fenêtre, et on VÉRIFIE qu'elle existe.
+# konsole a été lancé plus haut — par le menu Démarrer si celui-ci marche,
+# directement sinon — et c'est VÉRIFIÉ avant de juger le sélecteur.
 #
 # Le 2026-11-07, konsole n'était pas installé dans l'invité : « setsid
 # konsole & » ne lançait rien, il n'y avait qu'une fenêtre, et l'essai
 # concluait « Alt+Tab ne marche pas ». Il accusait le sélecteur pour un
-# décor absent. konsole est installé depuis, mais la leçon tient : on ne
-# teste pas un sélecteur de fenêtres sans avoir prouvé qu'il y a des
-# fenêtres à sélectionner.
-dans_session 'setsid konsole > /tmp/konsole.log 2>&1 &' > /dev/null 2>&1 || true
-sleep 8
+# décor absent. Son absence est désormais constatée à l'étape 4, là où elle
+# a une cause lisible — mais la leçon tient : on ne teste pas un sélecteur
+# de fenêtres sans avoir prouvé qu'il y a des fenêtres à sélectionner.
 fenetres=0
 ssh_vm 'pgrep -u ankh -x konsole > /dev/null' 2>/dev/null && fenetres=1
-echo "   konsole lancé : $([[ ${fenetres} == 1 ]] && echo oui || echo NON)"
+echo "   seconde fenêtre (konsole) : $([[ ${fenetres} == 1 ]] && echo oui || echo NON)"
 if (( fenetres == 0 )); then
     ssh_vm 'tail -5 /tmp/konsole.log 2>/dev/null' | sed 's/^/     /' || true
     grief "pas de seconde fenêtre : Alt+Tab n'a rien à montrer, et ce n'est pas le sélecteur qui est en cause"
 else
+    # Depuis DE-015 c'est « thumbnail_grid », livré par KWin. Un échec ici
+    # ne met plus en cause une pièce à nous : il met en cause notre
+    # configuration de KWin, ce qui est une tout autre réparation.
     essai_interaction alt-tab "Alt+Tab montre le sélecteur, Alt maintenu" oui 1 alt_tab_ouvrir
     essai_interaction alt-tab-ferme "le sélecteur disparaît au relâchement" oui 1 alt_tab_fermer
+
+    # La barre des tâches répond-elle au clic ? C'est la demande « vérifie
+    # les tâches, les fenêtres multiples et l'activation des applications ».
+    #
+    # org.kde.plasma.icontasks a « minimizeActiveTaskOnClick=true » par
+    # défaut (applets/taskmanager/main.xml de plasma-desktop) : cliquer
+    # l'entrée de la fenêtre active la minimise, la recliquer la rétablit —
+    # exactement le geste de Windows 11. Deux clics, deux changements
+    # d'écran.
+    #
+    # CE QUE CET ESSAI N'ÉTABLIT PAS, et il faut le dire : que la fenêtre
+    # minimisée puis rétablie soit bien konsole. KWin n'expose pas la
+    # fenêtre active sur D-Bus sans qu'un script lui soit chargé, et charger
+    # un script pour l'observer est une machinerie que ce passage n'a pas.
+    # Ce qui est établi : l'entrée de tâche sous le curseur répond, deux fois
+    # de suite, dans les deux sens.
+    if [[ -n "${reperes}" ]]; then
+        # Les entrées de tâches sont groupées au centre, juste à droite de
+        # Démarrer. On prend le deuxième amas de la moitié GAUCHE : le
+        # premier est Démarrer.
+        gauche=()
+        for x in ${reperes}; do
+            (( x < ECRAN_L / 2 )) && gauche+=("${x}")
+        done
+        if (( ${#gauche[@]} >= 2 )); then
+            tache_x="${gauche[1]}"
+            tache_y=$(( ECRAN_H - 24 ))
+            echo "   entrée de tâche visée : x=${tache_x}"
+            essai_interaction tache-minimise \
+                "un clic sur l'entrée de tâche minimise la fenêtre" oui 1 \
+                cliquer "${tache_x}" "${tache_y}"
+            essai_interaction tache-restaure \
+                "un second clic la rétablit" oui 1 \
+                cliquer "${tache_x}" "${tache_y}"
+        else
+            echo "   (moins de deux amas à gauche : pas d'entrée de tâche à viser)"
+        fi
+    fi
 fi
 
 {
