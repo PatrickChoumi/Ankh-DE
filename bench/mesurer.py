@@ -141,18 +141,26 @@ def zone_rouge(image, x0, y0, x1, y1):
     return max(xs) - min(xs) + 1, max(ys) - min(ys) + 1, hexa(couleur)
 
 
-def barre(image, x):
-    noir = (0, 0, 0)
+def barre(image, x, fond=(255, 255, 255)):
+    """Espace sous la barre, hauteur visible, couleur — à l'abscisse x.
+
+    « fond » est la couleur du papier peint uni posé pour la mesure, et ce
+    n'est plus le noir. Le 2026-11-07, le harnais posait un fond NOIR puis
+    cherchait une barre translucide SOMBRE dessus : les deux se confondaient,
+    et le relevé rendait « marge_bas=800, hauteur=0 » — soit l'écran entier
+    pris pour du vide. Une barre en verre ne se mesure que sur un fond qui
+    tranche avec elle.
+    """
     y = image.hauteur - 1
     espace = 0
-    while y >= 0 and ecart(image.px(x, y), noir) < SEUIL_FOND:
+    while y >= 0 and ecart(image.px(x, y), fond) < SEUIL_FOND:
         espace += 1
         y -= 1
     bas = y
-    while y >= 0 and ecart(image.px(x, y), noir) >= SEUIL_FOND:
+    while y >= 0 and ecart(image.px(x, y), fond) >= SEUIL_FOND:
         y -= 1
     hauteur = bas - y
-    couleur = image.px(x, (bas + y) // 2 + 1) if hauteur else noir
+    couleur = image.px(x, (bas + y) // 2 + 1) if hauteur else fond
     return espace, hauteur, hexa(couleur)
 
 

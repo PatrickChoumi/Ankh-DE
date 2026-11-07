@@ -547,6 +547,13 @@ echo "   Alt+Tab : kwinrc demande « ${selecteur_voulu:-rien} », paquet présen
 
 # Le module QML partagé : sans lui, les quatre applets repris démarrent sur
 # une erreur QML et la barre les affiche vides.
+fond_present=non
+ssh_vm 'test -s /usr/local/share/wallpapers/Ankh-Prismes/contents/images_dark/3840x2160.png' \
+    2>/dev/null && fond_present=oui
+fond_pose="$(dans_session 'kreadconfig6 --file plasma-org.kde.plasma.desktop-appletsrc --group Containments --group 1 --group Wallpaper --group org.kde.image --group General --key Image' || true)"
+echo "   fond d'écran : paquet ${fond_present}, posé « ${fond_pose:-?} »"
+[[ "${fond_present}" == oui ]] || grief "le fond d'écran Ankh-Prismes n'est pas installé"
+
 module_present=non
 ssh_vm 'test -f /usr/local/share/ankh-de/qml/Settings.qml' 2>/dev/null && module_present=oui
 echo "   module QML partagé : ${module_present}"
@@ -668,6 +675,7 @@ fi
     echo "- pièces des lots 4 et 6 : ${nouvelles[*]}"
     echo "- Alt+Tab : kwinrc demande \`${selecteur_voulu:-rien}\`, paquet présent : ${selecteur_present}"
     echo "- module QML partagé : ${module_present}"
+    echo "- fond d'écran : paquet ${fond_present}, posé \`${fond_pose:-?}\`"
     echo "- pièces désignées absentes : $(grep -c 'ABSENTE' <<< "${pieces}" 2>/dev/null || echo '?')"
     echo "- erreurs sur nos pièces : $([[ -n "${erreurs}" ]] && echo oui || echo aucune)"
 } >> "${sortie}/vm-rapport.md"
@@ -702,7 +710,12 @@ echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
 
 # Fond uni avant de mesurer l'image : la barre est en verre, et un papier
 # peint coloré se lirait à travers elle.
-plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","0,0,0"); })' > /dev/null || true
+#
+# BLANC, et non noir. Le 2026-11-07, ce fond était noir et la barre est
+# translucide sombre : les deux se confondaient, et le relevé rendait
+# « marge_bas=800, hauteur_visible=0 » — l'écran entier pris pour du vide.
+# Une barre en verre ne se mesure que sur un fond qui tranche avec elle.
+plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","255,255,255"); })' > /dev/null || true
 sleep 3
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
     "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true

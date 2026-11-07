@@ -210,4 +210,10 @@ ajouter("org.ankh.bureau", "org.kde.plasma.showdesktop")
 var bureaux = desktopsForActivity(currentActivity())
 for (var j = 0; j < bureaux.length; j++) {
     bureaux[j].wallpaperPlugin = "org.kde.image"
+    // « Prismes d'Ankh » : le fond de Fluent que livre AnduinOS (GPL-3.0),
+    // tourné aux violets d'Ankh par third_party/preparer.sh. Il porte ses
+    // deux variantes, claire et sombre, et déclare l'accent d'Ankh — c'est
+    // par là que « accentColorFromWallpaper » trouve le bon violet (DE-004).
+    bureaux[j].currentConfigGroup = ["Wallpaper", "org.kde.image", "General"]
+    bureaux[j].writeConfig("Image", "Ankh-Prismes")
 }

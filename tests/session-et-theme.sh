@@ -281,6 +281,34 @@ if [[ -d "${applets}/org.ankh.demarrer" ]]; then
         echecs=$((echecs + 1))
     fi
 
+    # Le fond d'écran, et surtout ses DEUX variantes : un paquet qui n'a que
+    # la claire laisse le bureau sombre sur une image claire, sans erreur et
+    # sans que personne ne le voie passer.
+    fond="${prefixe}/share/wallpapers/Ankh-Prismes"
+    for variante in images images_dark; do
+        verifies=$((verifies + 1))
+        if [[ -s "${fond}/contents/${variante}/3840x2160.png" ]]; then
+            printf '  ok    %-44s %s\n' "fond d'écran, variante ${variante}" "3840x2160"
+        else
+            echo "  ECHEC ${fond}/contents/${variante}/3840x2160.png est absent" >&2
+            echecs=$((echecs + 1))
+        fi
+    done
+    # Et l'accent qu'il déclare : c'est par cette clé que DE-004 trouve le
+    # violet d'Ankh plutôt qu'une couleur calculée depuis l'image.
+    verifies=$((verifies + 1))
+    accent="$(python3 -I -c "
+import json, sys
+d = json.load(open(sys.argv[1]))
+print(d.get('X-KDE-PlasmaImageWallpaper-AccentColor', {}).get('Dark', ''))
+" "${fond}/metadata.json" 2>/dev/null || true)"
+    if [[ "${accent}" == "#a78bfa" ]]; then
+        printf '  ok    %-44s %s\n' "l'accent déclaré par le fond" "${accent}"
+    else
+        echo "  ECHEC le fond déclare l'accent sombre « ${accent} », attendu « #a78bfa »" >&2
+        echecs=$((echecs + 1))
+    fi
+
     # Le module QML partagé. Les applets repris de Tidewater l'atteignent par
     # « ../../../../../ankh-de/qml » depuis leur contents/ui : cinq niveaux
     # exactement. Un applet installé sans lui démarre sur une erreur QML, que

@@ -91,6 +91,7 @@ if [ -d "${ANKH_DE_DATADIR}" ]; then
     ankh_de_verifier_piece "thème d'icônes"    "${ANKH_DE_DATADIR}/icons/Fluent-Ankh"
     ankh_de_verifier_piece "curseurs"          "${ANKH_DE_DATADIR}/icons/Ankh-curseurs"
     ankh_de_verifier_piece "sélecteur Alt+Tab" "${ANKH_DE_DATADIR}/kwin/tabbox/ankh-selecteur"
+    ankh_de_verifier_piece "fond d'écran"      "${ANKH_DE_DATADIR}/wallpapers/Ankh-Prismes"
 fi
 
 # Repère pour nos propres scripts et pour le signalement de bogues. Il ne

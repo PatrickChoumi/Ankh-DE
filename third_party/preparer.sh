@@ -753,6 +753,78 @@ with open(chemin, "w", encoding="utf-8") as f:
 META
 echo "ankh-selecteur : $(find "${sortie}/tabbox/ankh-selecteur" -type f | wc -l) fichiers"
 
+# --- Le fond d'écran : « Prismes d'Ankh » --------------------------------
+#
+# Pas dessiné ici, et c'est délibéré. Trois tentatives de fond fait maison
+# ont été jetées le 2026-11-07 — un ankh géant qui se lisait comme le symbole
+# de Vénus, des voiles de lumière, des crêtes molles comme de la cire. Le
+# défaut commun était le flou : des dégradés doux, aucun contraste de valeur.
+#
+# Les fonds qui tiennent ont l'inverse : arêtes nettes, facettes à dégradé
+# linéaire, écart de valeur franc entre la face éclairée et celle à l'ombre.
+# AnduinOS en livre deux, clair et sombre, en GPL-3.0 — même famille Fluent
+# que le thème GTK et le thème d'icônes que ce script reprend déjà.
+#
+# On les reprend, et on les fait nôtres par une ROTATION DE TEINTE : les
+# valeurs sont conservées, donc le modelé des facettes aussi. C'est la même
+# méthode que pour le thème d'icônes, où le rose de la variante « purple »
+# devient le violet d'Ankh.
+ANDUIN_COMMIT=c659fae21267ba8c6d93c3d313147c8b17cf63da
+recuperer https://github.com/Anduin2017/AnduinOS "${ANDUIN_COMMIT}" \
+    "${travail}/anduin" src/mods/23-wallpaper-mod
+fonds="${travail}/anduin/src/mods/23-wallpaper-mod"
+
+paquet="${sortie}/wallpapers/Ankh-Prismes"
+rm -rf "${paquet}"
+install -d -m 0755 "${paquet}/contents/images" "${paquet}/contents/images_dark"
+python3 -I "${racine}/third_party/recolorer-fond.py" \
+    "${fonds}/Fluent-building-light.png" "${paquet}/contents/images/3840x2160.png"
+python3 -I "${racine}/third_party/recolorer-fond.py" \
+    "${fonds}/Fluent-building-night.png" "${paquet}/contents/images_dark/3840x2160.png"
+
+# La vignette de la page « Fond d'écran » de Plasma : la variante sombre,
+# qui est celle par défaut d'Ankh DE.
+python3 -I -c "
+from PIL import Image
+import sys
+im = Image.open(sys.argv[1])
+im.resize((1280, 720), Image.LANCZOS).save(sys.argv[2], optimize=True)
+" "${paquet}/contents/images_dark/3840x2160.png" "${paquet}/contents/screenshot.png"
+
+# « X-KDE-PlasmaImageWallpaper-AccentColor » : c'est par cette clé que
+# l'accent de Plasma suit le fond d'écran (DE-004). Sans elle, Plasma
+# calcule une couleur depuis l'image, et tombe sur un violet voisin mais pas
+# sur LE violet d'Ankh.
+cat > "${paquet}/metadata.json" << 'FOND'
+{
+    "KPlugin": {
+        "Authors": [
+            {
+                "Name": "AnduinOS"
+            },
+            {
+                "Name": "Ankh DE (recoloration)"
+            }
+        ],
+        "Id": "Ankh-Prismes",
+        "License": "GPL-3.0-or-later",
+        "Name": "Prismes d'Ankh",
+        "Name[en]": "Ankh Prisms"
+    },
+    "X-KDE-PlasmaImageWallpaper-AccentColor": {
+        "Light": "#7c3aed",
+        "Dark": "#a78bfa"
+    }
+}
+FOND
+
+for f in "${paquet}/contents/images/3840x2160.png" \
+         "${paquet}/contents/images_dark/3840x2160.png" \
+         "${paquet}/contents/screenshot.png"; do
+    [[ -s "${f}" ]] || { echo "Fond d'écran : ${f} n'a pas été produit" >&2; exit 1; }
+done
+echo "Ankh-Prismes : $(du -sh "${paquet}" | cut -f1), clair + sombre + vignette"
+
 # Aucun de nos applets ne doit porter un identifiant de Plasma : ce serait
 # écraser une pièce de la distribution (DE-011).
 for m in "${sortie}"/applets/*/metadata.json; do

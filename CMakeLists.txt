@@ -190,6 +190,15 @@ if(ANKH_DE_DATA)
             DESTINATION ${KDE_INSTALL_DATADIR}/kwin/tabbox
         )
     endif()
+
+    # Le fond d'écran « Prismes d'Ankh », clair et sombre. La disposition le
+    # désigne par son nom de paquet : déplacer l'un sans l'autre laisse
+    # Plasma sur le fond de la distribution, sans rien dire.
+    if(EXISTS "${ANKH_DE_PREPARE}/wallpapers")
+        install(DIRECTORY "${ANKH_DE_PREPARE}/wallpapers/"
+            DESTINATION ${KDE_INSTALL_DATADIR}/wallpapers
+        )
+    endif()
     file(GLOB ANKH_DE_KWIN "${CMAKE_CURRENT_SOURCE_DIR}/src/kwin/*")
     if(ANKH_DE_KWIN)
         install(DIRECTORY src/kwin/
