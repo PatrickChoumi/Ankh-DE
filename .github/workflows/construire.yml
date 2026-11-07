@@ -114,7 +114,13 @@ jobs:
         run: |
           set -euo pipefail
           cp src/decoration/VERSION-BREEZE /tmp/VERSION-BREEZE.bak
-          sed -i -e 's/^plasma_min=.*/plasma_min=0.1/' \
+          # Les TROIS clés, pas seulement les bornes : « plasma= » doit
+          # rester dans sa propre plage, sinon c'est ce contrôle-là qui
+          # refuse, avec un autre message, et le test n'éprouve plus ce
+          # qu'il croit. C'est exactement ce qui s'est passé au premier
+          # passage de DE-016.
+          sed -i -e 's/^plasma=.*/plasma=0.1/' \
+                 -e 's/^plasma_min=.*/plasma_min=0.1/' \
                  -e 's/^plasma_max=.*/plasma_max=0.1/' src/decoration/VERSION-BREEZE
           if cmake -S . -B /tmp/garde > /tmp/garde.log 2>&1; then
             cp /tmp/VERSION-BREEZE.bak src/decoration/VERSION-BREEZE

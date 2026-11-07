@@ -301,8 +301,56 @@ dans le vide :
   endroits.
 
 **Phase A des consignes faite** : [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md). Une seule
-implémentation par responsabilité, aucun doublon. Et le constat qui compte : **sur douze
-responsabilités, aucune interaction n'est testée**.
+implémentation par responsabilité, aucun doublon. Et le constat qui comptait **à cette date** :
+sur douze responsabilités, aucune interaction n'était testée. Ce n'est plus vrai du menu
+Démarrer depuis `09e4950` — l'état courant est dans
+[docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md), qui en est la source unique.
+
+## 2026-11-07 — la barre devient native, et Ankh DE se construit enfin sur Ubuntu
+
+Deux décisions le même jour, sur deux demandes du propriétaire, et elles se tenaient.
+
+**[DE-016](DECISIONS.md) — la cible est Ubuntu 26.04 LTS, donc Plasma 6.6.** `CMakeLists.txt`
+exigeait l'**égalité** avec 6.8. L'archive d'Ubuntu donne pour 26.04 `kdecoration 4:6.6.4` :
+`./installer.sh` sortait en `FATAL_ERROR` **sur la machine cible**. Personne ne l'avait vu parce
+que `construire.yml` passait `-DANKH_DE_PLASMA_NON_TESTE=ON` sur les trois distributions — le
+garde-fou livré n'était jamais celui que la CI éprouvait. Le garde-fou vit désormais dans
+`cmake/GardeVersionPlasma.cmake`, et `tests/garde-version.sh` en fait treize cas en `cmake -P`,
+sans Qt ni kdecoration. Deux mutations prouvent qu'il peut échouer.
+
+> Et son premier passage en CI a échoué pour une raison instructive : le test négatif ne
+> resserrait que les **bornes**, si bien que `plasma=6.6` se retrouvait hors de sa propre plage
+> et que c'était ce contrôle-là qui refusait, avec un autre message. Le cas est maintenant dans
+> `tests/garde-version.sh`, pour que la CI ne soit plus la première à le voir.
+
+**[DE-015](DECISIONS.md) — huit applets repris passent au natif.** Le relevé qui décide : la
+barre portait huit applets qui ne sont pas de Plasma, et **un seul** avait été prouvé interactif.
+Pire, pour faire place à `org.ankh.etat`, la disposition **masquait** les cinq applets natives de
+la zone système : Ankh DE retirait le réglage du volume, du Wi-Fi, du Bluetooth et de la
+luminosité pour les remplacer par un volet qui pilotait le matériel par `wpctl` et `nmcli`, et
+dont aucune tuile n'avait jamais été pressée. Ce n'était pas une fonction manquante, c'était
+**moins bien que Plasma nu**.
+
+Deux de ces imports reposaient sur une valeur **fausse**, écrite de mémoire : l'horloge de Plasma
+sait mettre la date **sous** l'heure (`dateDisplayFormat=BelowTime`, lu dans
+`applets/digital-clock/main.xml`), et `iconSpacing` d'icontasks est un `Int`, pas une
+énumération. Deux applets importés pour contourner des limites qui n'existaient pas. L'audit
+complet est dans [docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md).
+
+Et un piège évité par le même réflexe : `org.kde.plasma.marginsseparator` aurait été plus propre
+pour l'écart de 9 px, mais il **n'existe pas en Plasma 6.6** — 404 sur la branche `Plasma/6.6`,
+200 sur `Plasma/6.8`. La cible est 6.6.
+
+**Le harnais ouvre maintenant une VM Ubuntu** (`ANKH_VM_DISTRIB=ubuntu`, le défaut), et le
+workflow en fait une matrice, Ubuntu d'abord, `fail-fast` à faux. `konsole`, `dolphin` et
+`systemsettings` sont vérifiés par `command -v` **juste après leur installation** : le
+2026-11-07, `konsole` figurait dans la liste et l'essai Alt+Tab concluait pourtant « konsole
+lancé : NON » sans rien expliquer, parce que le lancement était enterré sous
+`> /dev/null 2>&1 || true` trois cents lignes plus bas.
+
+**Les documents ne racontent plus qu'une histoire.** `docs/ANTI_DOUBLONS.md` est la source unique
+de l'état fonctionnel, et `ci/verifier-coherence.sh` §8 refuse qu'un autre document attribue une
+interaction à un autre SHA. Éprouvé par mutation.
 
 ## Ce qui est vérifié, et ce qui ne l'est pas
 

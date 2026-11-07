@@ -246,6 +246,39 @@ if [[ -n "${mesures_citees}" ]] && (( nb_valeurs > 1 )); then
         --exclude-dir=.git --exclude=AUDIT.md | sed 's/^/        /' | cut -c1-120 >&2
 fi
 
+# --- 8. Un seul état fonctionnel, un seul SHA de preuve -------------------
+# Le 2026-11-07, cinq documents portaient cinq états différents du menu
+# Démarrer : le README le disait interactif, la ROADMAP disait l'inverse,
+# AVANCEMENT disait qu'aucune interaction n'était testée. Chacun était vrai à
+# sa date et faux au présent — exactement le défaut que le §5 corrige pour la
+# version de Plasma et le §7 pour le compte des jetons.
+#
+# docs/ANTI_DOUBLONS.md est la source unique (son en-tête le déclare). Tout
+# autre document qui parle d'une interaction PROUVÉE doit citer le même SHA.
+#
+# AVANCEMENT.md est exclu, et pour une raison de fond : c'est un JOURNAL. Ses
+# entrées datées doivent garder ce qui était vrai à leur date, sinon elles ne
+# servent plus à rien. Son tableau « ce qui est vérifié » renvoie ici.
+canonique="$(sed -n 's/^| \*\*SHA des preuves d.interaction\*\* | `\([0-9a-f]\{7,40\}\)` |.*/\1/p'     docs/ANTI_DOUBLONS.md 2>/dev/null | head -1)"
+if [[ -z "${canonique}" ]]; then
+    signaler "docs/ANTI_DOUBLONS.md ne déclare plus de « SHA des preuves d'interaction » : l'état fonctionnel n'a plus de source"
+else
+    # Les mots qui font d'une phrase une affirmation d'interaction. « ouvre »
+    # seul ne suffit pas : on veut les verdicts, pas les descriptions.
+    MOTS_INTERACTION='interactif|interaction|prend le clavier|se referme sur Échap|closes on Esc|takes the keyboard|lance réellement|really launches'
+    while IFS=: read -r fichier ligne texte; do
+        [[ -n "${fichier}" ]] || continue
+        # Les SHA cités sur cette ligne, en 7 caractères pour comparer.
+        while read -r cite; do
+            [[ -n "${cite}" ]] || continue
+            [[ "${cite:0:7}" == "${canonique:0:7}" ]] && continue
+            signaler "${fichier}:${ligne} attribue une interaction au SHA ${cite}, alors que docs/ANTI_DOUBLONS.md déclare ${canonique}"
+        done < <(grep -oE '`[0-9a-f]{7,40}`' <<< "${texte}" | tr -d '`' || true)
+    done < <(grep -rnE "${MOTS_INTERACTION}" --include='README.md' --include='README.en.md' \
+                 --include='ROADMAP.md' --include='CLAUDE.md' . 2>/dev/null \
+             | grep -v '^\./\.git' | grep -E '`[0-9a-f]{7,40}`' || true)
+fi
+
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then
     echo >&2

@@ -15,7 +15,8 @@
 >
 > | **Quoi reprendre, où, et pourquoi pas** | [docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) |
 > | **Ce qui existe déjà : ne pas le réécrire** | [docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md) |
-> | **La matrice : qui fait quoi, et dans quel état** | [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
+> | **L'ÉTAT FONCTIONNEL — source unique, ne pas le redire ailleurs** | [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
+| **L'audit de simplification : garder, configurer le natif, supprimer** | [docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md) |
 >
 > En cas de contradiction : **DECISIONS.md fait foi pour les choix**, **ANKH-DE-SPEC.md pour la
 > cible**. Ce fichier est alors à corriger.
@@ -139,6 +140,10 @@ Et une version n'est « stabilisée » que si **Construire, Banc et VM passent s
   Deux diagnostics faux ont précédé le bon — `XDG_DATA_DIRS` ne manquait pas, et le silence du
   script venait d'une catégorie de journal muette. La cause était
   `kdeglobals [KDE] LookAndFeelPackage`, écrit nulle part (DE-014).
+- **L'état fonctionnel ne s'écrit QUE dans [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md)**, qui
+  déclare le SHA des preuves. Le 2026-11-07, cinq documents portaient cinq états différents du
+  menu Démarrer — chacun vrai à sa date, faux au présent. `ci/verifier-coherence.sh` §8 refuse
+  désormais qu'un document attribue une interaction à un autre SHA.
 - **Ce qui n'est PAS établi, et qu'il ne faut pas confondre** : une pièce *installée*, une pièce
   *chargée dans la barre* et une pièce *qui répond*. Les applets repris de Tidewater
   (`org.ankh.etat`, `notifications`, `taches`, `vuetaches`, `separateur`) sont installés et

@@ -1,5 +1,60 @@
 # Journal des versions
 
+## Non publié — 2026-11-07
+
+### Changé — la barre devient native, sauf Démarrer ([DE-015](DECISIONS.md))
+
+Huit applets repris sont remplacés par les applets **natives de Plasma**, habillées par notre
+style Plasma, nos couleurs et nos icônes : `org.ankh.etat`, `org.ankh.notifications`,
+`org.ankh.taches`, `org.ankh.vuetaches`, `org.ankh.separateur`, `org.ankh.horloge`,
+`org.ankh.bureau` et `ankh-selecteur`. Un seul des huit avait été prouvé interactif, et il
+reste : le menu Démarrer.
+
+- **Corrigé, et c'est le point le plus important pour l'usage quotidien** : la disposition
+  **masquait** les cinq applets natives de la zone système pour faire place au volet d'état. Ankh
+  DE retirait donc le réglage du **volume**, du **Wi-Fi**, du **Bluetooth** et de la
+  **luminosité**. Elles sont de retour, et un contrôle du harnais refuse qu'elles soient masquées
+  à nouveau.
+- **Gagné sans une ligne écrite** : un calendrier, un agenda et les fuseaux horaires (horloge
+  native, date **sous** l'heure) ; les aperçus de fenêtres, les listes de sauts et l'indicateur
+  audio (`icontasks`) ; une grille de grandes vignettes pour Alt+Tab (`thumbnail_grid`, livré par
+  KWin).
+- **Perdu, et c'est dit** : les paramètres rapides ne sont plus un volet unique mais quatre
+  icônes dans la zone de notification ; il n'y a plus de bouton « Vue des tâches » (Meta+W).
+- **Retiré** : 141 lignes de `third_party/preparer.sh`, le module QML partagé `ankh-de/qml`, le
+  paquet du sélecteur Alt+Tab, et une dépendance réseau à la construction.
+
+### Corrigé — Ankh DE refusait de se construire sur sa propre cible ([DE-016](DECISIONS.md))
+
+`CMakeLists.txt` exigeait l'**égalité** avec Plasma 6.8. Ubuntu 26.04 livre `kdecoration 6.6.4` :
+`./installer.sh` sortait en `FATAL_ERROR` sur la machine cible. La CI ne le voyait pas, parce
+qu'elle passait `-DANKH_DE_PLASMA_NON_TESTE=ON` sur les trois distributions.
+
+- la version prise en charge est une **plage**, 6.6 à 6.8, et la cible est **6.6** ;
+- `construire.yml` ne passe plus d'échappatoire : le garde-fou livré est celui qu'on éprouve ;
+- `tests/garde-version.sh` : treize cas, sans Qt ni kdecoration, éprouvés par mutation.
+
+### Ajouté — les épreuves
+
+- le harnais ouvre une VM **Ubuntu 26.04** (la cible) autant que Fedora 44, et le workflow en
+  fait une matrice, Ubuntu d'abord ;
+- un essai de **lancement réel** depuis Démarrer : taper `konsole`, Entrée, puis demander au
+  système s'il tourne — le verdict vient de `pgrep`, pas d'un pourcentage de pixels ;
+- `konsole`, `dolphin` et `systemsettings` vérifiés **là où on les installe** ;
+- deux clics sur l'entrée de tâche, qui exercent `icontasks` dans les deux sens.
+
+### Corrigé — les documents ne racontent plus qu'une histoire
+
+[docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) est la **source unique** de l'état fonctionnel.
+`ci/verifier-coherence.sh` §8 refuse qu'un autre document attribue une interaction à un autre
+SHA. Le 2026-11-07, cinq documents portaient cinq états différents du menu Démarrer.
+
+### À valider
+
+Que la décoration **se charge** dans un vrai KWin 6.6 ; que Démarrer lance réellement ; que les
+tuiles natives répondent ; que le désinstallateur ramène à Plasma standard. **Compiler n'est pas
+se charger**, et aucun de ces points n'est acquis à la date de cette entrée.
+
 ## 0.1.0 — pré-version (2026-11-06)
 
 Première version d'Ankh DE : une **session** qu'on choisit à l'écran de connexion, et qui donne

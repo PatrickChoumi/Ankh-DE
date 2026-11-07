@@ -1,16 +1,28 @@
-# ANTI-DOUBLONS — ce qui existe déjà, et ce qu'il ne faut pas réécrire
+# ANTI-DOUBLONS — ce qui existe déjà, et l'état fonctionnel d'Ankh DE
 
-> Phase A de [docs/consignes/ANTI-DOUBLONS.md](consignes/ANTI-DOUBLONS.md).
-> **Code audité : `c0ac092`**, branche `main`, 42 commits, local = `origin/main`.
+> **Ce fichier est la SOURCE UNIQUE de l'état fonctionnel.** README, ROADMAP, CLAUDE.md et
+> AVANCEMENT ne doivent pas redire ce que telle interaction prouve : ils renvoient ici.
 >
-> **Les preuves de session viennent d'un AUTRE SHA, et il faut le dire** : du passage en VM sur
-> `e546e34` (2026-11-07), le dernier dont le rapport soit complet. Les commits suivants
-> (`fbe7f47`, `c0ac092`) ne touchent **aucun applet** — ils corrigent le harnais de mesure et
-> ajoutent des documents — mais tant que les trois workflows n'ont pas passé sur un seul et
-> même SHA, ce document ne peut pas prétendre le contraire.
->
-> Session de référence : **Fedora 44, Plasma 6.8.2, Wayland**, VM neuve, installée par
-> `installer.sh` et ouverte depuis SDDM. 59 vérifications clé par clé passées dedans.
+> La raison est un défaut constaté le 2026-11-07 : cinq documents portaient cinq états
+> différents du menu Démarrer — le README le disait interactif, la ROADMAP disait l'inverse,
+> AVANCEMENT disait qu'aucune interaction n'était testée. Chacun était vrai à sa date, et faux
+> au présent. `ci/verifier-coherence.sh` compare désormais le SHA déclaré ci-dessous à celui que
+> les autres documents citent.
+
+<!-- PREUVE-COURANTE : ne pas modifier le format, ci/verifier-coherence.sh le lit -->
+| | |
+|---|---|
+| **SHA des preuves d'interaction** | `09e4950` |
+| **Passage** | `VM — session réelle`, 2026-11-07 |
+| **Session** | Fedora 44, Plasma 6.8.2, Wayland, VM neuve, installée par `installer.sh`, ouverte depuis SDDM |
+| **Code audité** | `6e78a61`, branche `simplification-plasma-6.6` |
+
+> **Le code audité et le SHA des preuves DIFFÈRENT, et il faut le dire.** `6e78a61` retire huit
+> applets repris au profit des applets natives de Plasma ([DE-015](../DECISIONS.md)) et porte la
+> cible à Plasma 6.6 ([DE-016](../DECISIONS.md)). Ses propres preuves ne sont pas encore
+> rendues : le tableau ci-dessous dit donc, pour chaque responsabilité, ce qui est établi **sur
+> `09e4950`** et ce qui est seulement **attendu** sur `6e78a61`. Tant qu'un passage n'a pas
+> tourné, « attendu » n'est pas « prouvé ».
 
 ## Comment lire ce document
 
@@ -29,35 +41,32 @@ est dans la barre. Une capture ne prouve pas qu'un bouton répond.
 
 ---
 
-## 1. Ce qui est chargé dans la session, et par quoi
+## 1. Qui tient quoi, et dans quel état
 
-Relevé par `evaluateScript` sur `plasmashell`, dans l'ordre réel du panneau
-(passage en VM sur `e546e34`) :
-
-```
-org.kde.plasma.panelspacer, org.ankh.demarrer, org.ankh.vuetaches, org.ankh.taches,
-org.kde.plasma.panelspacer, org.kde.plasma.systemtray, org.ankh.separateur,
-org.ankh.etat, org.ankh.horloge, org.ankh.notifications, org.ankh.bureau
-```
+Depuis [DE-015](../DECISIONS.md) (2026-11-07), **une seule pièce de la barre nous appartient** :
+le menu Démarrer. Les huit autres responsabilités sont tenues par les applets natives de Plasma,
+habillées par notre style Plasma, nos couleurs et nos icônes. L'audit complet, avec le verdict
+composant par composant, est dans [docs/SIMPLIFICATION.md](SIMPLIFICATION.md).
 
 | Responsabilité | Implémentation **active** | Origine | État |
 |---|---|---|---|
-| Lanceur | `org.ankh.demarrer` | KDE-Windows-Modern `7ef6bfe` | **interactif** — s'ouvre, prend le clavier sans clic, cherche, se ferme sur Échap (`7181d91`) |
-| Gestionnaire de tâches | `org.ankh.taches` | Tidewater `4484377` | chargé ; **non interactif** |
-| Vue des tâches | `org.ankh.vuetaches` | Tidewater `4484377` | chargé ; **non interactif** |
-| Hôte de zone système | `org.kde.plasma.systemtray` — **celui de Plasma** | natif | chargé ; repli assumé |
-| Paramètres rapides | `org.ankh.etat` | Tidewater `4484377` | chargé ; **non interactif** |
-| Notifications (interface) | `org.ankh.notifications` | Tidewater `4484377` | chargé ; **non interactif** |
-| Notifications (service) | daemon de Plasma | natif | **aucun second service** — vérifié : notre applet est une interface |
-| Horloge et calendrier | `org.ankh.horloge` | KDE-Windows-Modern `7ef6bfe` | chargé ; calendrier **non vérifié** |
-| Afficher le bureau | `org.ankh.bureau` | KDE-Windows-Modern `7ef6bfe` | chargé ; **non interactif** |
-| Séparateur | `org.ankh.separateur` | Tidewater `4484377` | chargé ; espacement **non mesuré** |
-| Alt+Tab | `ankh-selecteur` | Tidewater `4484377` | installé et **désigné** par `kwinrc` ; **jamais déclenché** |
-| Fond d'écran | `Ankh-Prismes` | AnduinOS `c659fae` | installé **et posé** |
+| Lanceur | `org.ankh.demarrer` | KDE-Windows-Modern `7ef6bfe` | **interactif** sur `09e4950` : s'ouvre, prend le clavier sans clic, cherche, se ferme sur Échap. **Le lancement réel d'une application reste attendu** |
+| Gestionnaire de tâches | `org.kde.plasma.icontasks` | **natif** | attendu : chargé et interactif (deux clics, minimise puis rétablit) |
+| Vue des tâches | *aucun bouton* — effet Overview de KWin sur Meta+W | **natif** | DEFER hors de 0.1 ([DE-015](../DECISIONS.md)) |
+| Hôte de zone système | `org.kde.plasma.systemtray` | **natif** | attendu : chargé, et ne masquant **que** la cloche |
+| Réseau, Bluetooth, volume, luminosité | `org.kde.plasma.{networkmanagement,bluetooth,volume,brightness}` | **natif** | attendu : **visibles**. Elles étaient MASQUÉES jusqu'au 2026-11-07 |
+| Notifications (interface) | `org.kde.plasma.notifications` | **natif** | attendu : chargé, posé à droite de l'horloge |
+| Notifications (service) | daemon de Plasma | natif | **aucun second service** |
+| Horloge et calendrier | `org.kde.plasma.digitalclock`, `dateDisplayFormat=BelowTime` | **natif** | attendu : chargé, date sous l'heure. **Calendrier non essayé** |
+| Afficher le bureau | `org.kde.plasma.showdesktop` | **natif** | attendu : chargé. **Restauration des fenêtres non essayée** |
+| Écart de 9 px | `org.kde.plasma.panelspacer`, `expanding=false`, `length=9` | **natif** | attendu : chargé |
+| Alt+Tab | `thumbnail_grid` | **natif (KWin)** | **jamais montré à l'écran.** Les trois passages qui l'ont tenté n'avaient pas de seconde fenêtre |
+| Fond d'écran | `Ankh-Prismes` | AnduinOS `c659fae` | installé **et posé** sur `09e4950` |
+| Style des contrôles | `org.ankh.style` | Breeze `ca217f1` | **validé** : 12 jetons conformes |
+| Décoration des fenêtres | `org.ankh.decoration` | Breeze `ca217f1` | **validé** : 6 jetons sur 11. Se **charge** dans KWin 6.8 ; dans KWin **6.6**, non établi |
+| Verrouillage | KScreenLocker | natif | **jamais essayé** |
 
 **Un seul de chaque.** Aucune responsabilité n'a deux implémentations actives.
-
----
 
 ## 2. Les doublons que l'on évite, et pourquoi
 

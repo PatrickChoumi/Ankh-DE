@@ -84,6 +84,16 @@ cas "6.8 (Fedora 44, Arch) est accepté"   "${reel}" 6.8 accepte "dans la plage 
 cas "6.5 est refusé (sous la borne)"      "${reel}" 6.5 refuse  "n'est éprouvé que de Plasma 6.6 à 6.8"
 cas "6.9 est refusé (au-dessus)"          "${reel}" 6.9 refuse  "n'est éprouvé que de Plasma 6.6 à 6.8"
 
+# --- Le cas exact du test négatif de construire.yml ----------------------
+# Il resserre la plage ET la cible sur une valeur absurde, puis vérifie le
+# message. Au premier passage de DE-016, il ne resserrait QUE les bornes :
+# « plasma= » se retrouvait hors de sa propre plage, c'est ce contrôle-là qui
+# refusait, avec un autre message, et le test échouait pour la mauvaise
+# raison. Le cas est ici pour que la CI ne soit plus la première à le voir.
+cas "les trois clés à 0.1 : refus pour cause de plage" \
+    "$(fabriquer tout-0-1 0.1 0.1 0.1)" 6.8 refuse \
+    "n'est éprouvé que de Plasma 0.1 à 0.1"
+
 # --- L'échappatoire avertit, mais ne bloque pas ---------------------------
 cas "6.9 passe avec l'échappatoire"       "${reel}" 6.9 accepte "n'est éprouvé que de Plasma 6.6 à 6.8" ON
 

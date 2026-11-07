@@ -52,6 +52,11 @@ def rendre() -> str:
         "> et 3 « terminés » jusqu'au 2026-11-06, alors que cinq jetons du lot 2 ne sont pas",
         "> mesurés. Une mesure **sans cible** est un simple relevé : on la suit, on ne l'impose",
         "> pas.",
+        ">",
+        "> **ATTENTION, contresens déjà commis.** Dans la colonne « cible », *relevé* qualifie LE",
+        "> JETON — il n'a pas de valeur de Windows 11 à atteindre — et ne dit RIEN de l'état d'un",
+        "> lot. Le 2026-11-07, un audit a lu « relevé » comme « le lot 4 n'est que relevé ».",
+        "> L'état des lots est dans ROADMAP.md ; l'état fonctionnel dans docs/ANTI_DOUBLONS.md.",
         "",
         f"**{len(mesures)} mesures.** Mesures obligatoires, lots : "
         + (", ".join(str(n) for n in sorted(obligatoires)) if obligatoires else "aucun")

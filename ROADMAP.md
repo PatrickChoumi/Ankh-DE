@@ -7,29 +7,38 @@
 > Les lots 1 à 10 sont ceux de **D-052** du dépôt [Ankh](https://github.com/PatrickChoumi/Ankh).
 > Le lot 0 est propre à ce dépôt : il rend le tout autonome.
 
+> **L'état fonctionnel de chaque responsabilité n'est PAS redit ici.** Il vit dans
+> [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md), qui en est la source unique, et
+> `ci/verifier-coherence.sh` refuse qu'un document le contredise. Ce tableau dit où en est
+> chaque LOT, pas ce que telle interaction prouve.
+
 | Lot | Objectif | État au 2026-11-07 |
 |---|---|---|
-| **0** | **Autonomie** : le DE se compile, s'installe et se retire seul | **FINI** — compile sur Fedora 44, Arch et Ubuntu 26.04 ; s'installe et sa session s'ouvre dans une VM |
+| **0** | **Autonomie** : le DE se compile, s'installe et se retire seul | **PARTIEL** — compile sur Fedora 44, Arch et Ubuntu 26.04 ; s'installe et sa session s'ouvre dans une VM Fedora. La VM **Ubuntu**, qui est la cible (DE-016), et le tour complet du désinstallateur restent à rendre |
 | **1** | Fondations : police, tailles, couleurs, rendu, animations, curseurs | **FINI** — appliqué par la session (DE-010), vérifié en VM : `Selawik 10.5`, couleurs `Ankh`. 12 jetons conformes |
-| **2** | Fenêtres : la décoration « Ankh » | **mesuré ici** — 6 jetons sur 11 par un vrai KWin : barre de titre **32 px**, bords à 0, boutons `M`/`IAX`. Les 5 autres (rayon des coins, bouton Fermer, alignement du titre) demandent une capture que KWin refuse en backend virtuel |
+| **2** | Fenêtres : la décoration « Ankh » | **PARTIEL** — 6 jetons sur 11 par un vrai KWin : barre de titre **32 px**, bords à 0, boutons `M`/`IAX`. Les 5 autres demandent une capture que KWin refuse en backend virtuel. Et le chargement dans un KWin **6.6** n'est pas établi |
 | **3** | Contrôles : style Qt, QtQuick de KDE, thème GTK | **FINI** — 12 jetons conformes, rejoués à chaque PR sans VM |
-| **4** | Shell : style Plasma, barre, zone de notification, horloge, notifications | **en cours** — le style Plasma `ankh` et `ankh-clair` sont livrés (DE-011, dérivés de KDE-Windows-Modern) ; l'horloge et « Afficher le bureau » aussi. Les 9 jetons de la barre ne sont **pas encore mesurés** |
-| **5** | Démarrer d'Ankh | **s'ouvre**, vérifié en VM le 2026-11-06 (`a71432e`) : disposition d'Ankh évaluée, applet dans la barre, 9,48 % de l'écran qui change en une boîte centrée de 662×696. **Interactions non prouvées** tant que le passage du 2026-11-07 n'a pas rendu son verdict ; la grille 6 × 3 et « Recommandé » manquent au dessin |
-| **6** | Paramètres rapides en un seul volet | à faire — le plus fragile (trois modules privés, aucun appui amont) |
-| **7** | Alt+Tab, vue d'ensemble, déconnexion, verrouillage, sons, Windows+Z | à faire. L'écran de **verrouillage** reste délibérément celui de Plasma tant qu'un déverrouillage réel n'aura pas été essayé |
-| **8** | Applications : Dolphin, Configuration du système, Discover, Konsole, GTK, Flatpak, Electron | à faire |
+| **4** | Shell : style Plasma, barre, zone de notification, horloge, notifications | **PARTIEL** — les 9 jetons de la barre sont mesurés et conformes. Depuis **DE-015**, la barre est native sauf Démarrer : horloge, tâches, notifications, « Afficher le bureau » et l'écart de 9 px sont ceux de Plasma, habillés par le style `ankh` |
+| **5** | Démarrer d'Ankh | **PARTIEL** — ouverture, focus clavier et recherche prouvés ; **le lancement réel d'une application reste à prouver**, et c'est lui qui décide si l'applet est gardé. La grille 6 × 3 d'épingles et « Recommandé » manquent au dessin |
+| **6** | Paramètres rapides en un seul volet | **ABANDONNÉ pour 0.1 (DE-015)** — c'était « le plus fragile, trois modules privés, aucun appui amont ». Les quatre applets natives (réseau, Bluetooth, volume, luminosité) le remplacent dans la zone système. Écart de fidélité assumé : quatre icônes au lieu d'un volet |
+| **7** | Alt+Tab, vue d'ensemble, déconnexion, verrouillage, sons, Windows+Z | **PARTIEL** — Alt+Tab passe au sélecteur natif de KWin (`thumbnail_grid`, DE-015) ; il n'a **jamais été montré à l'écran**. Vue d'ensemble : Meta+W natif, bouton **DEFER**. Verrouillage, déconnexion : jamais essayés |
+| **8** | Applications : Dolphin, Configuration du système, Discover, Konsole, GTK, Flatpak, Electron | à faire — les trois premières sont installées dans la VM depuis le 2026-11-07, pas encore regardées |
 | **9** | Icônes et curseurs au violet d'Ankh | **FINI** — curseurs au lot 1 ; thème d'icônes `Fluent-Ankh` recoloré, et bouton Démarrer au logo d'Ankh (DE-013) |
 | **10** | Finitions : 125 et 150 %, thème clair, accessibilité, mesures obligatoires | à faire |
 
-**Prochains lots : la base est choisie, et elle est en QML.** Tidewater (`4484377`, GPL-3.0)
-ne contient **aucune ligne de C++ ni de CMake**, et ses onze identifiants sont préfixés
-`tidewater.*` : rien à compiler, rien à reporter à chaque version de Plasma, aucune collision
-avec un applet de Plasma. Il couvre le lot 6 (`status`, `notifications`), le lot 7
-(`tidewater-switcher`, `KWin/WindowSwitcher`) et le reste du lot 4. Les deux pièces conseillées
-de KDE-Windows-Modern sont écartées, mesure faite : `icontasks` porte l'identifiant de l'applet
-standard de Plasma et 11 fichiers C++ ; sa zone système est un fork du conteneur système, 40
-fichiers C++ et 6 585 lignes de QML. Le relevé complet, avec ce que leur README ne dit pas, est
-dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
+**Cible : Ubuntu 26.04 LTS, Plasma 6.6** (DE-016), plage éprouvée 6.6 à 6.8. Le choix n'est pas
+cosmétique : jusqu'au 2026-11-07, le CMake exigeait 6.8 et Ankh DE **refusait de se construire**
+sur cette cible.
+
+**L'audit de simplification**, verdict par composant, est dans
+[docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md).
+
+**Les prochains lots ne demandent plus d'importer quoi que ce soit.** Ce paragraphe annonçait
+Tidewater (`4484377`) comme base des lots 4, 6 et 7. **DE-015 a retiré les six pièces reprises**
+le 2026-11-07 : pas une n'avait été prouvée interactive, et Plasma livre pour chacune un
+équivalent natif qui marche. Ce qui reste à faire est du **test** et du **réglage**, pas de
+l'intégration. Les deux pièces de KDE-Windows-Modern restent écartées pour les raisons déjà
+nommées, et le relevé complet est dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md).
 
 **Compte des mesures : 27 jetons sur 53, mesurés ET conformes**, dont les 9 du lot 4. Le détail est dans
 [docs/FIDELITE.md](docs/FIDELITE.md), généré depuis `bench/jetons.toml`.

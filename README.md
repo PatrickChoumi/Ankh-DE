@@ -5,39 +5,50 @@
 *[English version](README.en.md)*
 
 Ankh DE donne à Plasma les mesures, la typographie, les matières, les animations et la disposition
-de Windows 11 — au pixel près, et **vérifiées par un programme** — sous l'identité graphite et
-violet d'[Ankh](https://github.com/PatrickChoumi/Ankh). Il s'installe sur Fedora, Arch ou Ubuntu
-sans modifier un seul fichier de la distribution, et se retire d'un geste.
+de Windows 11 — au pixel près là où **le banc le mesure** — sous l'identité graphite et violet
+d'[Ankh](https://github.com/PatrickChoumi/Ankh). Il ne modifie aucun fichier de la distribution,
+et se retire d'un geste.
 
-> ### État : **pré-version** — la barre et le menu Démarrer sont à nous, et c'est prouvé.
+**Ce n'est pas un bureau écrit de zéro, et c'est volontaire.** Ankh DE *habille* KDE Plasma : une
+seule pièce de la barre lui appartient, le menu Démarrer. Tout le reste — tâches, zone système,
+horloge et calendrier, notifications, Alt+Tab — ce sont les applets **natives de Plasma**,
+habillées par notre style. L'audit qui a conduit là, composant par composant, est dans
+[docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md) ([DE-015](DECISIONS.md)).
+
+> ### État : **pré-version**, et ce qu'elle vaut est dit sans arrondi
 >
-> Ankh DE a été **installé par son propre installateur dans une VM neuve** (Fedora 44,
-> Plasma 6.8.2) et la session ouverte **depuis l'écran de connexion**. Dans cette session :
-> `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
-> `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
-> fontconfig, et **48 vérifications clé par clé** passées *dans la session* — le compte est
-> imprimé par le test et repris dans le rapport, car il dépend des outils de l'invité.
+> | Où | Ce qui est établi |
+> |---|---|
+> | **Fedora 44, Plasma 6.8.2** | la session s'ouvre depuis l'écran de connexion, installée par `installer.sh` dans une VM neuve. `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`. **48 vérifications clé par clé** passées *dans la session* |
+> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | le code **compile et se lie** proprement (`ldd -r` propre). La **session n'est pas encore ouverte** sur cette cible : le passage est en cours |
+> | **Arch** | le code compile. Ni installation, ni session |
 >
-> **Le menu Démarrer répond.** Il ne s'agit plus seulement de l'ouvrir : depuis le 2026-11-07 le
-> harnais **clique et tape** dans la VM, par les événements d'entrée de QEMU. Ce qui est établi :
+> **L'état fonctionnel de chaque pièce — installée, chargée, interactive, validée — est dans
+> [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md), et nulle part ailleurs.** Ce README ne le
+> redit pas : cinq documents en portaient cinq versions différentes le 2026-11-07, et
+> `ci/verifier-coherence.sh` le refuse désormais.
+>
+> **Le menu Démarrer répond au clavier**, et c'est la seule interaction prouvée à ce jour. Depuis
+> le 2026-11-07 le harnais **clique et tape** dans la VM, par les événements d'entrée de QEMU
+> (SHA des preuves : `09e4950`).
 >
 > | Ce qu'on demande | Ce que le passage répond |
 > |---|---|
 > | Quelle disposition `plasmashell` a-t-il évaluée ? | `…/org.ankh.de.desktop/contents/layouts/org.kde.plasma.desktop-layout.js` — **la nôtre**, d'après son propre journal |
-> | Qu'y a-t-il dans la barre ? | `org.ankh.demarrer`, `org.ankh.horloge`, `org.ankh.bureau` installés ; `icontasks` et la zone système restent ceux de Plasma, par repli assumé |
 > | L'écran a-t-il changé à l'ouverture ? | **11,40 %** de l'écran, boîte de 675×707 à x=302 sur 1280 — donc **centrée**, et non collée à gauche comme Kickoff |
 > | Le menu prend-il le clavier **sans qu'on clique dedans** ? | **oui** — on tape `konsole`, les résultats s'affichent. C'est le geste de Windows 11 : touche Windows, puis on tape |
 > | Échap le referme-t-il ? | **oui**, 11,69 % de l'écran revient |
-> | Un clic sur les applets de droite ouvre-t-il un panneau ? | **oui** — 18,12 % et 16,25 % |
+> | Un clic sur la zone de droite ouvre-t-il un panneau ? | **oui** — 18,12 % et 16,25 %. Mais le repérage rend une abscisse, pas un identifiant : **on ne sait pas quel applet a répondu** |
 >
-> Jusqu'au 2026-11-06 la barre visible était celle de **Breeze**, portant nos couleurs, nos
-> icônes et notre thème Plasma : `kdeglobals [KDE] LookAndFeelPackage` n'était écrit nulle part
-> ([DE-014](DECISIONS.md)). Ce déguisement a tenu le défaut caché plusieurs jours, et trois
-> constats du harnais s'affichaient en « ÉCHEC » dans un passage vert. Les deux sont corrigés.
+> **Ce qui n'est PAS prouvé**, et qu'il serait facile de laisser croire : que Démarrer **lance**
+> une application (l'essai existe depuis le 2026-11-07, il n'a pas encore rendu) ; qu'Alt+Tab
+> montre quoi que ce soit (les trois passages qui l'ont tenté n'avaient pas de seconde fenêtre) ;
+> que les tuiles réseau, Bluetooth, volume et luminosité répondent ; que le calendrier s'ouvre ;
+> que le verrouillage et la déconnexion marchent ; que le désinstallateur ramène à Plasma
+> standard sur une vraie machine.
 >
 > **27 jetons sur 53 mesurés et conformes** — 12 contrôles, 6 fenêtres, et **les 9 de la barre**,
-> relevés en VM sur `fbe7f47`, où **Construire, Banc et VM passent tous les trois sur le même
-> SHA**. Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
+> relevés en VM sur `fbe7f47`. Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
 > [ROADMAP.md](ROADMAP.md), [DECISIONS.md](DECISIONS.md).
 
 ## Le menu Démarrer, ouvert dans une vraie session
@@ -139,10 +150,13 @@ Ces planches sont **produites par la CI à chaque changement**, pas prises à la
 
 ## Installation
 
-**Prérequis** : KDE Plasma **6.8.x**, session Wayland, Qt 6.6+, KDE Frameworks 6+.
-Toutes les preuves de ce dépôt sont faites sur **6.8.2** (Fedora 44). Une autre version arrête
-la construction, sauf `-DANKH_DE_PLASMA_NON_TESTE=ON`
-([DE-008](DECISIONS.md), `src/decoration/VERSION-BREEZE`).
+**Prérequis** : KDE Plasma **6.6 à 6.8**, session Wayland, Qt 6.6+, KDE Frameworks 6+.
+La cible est **6.6**, celle d'Ubuntu 26.04 LTS. Hors de cette plage, la construction s'arrête,
+sauf `-DANKH_DE_PLASMA_NON_TESTE=ON`
+([DE-016](DECISIONS.md), `src/decoration/VERSION-BREEZE`).
+
+> Jusqu'au 2026-11-07, ce prérequis disait **6.8.x** *et le CMake l'imposait* : Ankh DE refusait
+> donc de se construire sur Ubuntu 26.04, qui livre Plasma 6.6.4.
 
 ```bash
 git clone https://github.com/PatrickChoumi/Ankh-DE
@@ -203,9 +217,11 @@ pas corrigés** tant que KDE ne les ouvrira pas, et ils sont détaillés dans
   que la couleur d'accent, ramenée au violet d'Adwaita ;
 - **Chrome, VS Code et les applications Electron** dessinent leur propre barre de titre ;
 - les applications **GTK en Flatpak** ne voient pas le thème GTK du système ;
-- **Démarrer** et les **paramètres rapides** (lots 5 et 6) passeront par des modules *privés* de
-  Plasma : ils peuvent casser à chaque version. La CI le montrera avant que la mise à jour
-  n'arrive chez vous ;
+- les **paramètres rapides** ne sont **pas** un volet unique comme dans Windows 11, mais quatre
+  icônes natives dans la zone de notification — réseau, Bluetooth, volume, luminosité. C'est le
+  vrai écart de fidélité de cette version, et il est assumé : quatre icônes qui marchent valent
+  mieux qu'un volet qui ne répond pas ([DE-015](DECISIONS.md)) ;
+- pas de bouton **Vue des tâches** : la vue d'ensemble est sur **Meta+W**, celle de KWin ;
 - Selawik n'a **pas de semi-gras** et son crénage est incomplet : un titre semi-gras s'affiche en
   gras.
 
