@@ -21,7 +21,7 @@ style. The component-by-component audit that led there is in
 > | Where | What is established |
 > |---|---|
 > | **Fedora 44, Plasma 6.8.2** | the session opens from the login screen, installed by `installer.sh` in a fresh VM. `ANKH_DE_SESSION=1`, style `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh`. **48 key-by-key checks** passing *inside the session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **the target** | the code **builds and links** cleanly (`ldd -r` clean). The **session is not yet open** on this target; the run is in flight |
+> | **Ubuntu 26.04, Plasma 6.6** — **the target** | **the session opens** from the login screen and **every setting applies** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, Plasma style `ankh` — run `42397366933`. That run nonetheless ended in failure, on a harness defect unrelated to Ankh DE; the key-by-key checks did not run. Detail: [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
 > | **Arch** | the code builds. No install, no session |
 >
 > **The functional state of each piece — installed, loaded, interactive, validated — lives in

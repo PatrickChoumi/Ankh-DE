@@ -348,6 +348,20 @@ workflow en fait une matrice, Ubuntu d'abord, `fail-fast` à faux. `konsole`, `d
 lancé : NON » sans rien expliquer, parce que le lancement était enterré sous
 `> /dev/null 2>&1 || true` trois cents lignes plus bas.
 
+**Et la cible a répondu.** Passage `42397366933`, job Ubuntu : sur **Ubuntu 26.04.1 LTS,
+Plasma 6.6**, `installer.sh` réussit, la session s'ouvre depuis SDDM, le compositeur dessine, et
+**tous les réglages s'appliquent** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, icônes
+`Fluent-Ankh`, style Plasma `ankh`, `LookAndFeelPackage=org.ankh.de.desktop`. C'est exactement ce
+que DE-016 débloquait.
+
+Le passage s'est pourtant conclu en **échec**, et deux fois par ma faute. D'abord
+`plasmashell --version`, que j'avais substitué à `rpm -q` pour rendre le relevé générique : lancé
+par ssh, sans affichage, il ne rend rien. Ensuite le contrôle des lignes vides du rapport, qui a
+bien vu la ligne vide — c'était son travail — mais qui sortait en `exit 1` sur place, emportant
+les étapes 8 à 13. Aucune vérification clé par clé, aucune interaction, aucune capture, pour une
+ligne de rapport. Il grief désormais : le passage échoue toujours, mais après avoir tout appris.
+C'était la règle que ce script s'était donnée, et cet endroit ne la suivait pas.
+
 **Les documents ne racontent plus qu'une histoire.** `docs/ANTI_DOUBLONS.md` est la source unique
 de l'état fonctionnel, et `ci/verifier-coherence.sh` §8 refuse qu'un autre document attribue une
 interaction à un autre SHA. Éprouvé par mutation.

@@ -229,7 +229,7 @@ if [[ "${DISTRIB}" == ubuntu ]]; then
         libkf6iconthemes-dev libkf6windowsystem-dev libkf6colorscheme-dev \
         libkf6style-dev libkdecorations3-dev \
         fontmake librsvg2-bin x11-apps sassc fontconfig git \
-        python3-pil \
+        python3-pil libnotify-bin \
         konsole dolphin systemsettings \
         > /tmp/paquets.log 2>&1' || {
             echo "L'installation de Plasma a échoué :" >&2
@@ -248,7 +248,7 @@ else
         kf6-kiconthemes-devel kf6-kwindowsystem-devel kf6-kcolorscheme-devel \
         kf6-frameworkintegration-devel kdecoration-devel \
         fontmake librsvg2-tools xcursorgen sassc fontconfig git \
-        python3-pillow \
+        python3-pillow libnotify \
         konsole dolphin plasma-systemsettings \
         > /tmp/paquets.log 2>&1' || {
             echo "L'installation de Plasma a échoué :" >&2
@@ -266,7 +266,7 @@ fi
 # lancement était enterré sous « > /dev/null 2>&1 || true » trois cents
 # lignes plus bas. Un outil manquant doit faire échouer l'étape qui
 # l'installe, pas l'essai qui s'en sert.
-for appli in konsole dolphin systemsettings; do
+for appli in konsole dolphin systemsettings notify-send loginctl; do
     chemin="$(ssh_vm "command -v ${appli} 2>/dev/null" || true)"
     if [[ -n "${chemin}" ]]; then
         echo "   ${appli} : ${chemin}"
@@ -1389,6 +1389,110 @@ fi
     echo "- ce qui N'EST PAS établi : quel amas correspond à quel applet. Le repérage rend une"
     echo "  abscisse, pas un identifiant."
 } >> "${sortie}/vm-rapport.md"
+
+# --- 12.3bis Nommer l'applet, en comptant depuis la DROITE -------------
+#
+# Objection reçue le 2026-11-07, et elle était juste : « le harnais sait
+# cliquer les zones de droite, mais ne sait pas identifier l'applet qui a
+# répondu. Il ne faut donc pas annoncer que le Wi-Fi fonctionne parce qu'un
+# panneau s'est ouvert. » Les essais 12.2 ne nomment effectivement rien.
+#
+# Il y a pourtant une chose qu'on peut établir, et une seule : compter depuis
+# la DROITE. L'ordre de la fin de notre disposition est fixe et connu —
+# horloge, cloche, « Afficher le bureau » — alors que la gauche varie avec le
+# nombre de fenêtres et d'icônes de la zone système. Le dernier amas est donc
+# « Afficher le bureau », l'avant-dernier la cloche, et l'antépénultième
+# l'horloge.
+#
+# CE QUE CELA RESTE : une HYPOTHÈSE tirée de la disposition, pas une
+# identification lue dans plasmashell. Elle est écrite dans le nom des
+# captures pour qu'on puisse la démentir en regardant. Si l'une des trois ne
+# montre pas ce qu'elle annonce, c'est l'hypothèse qui tombe, pas l'applet.
+if [[ -n "${reperes}" ]]; then
+    amas=()
+    for x in ${reperes}; do amas+=("${x}"); done
+    n_amas=${#amas[@]}
+    if (( n_amas >= 3 )); then
+        y_barre=$(( ECRAN_H - 24 ))
+        x_bureau="${amas[n_amas-1]}"
+        x_cloche="${amas[n_amas-2]}"
+        x_horloge="${amas[n_amas-3]}"
+        echo "   hypothèse de la disposition : horloge=${x_horloge}, cloche=${x_cloche}, bureau=${x_bureau}"
+
+        # L'horloge : son calendrier est grand, donc le seuil est haut.
+        essai_interaction hypothese-horloge-calendrier \
+            "l'antépénultième amas ouvre un grand panneau (horloge ?)" oui 3 \
+            cliquer "${x_horloge}" "${y_barre}"
+        deux_echap; sleep 1.5
+
+        essai_interaction hypothese-cloche \
+            "l'avant-dernier amas ouvre un panneau (cloche ?)" oui 1 \
+            cliquer "${x_cloche}" "${y_barre}"
+        deux_echap; sleep 1.5
+
+        # « Afficher le bureau » ne doit PAS ouvrir un panneau : il doit
+        # masquer les fenêtres. Et un second clic doit les rétablir — c'est
+        # la demande « afficher le bureau et restaurer les fenêtres ».
+        essai_interaction hypothese-bureau-masque \
+            "le dernier amas masque les fenêtres (bureau ?)" oui 1 \
+            cliquer "${x_bureau}" "${y_barre}"
+        essai_interaction hypothese-bureau-restaure \
+            "et un second clic les rétablit" oui 1 \
+            cliquer "${x_bureau}" "${y_barre}"
+    else
+        echo "   (moins de trois amas : l'hypothèse de l'ordre n'est pas applicable)"
+    fi
+fi
+
+# --- 12.4 Une notification réelle --------------------------------------
+# Demandé : « tester les notifications entrantes ». Une applet présente ne
+# prouve rien ; une notification qui arrive, si. On en envoie une par
+# l'interface standard (notify-send, donc le service de notifications de
+# Plasma) et on regarde si l'écran change.
+#
+# C'est l'interface NATIVE qui est éprouvée ici (DE-015) : org.ankh.notifications
+# a été retiré. Un échec met donc en cause notre style Plasma ou la
+# disposition, pas une pièce à nous.
+essai_interaction notification \
+    "une notification envoyée s'affiche" oui 0.3 \
+    dans_session "notify-send --app-name='Ankh DE' 'Essai' 'Le harnais a envoyé cette notification' || true"
+sleep 6
+
+# --- 12.5 Verrouiller, puis déverrouiller -------------------------------
+# Demandé : « tester verrouillage et déverrouillage ». loginctl les commande
+# tous les deux, donc aucun mot de passe à automatiser — et c'est le chemin
+# que suit Plasma lui-même.
+#
+# L'écran de verrouillage reste DÉLIBÉRÉMENT celui de Plasma (KScreenLocker) :
+# ce qu'on éprouve, c'est qu'il se déclenche et se retire dans notre session,
+# pas qu'il soit à nous.
+verrou_id="$(ssh_vm "loginctl list-sessions --no-legend 2>/dev/null | awk '\$3==\"ankh\"{print \$1; exit}'" || true)"
+if [[ -z "${verrou_id}" ]]; then
+    grief "aucune session loginctl pour l'utilisateur ankh : le verrouillage n'est pas testable"
+else
+    echo "   session loginctl : ${verrou_id}"
+    essai_interaction verrouillage \
+        "l'écran se verrouille" oui 3 \
+        ssh_vm "loginctl lock-session ${verrou_id}"
+    essai_interaction deverrouillage \
+        "et se déverrouille" oui 3 \
+        ssh_vm "loginctl unlock-session ${verrou_id}"
+fi
+
+# --- 12.6 L'horloge est bien sur deux lignes ---------------------------
+# Ce n'est PAS un essai d'interaction, et il ne faut pas le présenter comme
+# tel : c'est la vérification que la clé est écrite ET relue. DE-015 remplace
+# notre horloge par celle de Plasma au motif précis que son schéma offre
+# « BelowTime » — la date sous l'heure, comme Windows 11. Autant vérifier que
+# la disposition l'a réellement posée.
+#
+# Le calendrier lui-même reste NON ÉPROUVÉ : l'ouvrir demanderait de cliquer
+# l'horloge, et le repérage rend une abscisse, pas un identifiant. On ne dira
+# pas « le calendrier marche » parce qu'un panneau s'est ouvert.
+format_date="$(ssh_vm "grep -h '^dateDisplayFormat=' /home/ankh/.config/plasma-org.kde.plasma.desktop-appletsrc 2>/dev/null | head -1 | sed 's/^dateDisplayFormat=//'" || true)"
+echo "   horloge, format de date : « ${format_date:-non écrit} » (attendu BelowTime)"
+[[ "${format_date}" == BelowTime ]] \
+    || grief "l'horloge native n'est pas réglée sur « BelowTime » mais « ${format_date:-rien} » : la date ne sera pas sous l'heure"
 
 # --- 13. Le désinstallateur ramène-t-il à Plasma standard ? -------------
 # CLAUDE.md §3.8 : « desinstaller.sh doit ramener à l'état de départ. Une

@@ -20,7 +20,7 @@ habillées par notre style. L'audit qui a conduit là, composant par composant, 
 > | Où | Ce qui est établi |
 > |---|---|
 > | **Fedora 44, Plasma 6.8.2** | la session s'ouvre depuis l'écran de connexion, installée par `installer.sh` dans une VM neuve. `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`. **48 vérifications clé par clé** passées *dans la session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | le code **compile et se lie** proprement (`ldd -r` propre). La **session n'est pas encore ouverte** sur cette cible : le passage est en cours |
+> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | **la session s'ouvre** depuis l'écran de connexion et **tous les réglages s'appliquent** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh` — passage `42397366933`. Ce passage s'est néanmoins conclu en échec, sur un défaut du harnais sans rapport avec Ankh DE ; les vérifications clé par clé n'ont pas tourné. Détail : [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
 > | **Arch** | le code compile. Ni installation, ni session |
 >
 > **L'état fonctionnel de chaque pièce — installée, chargée, interactive, validée — est dans

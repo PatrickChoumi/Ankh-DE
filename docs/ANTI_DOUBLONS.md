@@ -17,6 +17,26 @@
 | **Session** | Fedora 44, Plasma 6.8.2, Wayland, VM neuve, installée par `installer.sh`, ouverte depuis SDDM |
 | **Code audité** | `6e78a61`, branche `simplification-plasma-6.6` |
 
+### Ce que la cible Ubuntu a déjà établi
+
+Passage `42397366933` du 2026-11-07, job **Ubuntu 26.04 — la cible**. Ce passage s'est conclu en
+**échec**, et il faut le dire avant tout le reste : la cause était un défaut de MON harnais —
+`plasmashell --version` ne rend rien lancé par ssh sans affichage, la ligne du rapport est restée
+vide, et le contrôle des lignes vides a refusé le passage. Ce défaut n'a aucun rapport avec Ankh
+DE. Les faits ci-dessous sont lus dans le journal du même passage, avant l'arrêt :
+
+| Sur Ubuntu 26.04.1 LTS, Plasma 6.6 | |
+|---|---|
+| `installer.sh` | **réussit** — ce qui était impossible avant [DE-016](../DECISIONS.md) : le CMake exigeait 6.8 et sortait en `FATAL_ERROR` |
+| La session | **s'ouvre** depuis SDDM : `DESKTOP_SESSION=ankh-de`, `XDG_CURRENT_DESKTOP=KDE`, type `wayland`, `ANKH_DE_SESSION=1` |
+| Le compositeur | **dessine** : écart-type 38,1 sur 256 couleurs |
+| Les réglages | **tous appliqués** : style `Ankh`, couleurs `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, `LookAndFeelPackage=org.ankh.de.desktop`, Selawik vue par fontconfig |
+
+Que le style `Ankh` soit **appliqué** veut dire que le greffon QStyle compilé contre KF 6.24 /
+Qt 6.10 est celui que la session emploie. Ce qui reste non établi sur 6.6 : que le greffon de
+**décoration** se charge dans KWin — la clé est écrite, et c'est tout ce qu'on sait. Les
+vérifications clé par clé (étape 8) n'ont pas tourné, puisque le passage s'est arrêté avant.
+
 > **Le code audité et le SHA des preuves DIFFÈRENT, et il faut le dire.** `6e78a61` retire huit
 > applets repris au profit des applets natives de Plasma ([DE-015](../DECISIONS.md)) et porte la
 > cible à Plasma 6.6 ([DE-016](../DECISIONS.md)). Ses propres preuves ne sont pas encore
