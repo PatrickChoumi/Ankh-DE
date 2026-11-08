@@ -37,28 +37,32 @@ readonly WM_COMMIT=7ef6bfe99a472f2fc7fa473383eda50f411a8840 # 2026-07-19
 readonly FLUENT_GTK_DEPOT=https://github.com/vinceliuice/Fluent-gtk-theme
 readonly FLUENT_GTK_COMMIT=7a49a464b0188c340101c52965c18190b1c694cf # 2026-08-18
 
-# Violets du thème « purple » de Fluent (Material) -> violets d'Ankh : accent
-# en clair (#7c3aed) et en sombre (#a78bfa), et les deux teintes des liens
-# visités, de la même famille.
-readonly VIOLETS_GTK=('AB47BC:7C3AED' 'BA68C8:A78BFA' '9C27B0:6D28D9' 'CE93D8:C4B5FD')
-# Bleu d'accent des curseurs Fluent (#0078d4, celui de Windows, et son reflet
-# #23e6fa) -> violet d'Ankh (sélection #8455f0 et violet du logo #a78bfa).
-readonly COULEURS=('0078d4:8455f0' '23e6fa:a78bfa')
-# Rose-magenta de la variante « purple » des icônes Fluent -> violets d'Ankh,
-# de la teinte principale à la plus claire. Relevé le 2026-11-05 dans ses
-# sources : 39 occurrences de #dc63ee, une de #e275f0, une de #ff85de.
-readonly VIOLETS_ICONES=('dc63ee:8455f0' 'e275f0:a78bfa' 'ff85de:c4b5fd')
-# Thème Plasma de KDE-Windows-Modern : il mêle les accents de Windows 11
-# (#4CC2FF et #60CDFF en sombre, #0078D4 en clair) et les bleus de Breeze
-# restés dans sa base (#3DAEE9, #3DAEE6, #93CEE9). Tous deviennent les
-# violets d'Ankh. Relevé le 2026-11-06 dans le commit figé.
-readonly VIOLETS_PLASMA_SOMBRE=(
-    '4CC2FF:a78bfa' '60CDFF:c4b5fd'
-    '3DAEE9:8455f0' '3DAEE6:8455f0' '93CEE9:c4b5fd'
+# ── Les couleurs : celles de Windows 11, et on cesse de les repeindre ────
+#
+# Jusqu'au 2026-11-08, cinq tableaux teintaient en violet d'Ankh les couleurs
+# des pièces amont. Or ces couleurs SONT celles de Windows 11 : les curseurs
+# Fluent portent #0078d4, le thème Plasma porte #4CC2FF et #60CDFF. On les
+# repeignait pour les reteindre, et il suffit de ne plus le faire.
+#
+# Deux pièces demandent mieux qu'une suppression : elles étaient construites
+# dans leur variante VIOLETTE, qu'il faut remplacer par la bonne, pas
+# simplement cesser de recolorer.
+#   - icônes : variante « yellow » (#ffcb52), et non « purple ». Relevé sur
+#     une capture de Windows 11 fournie par le propriétaire le 2026-11-08 :
+#     le dossier de « File Explorer » y est à #ffcd3e–#ffd14d. C'est donc
+#     une mesure, pas un goût.
+#   - thème GTK : variante par défaut, qui est le bleu (install.sh de
+#     Fluent-gtk-theme : « Default: blue »), et non « purple ».
+#
+# Il reste UNE recoloration, et elle va dans l'autre sens : le thème Plasma
+# de KDE-Windows-Modern a gardé des bleus de BREEZE dans sa base (#3DAEE9,
+# #3DAEE6, #93CEE9), qui ne sont pas ceux de Windows. On les amène sur les
+# accents de Windows 11 au lieu de les laisser.
+readonly BREEZE_VERS_WINDOWS_SOMBRE=(
+    '3DAEE9:4CC2FF' '3DAEE6:4CC2FF' '93CEE9:60CDFF'
 )
-readonly VIOLETS_PLASMA_CLAIR=(
-    '0078D4:7c3aed' '4CC2FF:a78bfa'
-    '3DAEE9:7c3aed' '3DAEE6:7c3aed' '93CEE9:c4b5fd'
+readonly BREEZE_VERS_WINDOWS_CLAIR=(
+    '3DAEE9:0078D4' '3DAEE6:0078D4' '93CEE9:4CC2FF'
 )
 # Tailles de chaque curseur, comme le build.sh des curseurs Fluent.
 readonly TAILLES=('x1:32' 'x1_25:40' 'x1_5:48' 'x2:64')
@@ -188,18 +192,12 @@ recuperer "${FLUENT_DEPOT}" "${FLUENT_COMMIT}" "${travail}/fluent" cursors
 source_curseurs="${travail}/fluent/cursors/src"
 dessins="${travail}/dessins"
 cp -r "${source_curseurs}/svg-white" "${dessins}"
-for couple in "${COULEURS[@]}"; do
-    avant="${couple%%:*}"; apres="${couple##*:}"
-    # La couleur doit encore exister : sinon, le dessin a changé en amont et
-    # le violet d'Ankh ne serait pas appliqué.
-    if ! grep -qil "#${avant}" "${dessins}"/*.svg; then
-        echo "Curseurs Fluent : la couleur #${avant} n'existe plus dans les sources" >&2
-        exit 1
-    fi
-    sed -i "s/#${avant}/#${apres}/gI" "${dessins}"/*.svg
-done
-if grep -qil '#0078d4\|#23e6fa' "${dessins}"/*.svg; then
-    echo "Curseurs Fluent : du bleu reste après la recoloration" >&2
+# Aucune recoloration : l'anneau d'attente des curseurs Fluent est déjà à
+# #0078d4, l'accent de Windows 11. On le vérifie quand même — s'il
+# disparaissait en amont, les curseurs cesseraient d'être ceux de Windows
+# sans que rien ne le dise.
+if ! grep -qil '#0078d4' "${dessins}"/*.svg; then
+    echo "Curseurs Fluent : l'accent #0078d4 de Windows a disparu des sources" >&2
     exit 1
 fi
 images="${travail}/images"
@@ -240,41 +238,13 @@ echo "$(find "${theme}/cursors" -type f | wc -l) curseurs, $(find "${theme}/curs
 echo "== Thème GTK Fluent-Ankh"
 recuperer "${FLUENT_GTK_DEPOT}" "${FLUENT_GTK_COMMIT}" "${travail}/fluent-gtk" src
 fluent_gtk="${travail}/fluent-gtk"
-fichiers_violets=(
-    "${fluent_gtk}/src/_sass/_color-palette.scss"
-    "${fluent_gtk}/src/gtk/assets-purple.svg"
-    "${fluent_gtk}/src/gtk-2.0/gtkrc-purple"
-    "${fluent_gtk}/src/gtk-2.0/gtkrc-purple-Dark"
-    "${fluent_gtk}/src/gtk-2.0/assets-folder/assets-purple.svg"
-    "${fluent_gtk}/src/gtk-2.0/assets-folder/assets-purple-Dark.svg"
-)
-for couple in "${VIOLETS_GTK[@]}"; do
-    avant="${couple%%:*}"; apres="${couple##*:}"
-    if ! grep -qi "#${avant}" "${fichiers_violets[@]}"; then
-        echo "Fluent GTK : #${avant} introuvable dans ses sources" >&2
-        exit 1
-    fi
-    sed -i "s/#${avant}/#${apres}/Ig" "${fichiers_violets[@]}"
-done
-# Images des contrôles, redessinées depuis les dessins recolorés, à 1x et 2x
-# (comme render-assets.sh de Fluent, avec rsvg-convert au lieu d'Inkscape).
-redessiner() { # $1 : dossier des images, $2 : dessin, $3 : liste des images
-    rm -rf "$1"; mkdir -p "$1"
-    while read -r image; do
-        [[ -n "${image}" ]] || continue
-        rsvg-convert --export-id="${image}" -o "$1/${image}.png" "$2"
-        rsvg-convert --export-id="${image}" --zoom=2 -o "$1/${image}@2.png" "$2"
-    done < "$3"
-}
-redessiner "${fluent_gtk}/src/gtk/assets-purple" "${fluent_gtk}/src/gtk/assets-purple.svg" \
-    "${fluent_gtk}/src/gtk/assets.txt"
-for variante in assets-purple assets-purple-Dark; do
-    redessiner "${fluent_gtk}/src/gtk-2.0/assets-folder/${variante}" \
-        "${fluent_gtk}/src/gtk-2.0/assets-folder/${variante}.svg" \
-        "${fluent_gtk}/src/gtk-2.0/assets-folder/assets.txt"
-done
+# Aucune recoloration (DE-017) : on construit la variante PAR DÉFAUT de
+# Fluent, qui est le bleu — « Default: blue » dans l'aide de son install.sh.
+# C'est l'accent de Windows 11. Jusqu'au 2026-11-08 on construisait la
+# variante « purple » puis on la repeignait en violet d'Ankh : deux étapes
+# pour s'éloigner de la cible.
 themes="${travail}/themes"; mkdir -p "${themes}"
-(cd "${fluent_gtk}" && ./install.sh --dest "${themes}" --name Fluent --theme purple \
+(cd "${fluent_gtk}" && ./install.sh --dest "${themes}" --name Fluent \
     --color light --size standard --tweaks round noborder)
 theme="${sortie}/themes/Fluent-Ankh"
 rm -rf "${theme}"
@@ -284,60 +254,64 @@ install -d -m 0755 "${theme}"
 # variante sombre, octet pour octet. GTK prend la feuille sombre quand KDE
 # demande le sombre (gtk-application-prefer-dark-theme, écrit à chaque
 # session par kded/gtkconfig.cpp de kde-gtk-config) : le thème suit donc le
-# clair et le sombre d'Ankh DE.
-cp -r "${themes}/Fluent-round-purple-Light/"{gtk-2.0,gtk-3.0,gtk-4.0} "${theme}/"
+# clair et le sombre.
+produit="${themes}/Fluent-round-Light"
+[[ -d "${produit}" ]] || {
+    echo "Fluent GTK : « ${produit} » absent ; install.sh a nommé sa sortie autrement :" >&2
+    ls -1 "${themes}" >&2
+    exit 1
+}
+cp -r "${produit}/"{gtk-2.0,gtk-3.0,gtk-4.0} "${theme}/"
 install -m 0644 "${fluent_gtk}/COPYING" "${theme}/COPYING"
 cat > "${theme}/index.theme" << 'THEME'
 [Desktop Entry]
 Type=X-GNOME-Metatheme
 Name=Fluent-Ankh
-Comment=Thème GTK Fluent (vinceliuice/Fluent-gtk-theme, GPL-3.0), au violet d'Ankh
+Comment=Thème GTK Fluent (vinceliuice/Fluent-gtk-theme, GPL-3.0), couleurs d'origine
 Encoding=UTF-8
 
 [X-GNOME-Metatheme]
 GtkTheme=Fluent-Ankh
 THEME
-# Plus aucun violet de Fluent, sauf dans la palette nommée que GTK propose
-# aux applications (« @define-color GRAPE_500 #9C27B0 »), qui n'est pas
-# l'accent du thème.
-for couple in "${VIOLETS_GTK[@]}"; do
-    if grep -rhi "#${couple%%:*}" "${theme}" | grep -vE '^@define-color [A-Z0-9_]+ #' > /dev/null; then
-        echo "Fluent-Ankh : le violet #${couple%%:*} de Fluent est resté" >&2
-        exit 1
-    fi
-done
-for feuille in gtk-3.0/gtk.css gtk-3.0/gtk-dark.css gtk-4.0/gtk.css gtk-4.0/gtk-dark.css; do
-    echo "Fluent-Ankh, ${feuille} : $(grep -o -i '#7c3aed\|#a78bfa' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
+# Le thème doit porter l'accent de Windows et AUCUN violet d'Ankh. Les deux
+# sens sont vérifiés : un thème qui aurait perdu son bleu serait aussi faux
+# qu'un thème resté violet.
+if grep -rqiE '#(7c3aed|a78bfa|8455f0|c4b5fd)' "${theme}"; then
+    echo "Fluent-Ankh : un violet d'Ankh est resté dans le thème GTK" >&2
+    grep -rliE '#(7c3aed|a78bfa|8455f0|c4b5fd)' "${theme}" | head -3 >&2
+    exit 1
+fi
+for feuille in gtk-3.0/gtk.css gtk-4.0/gtk.css; do
+    echo "Fluent-Ankh, ${feuille} : $(grep -o -i '#0078d4\|#005fb8' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
 done
 
 echo "== Thème d'icônes Fluent-Ankh (lot 9)"
-# Mon choix du 2026-10-15 : les icônes Fluent, au violet d'Ankh. Sa variante
-# « purple » est en réalité un rose-magenta (#dc63ee) : on la recolore.
+# La variante « yellow » de Fluent, et AUCUNE recoloration (DE-017).
+#
+# Le choix de la variante est une mesure, pas un goût : sur la capture de
+# Windows 11 fournie par le propriétaire le 2026-11-08, le dossier de
+# « File Explorer » est à #ffcd3e–#ffd14d. La variante « yellow » de Fluent
+# vaut #ffcb52 (install.sh, « case $color in »), soit le même jaune ambré.
+# Les autres candidates en sont loin : « standard » est bleu (#198ee6) et
+# « orange » tire au #ff9c33.
+#
+# Jusqu'au 2026-11-08 on construisait « purple » — en réalité un rose-magenta
+# #dc63ee — puis on la repeignait au violet d'Ankh.
 recuperer "${FLUENT_DEPOT}" "${FLUENT_COMMIT}" "${travail}/fluent-icones" src links install.sh
 fluent_icones="${travail}/fluent-icones"
-dessins_violets=( "${fluent_icones}"/src/scalable/places/purple-*.svg )
-if (( ${#dessins_violets[@]} == 0 )); then
-    echo "Icônes Fluent : aucun dessin « purple » dans les sources" >&2
+dessins_jaunes=( "${fluent_icones}"/src/scalable/places/yellow-*.svg )
+if (( ${#dessins_jaunes[@]} == 0 )); then
+    echo "Icônes Fluent : aucun dessin « yellow » dans les sources" >&2
     exit 1
 fi
-for couple in "${VIOLETS_ICONES[@]}"; do
-    avant="${couple%%:*}"; apres="${couple##*:}"
-    # La couleur doit encore exister : sinon, les dessins ont changé en amont
-    # et le violet d'Ankh ne serait pas appliqué.
-    if ! grep -qil "#${avant}" "${dessins_violets[@]}"; then
-        echo "Icônes Fluent : la couleur #${avant} n'existe plus dans les sources" >&2
-        exit 1
-    fi
-    sed -i "s/#${avant}/#${apres}/gI" "${dessins_violets[@]}"
-done
-if grep -qil '#dc63ee\|#e275f0\|#ff85de' "${dessins_violets[@]}"; then
-    echo "Icônes Fluent : du rose reste après la recoloration" >&2
+if ! grep -qil '#ffcb52' "${dessins_jaunes[@]}"; then
+    echo "Icônes Fluent : le jaune #ffcb52 a disparu des sources ; la variante a changé" >&2
     exit 1
 fi
-echo "${#dessins_violets[@]} dessins recolorés"
+echo "${#dessins_jaunes[@]} dessins « yellow », repris tels quels"
 
 brut="${travail}/icones-brut"
-(cd "${fluent_icones}" && ./install.sh --dest "${brut}" --name Fluent-Ankh purple > /dev/null)
+(cd "${fluent_icones}" && ./install.sh --dest "${brut}" --name Fluent-Ankh yellow > /dev/null)
 
 # install.sh nomme la variante « <nom>-purple » et range le gros des dessins
 # dans des dossiers cachés que les thèmes atteignent par des liens RELATIFS
@@ -349,22 +323,22 @@ renommer() { # $1 : suffixe produit par install.sh, $2 : notre nom, $3 : libell�
     rm -rf "${cible}"
     cp -a "${source}" "${cible}"
     sed -i "s/^Name=.*/Name=$3/" "${cible}/index.theme"
-    sed -i "s/^Comment=.*/Comment=Icônes Fluent (vinceliuice\/Fluent-icon-theme, GPL-3.0), au violet d'Ankh/" "${cible}/index.theme"
+    sed -i "s/^Comment=.*/Comment=Icônes Fluent (vinceliuice\/Fluent-icon-theme, GPL-3.0), variante jaune de Windows 11/" "${cible}/index.theme"
 }
-renommer "-purple"       Fluent-Ankh       "Ankh"
-renommer "-purple-dark"  Fluent-Ankh-dark  "Ankh (sombre)"
-renommer "-purple-light" Fluent-Ankh-light "Ankh (clair)"
+renommer "-yellow"       Fluent-Ankh       "Ankh"
+renommer "-yellow-dark"  Fluent-Ankh-dark  "Ankh (sombre)"
+renommer "-yellow-light" Fluent-Ankh-light "Ankh (clair)"
 
 # Les variantes sombre et claire atteignent le thème principal PAR SON NOM :
 # leurs liens « scalable », « scalable@2x » et « scalable@3x » pointent vers
-# « Fluent-Ankh-purple ». Le renommer les casse. On les retarge.
+# « Fluent-Ankh-yellow ». Le renommer les casse. On les retarge.
 retargetes=0
 for variante in Fluent-Ankh Fluent-Ankh-dark Fluent-Ankh-light; do
     while read -r lien; do
         cible="$(readlink "${lien}")"
         case "${cible}" in
-            *Fluent-Ankh-purple*)
-                ln -sfn "${cible//Fluent-Ankh-purple/Fluent-Ankh}" "${lien}"
+            *Fluent-Ankh-yellow*)
+                ln -sfn "${cible//Fluent-Ankh-yellow/Fluent-Ankh}" "${lien}"
                 retargetes=$((retargetes + 1))
                 ;;
         esac
@@ -397,7 +371,7 @@ compter_liens_morts() { # $1 : dossier d'un thème
 morts_amont=0
 morts_chez_nous=0
 for variante in "" "-dark" "-light"; do
-    morts_amont=$((morts_amont + $(compter_liens_morts "${brut}/Fluent-Ankh-purple${variante}")))
+    morts_amont=$((morts_amont + $(compter_liens_morts "${brut}/Fluent-Ankh-yellow${variante}")))
     morts_chez_nous=$((morts_chez_nous + $(compter_liens_morts "${sortie}/icones/Fluent-Ankh${variante}")))
 done
 if (( morts_chez_nous > morts_amont )); then
@@ -408,10 +382,18 @@ if (( morts_chez_nous > morts_amont )); then
     exit 1
 fi
 echo "liens : ${morts_chez_nous} morts, autant qu'en amont (icônes d'applications disparues)"
-# DE-013 : « start-here » de Fluent EST le quadrillage à quatre carreaux de
-# Windows. Repéré le 2026-11-06 sur la capture d'une VRAIE session — aucun
-# contrôle de licence ne pouvait le voir, le fichier n'étant pas versionné
-# chez nous mais fabriqué ici. On le remplace par le logo d'Ankh.
+# Le « start-here » de Fluent est remplacé par le nôtre (DE-013, DE-017).
+#
+# Le dessin de Fluent reprend le logo de Microsoft, qui est une marque
+# déposée : il ne peut pas être livré par un dépôt public. Le nôtre est une
+# grille de quatre carreaux monochromes — un motif d'interface courant, aux
+# couleurs du thème, sans les proportions ni les teintes de la marque. Qui
+# veut exactement le bouton de Windows le met lui-même : l'applet offre
+# « useCustomButtonImage », et docs/INSTALL.md l'explique.
+#
+# Repéré le 2026-11-06 sur la capture d'une VRAIE session — aucun contrôle de
+# licence ne pouvait le voir, le fichier n'étant pas versionné chez nous mais
+# fabriqué ici.
 # Toutes les variantes y passent (« -kde », « -kde-plasma », « -symbolic ») :
 # n'importe laquelle peut atterrir sur un bouton Démarrer.
 nos_icones="${racine}/src/icons/ankh"
@@ -433,9 +415,9 @@ done < <(find "${sortie}/icones" -name 'start-here*.svg')
 (( remplaces > 0 )) || { echo "Aucun start-here à remplacer : le thème a changé en amont" >&2; exit 1; }
 restants=0
 while read -r icone; do
-    grep -q "Ankh DE" "${icone}" 2>/dev/null || { restants=$((restants + 1)); echo "  resté : ${icone#${sortie}/icones/}" >&2; }
+    grep -q "ankh-de-demarrer" "${icone}" 2>/dev/null || { restants=$((restants + 1)); echo "  resté : ${icone#${sortie}/icones/}" >&2; }
 done < <(find "${sortie}/icones" -name 'start-here*.svg')
-(( restants == 0 )) || { echo "DE-013 : ${restants} icône(s) « start-here » ne sont pas les nôtres" >&2; exit 1; }
+(( restants == 0 )) || { echo "${restants} icône(s) « start-here » ne sont pas les nôtres : le logo de Microsoft serait livré" >&2; exit 1; }
 echo "bouton Démarrer : ${remplaces} icône(s) au logo d'Ankh"
 
 echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
@@ -485,18 +467,58 @@ habiller_plasma() { # $1 : dossier amont, $2 : notre nom, $3 : libellé, puis le
     "KPlugin": {
         "Id": "${nom}",
         "Name": "${libelle}",
-        "Description": "Style Plasma d'Ankh, dérivé de KDE-Windows-Modern (GPL-3.0)",
+        "Description": "Style Plasma aux couleurs de Windows 11, dérivé de KDE-Windows-Modern (GPL-3.0)",
         "License": "GPL-3.0-or-later",
         "Website": "https://github.com/PatrickChoumi/Ankh-DE"
     },
     "X-Plasma-API-Minimum-Version": "6.0"
 }
 META
+    # L'amont livre AUSSI un metadata.desktop, que nous ne réécrivions pas :
+    # il annonçait encore « Name=Windows-modern-dark » et l'auteur amont. Un
+    # paquet qui porte deux identités selon le fichier lu finit par en
+    # afficher une qu'on n'a pas choisie.
+    if [[ -f "${cible}/metadata.desktop" ]]; then
+        sed -i -e "s/^Name=.*/Name=${libelle}/" \
+               -e "s/^X-KDE-PluginInfo-Name=.*/X-KDE-PluginInfo-Name=${nom}/" \
+               -e "s|^Comment=.*|Comment=Style Plasma aux couleurs de Windows 11, dérivé de KDE-Windows-Modern (GPL-3.0)|" \
+               "${cible}/metadata.desktop"
+        grep -q "^Name=${libelle}$" "${cible}/metadata.desktop" \
+            || { echo "Style Plasma ${nom} : metadata.desktop n'a pas été renommé" >&2; exit 1; }
+    fi
     echo "${nom} : $(find "${cible}" -type f | wc -l) fichiers, $(du -sh "${cible}" | cut -f1)"
 }
 
-habiller_plasma Windows-modern-dark  ankh        "Ankh"         "${VIOLETS_PLASMA_SOMBRE[@]}"
-habiller_plasma Windows-modern-light ankh-clair  "Ankh (clair)" "${VIOLETS_PLASMA_CLAIR[@]}"
+# Les accents de Windows 11 que porte déjà l'amont (#4CC2FF, #60CDFF en
+# sombre, #0078D4 en clair) sont GARDÉS. Seuls les bleus de Breeze restés
+# dans sa base sont amenés sur ceux de Windows (DE-017).
+habiller_plasma Windows-modern-dark  ankh        "Windows 11"         "${BREEZE_VERS_WINDOWS_SOMBRE[@]}"
+habiller_plasma Windows-modern-light ankh-clair  "Windows 11 (clair)" "${BREEZE_VERS_WINDOWS_CLAIR[@]}"
+# Le thème doit porter l'accent de Windows, et aucun violet d'Ankh. Les deux
+# sens, parce qu'un thème qui aurait perdu son bleu serait aussi faux qu'un
+# thème resté violet.
+for style in ankh ankh-clair; do
+    if grep -rqiE '#(7c3aed|a78bfa|8455f0|c4b5fd)' "${sortie}/desktoptheme/${style}"; then
+        echo "Style Plasma ${style} : un violet d'Ankh est resté" >&2
+        exit 1
+    fi
+done
+grep -rqi '#4CC2FF' "${sortie}/desktoptheme/ankh" \
+    || { echo "Style Plasma ankh : l'accent #4CC2FF de Windows a disparu" >&2; exit 1; }
+grep -rqi '#0078D4' "${sortie}/desktoptheme/ankh-clair" \
+    || { echo "Style Plasma ankh-clair : l'accent #0078D4 de Windows a disparu" >&2; exit 1; }
+
+# Le « colors » du thème Plasma est en RGB DÉCIMAL, pas en hexadécimal : la
+# substitution ci-dessus ne l'a jamais touché, dans un sens comme dans
+# l'autre. Il porte donc encore les accents de Windows (76,194,255 = #4CC2FF
+# et 96,205,255 = #60CDFF), ce qui est exactement ce qu'on veut maintenant.
+# On le vérifie plutôt que de le supposer.
+for style in ankh ankh-clair; do
+    f="${sortie}/desktoptheme/${style}/colors"
+    [[ -f "${f}" ]] || continue
+    grep -qE '(76,194,255|0,120,212)' "${f}" \
+        || { echo "Style Plasma ${style} : « colors » ne porte plus d'accent de Windows" >&2; exit 1; }
+done
 # Les deux pièces que le lot 4 vise vraiment doivent exister.
 for piece in widgets/panel-background.svg widgets/tasks.svg; do
     [[ -f "${sortie}/desktoptheme/ankh/${piece}" ]] \
@@ -754,10 +776,12 @@ fonds="${travail}/anduin/src/mods/23-wallpaper-mod"
 paquet="${sortie}/wallpapers/Ankh-Prismes"
 rm -rf "${paquet}"
 install -d -m 0755 "${paquet}/contents/images" "${paquet}/contents/images_dark"
-python3 -I "${racine}/third_party/recolorer-fond.py" \
-    "${fonds}/Fluent-building-light.png" "${paquet}/contents/images/3840x2160.png"
-python3 -I "${racine}/third_party/recolorer-fond.py" \
-    "${fonds}/Fluent-building-night.png" "${paquet}/contents/images_dark/3840x2160.png"
+# Repris TELS QUELS (DE-017). recolorer-fond.py tournait leur teinte de +52°
+# pour aller du bleu au violet d'Ankh ; son propre en-tête le disait : « les
+# teintes dominantes sont à 210° et 220°, le bleu de Windows ». Elles sont
+# donc déjà la cible, et le script a été supprimé.
+install -m 0644 "${fonds}/Fluent-building-light.png" "${paquet}/contents/images/3840x2160.png"
+install -m 0644 "${fonds}/Fluent-building-night.png" "${paquet}/contents/images_dark/3840x2160.png"
 
 # La vignette de la page « Fond d'écran » de Plasma : la variante sombre,
 # qui est celle par défaut d'Ankh DE.
@@ -769,9 +793,9 @@ im.resize((1280, 720), Image.LANCZOS).save(sys.argv[2], optimize=True)
 " "${paquet}/contents/images_dark/3840x2160.png" "${paquet}/contents/screenshot.png"
 
 # « X-KDE-PlasmaImageWallpaper-AccentColor » : c'est par cette clé que
-# l'accent de Plasma suit le fond d'écran (DE-004). Sans elle, Plasma
-# calcule une couleur depuis l'image, et tombe sur un violet voisin mais pas
-# sur LE violet d'Ankh.
+# l'accent de Plasma suit le fond d'écran (DE-004). Sans elle, Plasma calcule
+# une couleur depuis l'image et tombe sur un bleu voisin, pas sur l'accent de
+# Windows 11.
 cat > "${paquet}/metadata.json" << 'FOND'
 {
     "KPlugin": {
@@ -789,8 +813,8 @@ cat > "${paquet}/metadata.json" << 'FOND'
         "Name[en]": "Ankh Prisms"
     },
     "X-KDE-PlasmaImageWallpaper-AccentColor": {
-        "Light": "#7c3aed",
-        "Dark": "#a78bfa"
+        "Light": "#0078D4",
+        "Dark": "#4CC2FF"
     }
 }
 FOND

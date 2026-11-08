@@ -1,27 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Bouton Démarrer d'Ankh DE.
+  Bouton Démarrer d'Ankh DE — id : ankh-de-demarrer
 
-  Repris du logo d'Ankh (build_files/files/usr/share/icons/hicolor/scalable/
-  apps/ankh-logo.svg du dépôt PatrickChoumi/Ankh) : le A au trait, barré de
-  violet. Les proportions d'origine sont conservées — sommet en pointe
-  nette, pieds plats, traverse pleine — et le dessin est recalé pour une
-  barre des tâches : traits plus francs, mesures posées sur la grille des
-  pixels.
+  Quatre carreaux en grille 2 x 2, monochromes, qui suivent le jeu de
+  couleurs par « ColorScheme-Text ».
 
-  Il remplace le « start-here » du thème Fluent, qui est le quadrillage à
-  quatre carreaux de Windows (DE-005, DE-013).
+  Ce N'EST PAS le logo de Windows, et ce ne peut pas l'être : le logo de
+  Microsoft est une marque déposée, et ce dépôt est public sous GPL-3.0. Une
+  grille de quatre carreaux est en revanche un motif d'interface courant —
+  c'est le glyphe « grille d'applications » de nombreux lanceurs libres — et
+  elle ne reprend ni les couleurs, ni les proportions, ni la perspective de
+  la marque.
 
-  Le A suit le jeu de couleurs par « ColorScheme-Text » ; la traverse garde
-  le violet d'Ankh, qui est l'identité.
+  Pour avoir exactement le bouton de son choix, y compris sur sa propre
+  machine, l'applet offre « useCustomButtonImage » et « customButtonImage » :
+  c'est expliqué dans docs/INSTALL.md.
+
+  Remplace le « start-here » du thème Fluent. Un dessin par taille : à 16 px,
+  un trait qui tombe entre deux pixels se délave.
 -->
 <svg width="24" height="24" viewBox="0 0 24 24" version="1.1"
      xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#e6edf3; }</style>
+    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#1f2328; }</style>
   </defs>
-  <path d="M4.8 19.6 12 4.4 19.2 19.6" fill="none"
-        class="ColorScheme-Text" stroke="currentColor" stroke-width="2.6"
-        stroke-linejoin="miter" stroke-miterlimit="6" stroke-linecap="butt"/>
-  <rect x="7.6" y="13.9" width="8.8" height="2.6" fill="#a78bfa"/>
+  <g class="ColorScheme-Text" fill="currentColor">
+    <rect x="2.0"  y="2.0"  width="9" height="9" rx="1.5"/>
+    <rect x="13.0" y="2.0"  width="9" height="9" rx="1.5"/>
+    <rect x="2.0"  y="13.0" width="9" height="9" rx="1.5"/>
+    <rect x="13.0" y="13.0" width="9" height="9" rx="1.5"/>
+  </g>
 </svg>

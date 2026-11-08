@@ -1,17 +1,33 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  Bouton Démarrer d'Ankh DE, dessiné pour 16 px.
-  Même motif que la version redimensionnable, mais posé sur des pixels
-  entiers : à cette taille, un trait à cheval sur deux pixels se délave.
-  Voir le commentaire de ../../scalable/places/start-here.svg.
+  Bouton Démarrer d'Ankh DE — id : ankh-de-demarrer
+
+  Quatre carreaux en grille 2 x 2, monochromes, qui suivent le jeu de
+  couleurs par « ColorScheme-Text ».
+
+  Ce N'EST PAS le logo de Windows, et ce ne peut pas l'être : le logo de
+  Microsoft est une marque déposée, et ce dépôt est public sous GPL-3.0. Une
+  grille de quatre carreaux est en revanche un motif d'interface courant —
+  c'est le glyphe « grille d'applications » de nombreux lanceurs libres — et
+  elle ne reprend ni les couleurs, ni les proportions, ni la perspective de
+  la marque.
+
+  Pour avoir exactement le bouton de son choix, y compris sur sa propre
+  machine, l'applet offre « useCustomButtonImage » et « customButtonImage » :
+  c'est expliqué dans docs/INSTALL.md.
+
+  Remplace le « start-here » du thème Fluent. Un dessin par taille : à 16 px,
+  un trait qui tombe entre deux pixels se délave.
 -->
 <svg width="16" height="16" viewBox="0 0 16 16" version="1.1"
      xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#e6edf3; }</style>
+    <style id="current-color-scheme" type="text/css">.ColorScheme-Text { color:#1f2328; }</style>
   </defs>
-  <path d="M3 13.5 8 2.5 13 13.5" fill="none"
-        class="ColorScheme-Text" stroke="currentColor" stroke-width="2"
-        stroke-linejoin="miter" stroke-miterlimit="6" stroke-linecap="butt"/>
-  <rect x="5" y="9" width="6" height="2" fill="#a78bfa"/>
+  <g class="ColorScheme-Text" fill="currentColor">
+    <rect x="1.0"  y="1.0"  width="6" height="6" rx="1"/>
+    <rect x="9.0" y="1.0"  width="6" height="6" rx="1"/>
+    <rect x="1.0"  y="9.0" width="6" height="6" rx="1"/>
+    <rect x="9.0" y="9.0" width="6" height="6" rx="1"/>
+  </g>
 </svg>

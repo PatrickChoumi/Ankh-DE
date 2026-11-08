@@ -27,7 +27,7 @@
 | Taille du texte courant (`police.corps.px`) | 14 px | ± 0.5 px | WinUI CommonStyles/TextBlock_themeresources.xaml, BodyTextBlockFontSize |
 | Taille des petits textes (légendes) (`police.legende.px`) | 12 px | ± 0.5 px | WinUI CommonStyles/TextBlock_themeresources.xaml, CaptionTextBlockFontSize |
 | Hauteur d'une ligne de texte courant (`police.corps.interligne`) | *relevé* | — | Windows : 20 px pour un texte de 14 px (doc signature-experiences/typography) ; dépend de la police |
-| Curseur de la souris (`curseur.theme`) | `Ankh-curseurs` | — | Mon choix du 2026-10-15 : curseurs Fluent blancs, anneau d'attente au violet d'Ankh, comme AnduinOS (D-052) |
+| Curseur de la souris (`curseur.theme`) | `Ankh-curseurs` | — | Curseurs Fluent blancs, anneau d'attente à l'accent de Windows 11 (#0078d4), repris sans recoloration depuis DE-017 |
 | Taille du curseur (`curseur.taille`) | 24 px | ± 0 px | Taille de Plasma, gardée (D-052) |
 | Facteur de durée des animations de KDE (`animations.facteur`) | *relevé* | — | Relevé ; les durées de Windows sont 83, 167, 250 et 333 ms (doc signature-experiences/motion) |
 | Unité de grille de Kirigami (`kirigami.unite`) | *relevé* | — | Relevé (Kirigami.Units.gridUnit) ; Windows place tout sur une grille de 4 px |

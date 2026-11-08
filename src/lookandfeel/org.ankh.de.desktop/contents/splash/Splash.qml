@@ -10,14 +10,14 @@
  * session.
  *
  * Couleurs : le fond de fenêtre d'Ankh (28,32,39) et le violet du logo
- * (#a78bfa), comme src/colors/Ankh.colors. Durées : 333 ms, celle de
+ * (#4cc2ff), comme src/colors/Ankh.colors. Durées : 333 ms, celle de
  * Windows 11 (page signature-experiences/motion de Microsoft).
  */
 import QtQuick
 
 Rectangle {
     id: root
-    color: "#1c2027"
+    color: "#202020"
 
     property int stage
 
@@ -40,7 +40,7 @@ Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
             y: 0
             text: "Ankh"
-            color: "#e6edf3"
+            color: "#ffffff"
             // 40 px : la taille « Title » de WinUI
             // (CommonStyles/TextBlock_themeresources.xaml).
             font.pixelSize: 40
@@ -58,13 +58,13 @@ Rectangle {
             width: 160
             height: 3
             radius: 1.5
-            color: "#2b303a"
+            color: "#2d2d2d"
 
             Rectangle {
                 id: avancement
                 height: parent.height
                 radius: parent.radius
-                color: "#a78bfa"
+                color: "#4cc2ff"
                 // Six étapes : la barre suit le démarrage réel plutôt
                 // qu'une animation décorative.
                 width: parent.width * Math.min(root.stage, 6) / 6

@@ -301,18 +301,18 @@ if [[ -d "${applets}/org.ankh.demarrer" ]]; then
             echecs=$((echecs + 1))
         fi
     done
-    # Et l'accent qu'il déclare : c'est par cette clé que DE-004 trouve le
-    # violet d'Ankh plutôt qu'une couleur calculée depuis l'image.
+    # Et l'accent qu'il déclare : c'est par cette clé que DE-004 trouve
+    # l'accent de Windows 11 plutôt qu'une couleur calculée depuis l'image.
     verifies=$((verifies + 1))
     accent="$(python3 -I -c "
 import json, sys
 d = json.load(open(sys.argv[1]))
 print(d.get('X-KDE-PlasmaImageWallpaper-AccentColor', {}).get('Dark', ''))
 " "${fond}/metadata.json" 2>/dev/null || true)"
-    if [[ "${accent}" == "#a78bfa" ]]; then
+    if [[ "${accent}" == "#4CC2FF" ]]; then
         printf '  ok    %-44s %s\n' "l'accent déclaré par le fond" "${accent}"
     else
-        echo "  ECHEC le fond déclare l'accent sombre « ${accent} », attendu « #a78bfa »" >&2
+        echo "  ECHEC le fond déclare l'accent sombre « ${accent} », attendu « #4CC2FF »" >&2
         echecs=$((echecs + 1))
     fi
 
@@ -370,23 +370,27 @@ else
     echo "== Les applets : absents (third_party/preparer.sh n'a pas été lancé)"
 fi
 
-# --- 4. Les icônes sont-elles vraiment au violet d'Ankh ? ----------------
-# Le thème peut être présent et les dessins restés roses : c'est la
-# recoloration qui porte l'identité, pas le nom du dossier.
+# --- 4. Les dossiers sont-ils au jaune de Windows 11 ? -------------------
+# Le thème peut être présent et la mauvaise variante construite : c'est la
+# couleur des dossiers qui se voit, pas le nom du paquet. Depuis DE-017 on
+# construit la variante « yellow » de Fluent (#ffcb52) et on ne recolore
+# plus rien — le jaune des dossiers de Windows 11, relevé à #ffcd3e–#ffd14d
+# sur une capture le 2026-11-08.
 icones="${prefixe}/share/icons/Fluent-Ankh"
 if [[ -d "${icones}" ]]; then
     echo "== Les icônes"
     attendre "nom affiché du thème d'icônes" "Ankh" \
         "$(awk -F= '/^Name=/{print $2; exit}' "${icones}/index.theme" 2>/dev/null || true)"
-    dossier_svg="$(find "${prefixe}/share/icons" -name 'folder_color_purple.svg' 2>/dev/null | head -1)"
+    dossier_svg="$(find "${prefixe}/share/icons" -name 'folder_color_yellow.svg' 2>/dev/null | head -1)"
     verifies=$((verifies + 1))
     if [[ -z "${dossier_svg}" ]]; then
         echo "  ECHEC aucun dessin de dossier trouvé dans le thème d'icônes" >&2
         echecs=$((echecs + 1))
-    elif grep -qi '#8455f0' "${dossier_svg}" && ! grep -qiE '#dc63ee|#e275f0|#ff85de' "${dossier_svg}"; then
-        printf '  ok    %s\n' "les dossiers portent le violet d'Ankh, plus de rose"
+    elif grep -qi '#ffcb52' "${dossier_svg}" \
+            && ! grep -qiE '#a78bfa|#8455f0|#7c3aed|#c4b5fd' "${dossier_svg}"; then
+        printf '  ok    %s\n' "les dossiers portent le jaune de Windows 11, aucun violet"
     else
-        echo "  ECHEC les dossiers ne sont pas au violet d'Ankh : ${dossier_svg}" >&2
+        echo "  ECHEC les dossiers ne sont pas au jaune de Windows 11 : ${dossier_svg}" >&2
         grep -oE '#[0-9a-fA-F]{6}' "${dossier_svg}" | sort -u | head -4 >&2
         echecs=$((echecs + 1))
     fi

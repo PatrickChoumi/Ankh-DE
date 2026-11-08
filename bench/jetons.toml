@@ -82,7 +82,7 @@ id = "curseur.theme"
 libelle = "Curseur de la souris"
 cible = "Ankh-curseurs"
 lot = 1
-source = "Mon choix du 2026-10-15 : curseurs Fluent blancs, anneau d'attente au violet d'Ankh, comme AnduinOS (D-052)"
+source = "Curseurs Fluent blancs, anneau d'attente à l'accent de Windows 11 (#0078d4), repris sans recoloration depuis DE-017"
 
 [[mesure]]
 id = "curseur.taille"

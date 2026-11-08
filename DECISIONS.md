@@ -31,6 +31,7 @@
 | DE-014 | La disposition de la barre n'est chargée que si `kdeglobals [KDE] LookAndFeelPackage` nous désigne ; un instrument muet ne vaut pas une réponse | DÉCIDÉ |
 | DE-015 | Habiller le natif plutôt que l'importer : les six applets repris de Tidewater et deux de KDE-Windows-Modern sont remplacés par les applets de Plasma (modifie DE-011) | DÉCIDÉ |
 | DE-016 | La version de Plasma prise en charge est une PLAGE, et la cible est celle de la machine de l'utilisateur : Ubuntu 26.04 LTS, Plasma 6.6 (précise DE-008) | DÉCIDÉ |
+| DE-017 | L'apparence par défaut est celle de **Windows 11**, sans identité Ankh ; Ankh est figée sur la branche `ankh` et reviendra en variante (modifie DE-003, DE-004, DE-013) | DÉCIDÉ |
 
 ---
 
@@ -607,3 +608,74 @@ Elles ont échoué à leur premier passage réel, et c'est le harnais qui se tro
     (éprouvé en insérant « Plasma 6.5 » dans le README : signalé).
   - Reste `À VALIDER` : que le greffon de décoration **se charge** dans un vrai KWin 6.6.
     Compiler et se lier n'est pas se charger. C'est l'objet de la VM Ubuntu.
+
+---
+
+## DE-017 — L'apparence par défaut est celle de Windows 11, sans identité Ankh
+
+- **Statut** : DÉCIDÉ (2026-11-08), demande du propriétaire.
+- **Modifie** : DE-003 (« la géométrie de Windows 11, les couleurs d'Ankh »),
+  DE-004 (l'accent suit le fond d'écran — la mécanique reste, la couleur change) et
+  DE-013 (le bouton Démarrer porte le logo d'Ankh). Aucune n'est abrogée : elles
+  redeviendront vraies le jour où la variante Ankh reviendra.
+- **Contexte** : la demande, dans ses mots. *« Tout ce que je veux c'est que
+  l'interface ressemble EXACTEMENT A CELLE DE WINDOWS. […] oublie ankh pour
+  l'instant on y reviendra hypothétiquement pour ajouter une vibe différente.
+  plus tard. mais ça ne veut pas dire que tu dois jeter le travail actuel.
+  conserve le quelque part. »*
+
+  C'est un retour au but d'origine, pas un virage : le projet était parti de
+  « prendre KDE et le faire ressembler à Windows », et la couche d'identité
+  Ankh s'était intercalée partout.
+- **Décision** :
+  1. Les couleurs par défaut sont celles de Windows 11, **thème clair**, comme
+     Windows sorti de la boîte.
+  2. Le travail Ankh est **figé sur la branche `ankh`** (`7d3e513`). Rien n'est
+     supprimé, rien n'est perdu.
+  3. Les **identifiants internes ne changent pas** (`org.ankh.demarrer`,
+     `org.ankh.de.desktop`, session `ankh-de`, schémas `Ankh` / `AnkhClair`) :
+     ce sont des chaînes invisibles, et les renommer toucherait cinq fichiers
+     — thème global, tests, CI, paquets, banc — pour aucun gain à l'écran.
+  4. Le **bouton Démarrer** est une grille neutre de quatre carreaux
+     monochromes. Le logo de Microsoft est une marque déposée : un dépôt public
+     sous GPL ne le distribue pas. L'applet offre déjà
+     « useCustomButtonImage » : qui veut exactement le bouton de Windows le
+     met chez lui.
+- **Raisons, et ce que le relevé a montré** :
+  1. **Le gros du travail était de la SUPPRESSION, pas de la création.** Les
+     couleurs que `third_party/preparer.sh` remplaçait SONT celles de
+     Windows 11 : les curseurs Fluent portent `#0078d4`, le style Plasma porte
+     `#4CC2FF` et `#60CDFF`. On les repeignait en violet. Cesser de le faire
+     suffit pour les curseurs, et le fond d'écran d'AnduinOS a ses teintes
+     dominantes à **210° et 220° — « le bleu de Windows »**, de l'aveu du
+     script qui les tournait de +52°.
+  2. **Deux pièces demandaient mieux qu'une suppression** : elles étaient
+     construites dans leur variante VIOLETTE. Les icônes passent à la variante
+     « yellow » (`#ffcb52`) et le thème GTK à sa variante par défaut, qui est
+     le bleu.
+  3. **Le jaune des dossiers est une mesure, pas un goût** : relevé à
+     `#ffcd3e`–`#ffd14d` sur une capture de Windows 11 fournie par le
+     propriétaire. Fluent sert `#ffcb52`.
+- **Alternatives rejetées** :
+  - *Renommer tous les identifiants.* Des heures de réécriture mécanique et un
+    gisement de régressions, avant même de toucher à l'apparence. À revoir une
+    fois le résultat validé.
+  - *Supprimer les fichiers d'Ankh.* Le propriétaire a demandé qu'ils soient
+    conservés. Une branche figée les garde lisibles et réactivables.
+  - *Livrer le logo de Windows.* Marque déposée.
+  - *Échantillonner les couleurs sur les captures.* **Essayé, et faux** : le
+    fond du menu Démarrer y mesure `#e2e7fa`, un gris bleuté, alors que WinUI
+    donne `#F3F3F3`. Le menu de Windows 11 est translucide (Mica) et prend la
+    teinte du fond d'écran — la capture mesure le fond d'écran. Même piège que
+    notre propre barre des tâches relevée à « 800 / 0 ». Les couleurs viennent
+    donc de la page « XAML theme resources » ; les captures servent aux
+    dispositions et aux pièces opaques, où elles sont irremplaçables.
+- **Vérification** :
+  - `tests/session-et-theme.sh` exige désormais l'accent `#4CC2FF` sur le fond
+    d'écran et le jaune `#ffcb52` sur les dossiers, et refuse tout violet.
+  - `third_party/preparer.sh` refuse qu'un violet d'Ankh survive dans le thème
+    GTK ou le style Plasma, **et** refuse que l'accent de Windows en
+    disparaisse : les deux sens, parce qu'un thème qui aurait perdu son bleu
+    serait aussi faux qu'un thème resté violet.
+  - Reste `À VALIDER` : l'allure réelle en session. Elle se juge sur une
+    capture, pas sur un test.

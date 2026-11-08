@@ -19,12 +19,20 @@
 # Lu par klookandfeelmanager.cpp (libklookandfeel, plasma-workspace).
 
 [kdeglobals][General]
-# Les gris de Windows 11 rendus en graphite bleuté d'Ankh, rangés par
-# couches (src/colors/Ankh.colors, lot 1).
-ColorScheme=Ankh
+# CLAIR par défaut, comme Windows 11 sorti de la boîte (DE-017).
+#
+# Le schéma sombre « Ankh » reste livré et se choisit dans les réglages. Les
+# deux identifiants gardent leur nom — les renommer toucherait cinq fichiers
+# pour zéro gain visible — mais leurs valeurs sont celles de WinUI depuis le
+# 2026-11-08 : fond #F3F3F3, texte #1A1A1A, accent #0078D4.
+#
+# Au passage, « AnkhClair » était construit et installé depuis le lot 1 sans
+# que RIEN ne le sélectionne jamais.
+ColorScheme=AnkhClair
 
 [kdeglobals][Icons]
-# Icônes Fluent, dossiers au violet d'Ankh (lot 9, fait le 2026-11-05).
+# Icônes Fluent, variante « yellow » : le jaune des dossiers de Windows 11,
+# relevé à #ffcd3e–#ffd14d sur une capture et servi par Fluent à #ffcb52.
 # Fabriquées par third_party/preparer.sh depuis un commit figé. Sans lui,
 # le thème est absent : le test le signale au lieu de laisser Plasma
 # retomber en silence sur les icônes de la distribution.
@@ -38,7 +46,8 @@ Theme=Fluent-Ankh
 widgetStyle=Ankh
 
 [kcminputrc][Mouse]
-# Curseurs Fluent blancs, anneau d'attente au violet d'Ankh.
+# Curseurs Fluent blancs, anneau d'attente à l'accent de Windows (#0078d4),
+# repris tel quel depuis le 2026-11-08.
 cursorTheme=Ankh-curseurs
 cursorSize=24
 
@@ -52,10 +61,14 @@ BorderSize=None
 BorderSizeAuto=false
 
 [plasmarc][Theme]
-# Style Plasma d'Ankh (lot 4, fait le 2026-11-06) : dérivé des SVG de
-# KDE-Windows-Modern (GPL-3.0), accents de Windows remplacés par ceux
-# d'Ankh. Fabriqué par third_party/preparer.sh.
-name=ankh
+# Style Plasma clair, pour aller avec le schéma clair (DE-017). Dérivé des
+# SVG de KDE-Windows-Modern (GPL-3.0) ; depuis le 2026-11-08 ses accents de
+# Windows sont GARDÉS, et seuls les bleus de Breeze restés dans sa base sont
+# amenés sur ceux de Windows. Fabriqué par third_party/preparer.sh.
+#
+# « ankh-clair » était lui aussi construit et installé sans jamais être
+# sélectionné.
+name=ankh-clair
 
 [ksplashrc][KSplash]
 # Écran de chargement d'Ankh (contents/splash/Splash.qml), fait le 2026-11-05.
