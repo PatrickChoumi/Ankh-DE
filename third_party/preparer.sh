@@ -281,8 +281,11 @@ if grep -rqiE '#(7c3aed|a78bfa|8455f0|c4b5fd)' "${theme}"; then
     grep -rliE '#(7c3aed|a78bfa|8455f0|c4b5fd)' "${theme}" | head -3 >&2
     exit 1
 fi
+# Ce qu'on affiche, c'est la couleur d'accent RÉELLEMENT présente, et non
+# un hexadécimal deviné : le premier jet cherchait #0078d4 et ne trouvait
+# rien, donc n'apprenait rien.
 for feuille in gtk-3.0/gtk.css gtk-4.0/gtk.css; do
-    echo "Fluent-Ankh, ${feuille} : $(grep -o -i '#0078d4\|#005fb8' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
+    echo "Fluent-Ankh, ${feuille} : accents $(grep -ohiE '#(0067c0|0078d4|005fb8|2196f3|4cc2ff)' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
 done
 
 echo "== Thème d'icônes Fluent-Ankh (lot 9)"
@@ -418,7 +421,7 @@ while read -r icone; do
     grep -q "ankh-de-demarrer" "${icone}" 2>/dev/null || { restants=$((restants + 1)); echo "  resté : ${icone#${sortie}/icones/}" >&2; }
 done < <(find "${sortie}/icones" -name 'start-here*.svg')
 (( restants == 0 )) || { echo "${restants} icône(s) « start-here » ne sont pas les nôtres : le logo de Microsoft serait livré" >&2; exit 1; }
-echo "bouton Démarrer : ${remplaces} icône(s) au logo d'Ankh"
+echo "bouton Démarrer : ${remplaces} icône(s) remplacées par la grille neutre"
 
 echo "Fluent-Ankh : $(find "${sortie}/icones/Fluent-Ankh" | wc -l) entrées ; les trois thèmes et leurs bases font $(du -sh "${sortie}/icones" | cut -f1)"
 
@@ -513,11 +516,17 @@ grep -rqi '#0078D4' "${sortie}/desktoptheme/ankh-clair" \
 # l'autre. Il porte donc encore les accents de Windows (76,194,255 = #4CC2FF
 # et 96,205,255 = #60CDFF), ce qui est exactement ce qu'on veut maintenant.
 # On le vérifie plutôt que de le supposer.
+# Les deux variantes n'ont pas le même accent, et c'est juste : l'amont
+# transcrit #4CC2FF en sombre (76,194,255) et #0067C0 en clair (0,103,192),
+# qui sont les deux accents de Windows 11. Mon premier garde-fou n'attendait
+# que la valeur sombre et a fait échouer le banc sur le thème clair — le
+# contrôle était faux, pas le thème.
+declare -A ACCENT_ATTENDU=( [ankh]='76,194,255' [ankh-clair]='0,103,192' )
 for style in ankh ankh-clair; do
     f="${sortie}/desktoptheme/${style}/colors"
     [[ -f "${f}" ]] || continue
-    grep -qE '(76,194,255|0,120,212)' "${f}" \
-        || { echo "Style Plasma ${style} : « colors » ne porte plus d'accent de Windows" >&2; exit 1; }
+    grep -qF "${ACCENT_ATTENDU[${style}]}" "${f}" \
+        || { echo "Style Plasma ${style} : « colors » ne porte plus l'accent ${ACCENT_ATTENDU[${style}]} de Windows" >&2; exit 1; }
 done
 # Les deux pièces que le lot 4 vise vraiment doivent exister.
 for piece in widgets/panel-background.svg widgets/tasks.svg; do
@@ -658,54 +667,73 @@ echo "org.ankh.demarrer : type AppletPopup posé (focus clavier)"
 # Microsoft Learn).
 demarrer="${sortie}/applets/org.ankh.demarrer"
 
-# 1. La page des épingles : notre grille remplace leur liste. L'API de la
-#    page est conservée — mêmes signaux, mêmes fonctions — donc
-#    MenuRepresentation n'a rien à savoir du changement.
-install -m 0644 "${racine}/src/demarrer/PinnedPage.qml" \
-    "${demarrer}/contents/ui/pages/PinnedPage.qml"
-grep -q "GridView" "${demarrer}/contents/ui/pages/PinnedPage.qml" \
-    || { echo "Menu : la grille des épingles n'a pas été posée" >&2; exit 1; }
+# Nos quatre fichiers remplacent ceux de l'amont. On COPIE au lieu de
+# rapiécer par sed : la refonte touche l'arbre visuel entier, et quatre des
+# sed d'hier seraient devenus des no-ops silencieux — « sed -i » sort en 0
+# quand il ne remplace rien.
+#
+# En contrepartie, un changement amont ne casse plus la construction : c'est
+# la propriété que les sed donnaient gratuitement. Les « grep -q » qui
+# suivent la remplacent, et ils vérifient maintenant quelque chose de plus
+# utile — non pas « mon sed a-t-il mordu », mais « le fichier livré porte-t-il
+# bien la forme de Windows 11 ».
+for f in MenuRepresentation.qml components/BottomBar.qml \
+         components/PowerButton.qml pages/PinnedPage.qml; do
+    install -m 0644 "${racine}/src/demarrer/$(basename "${f}")" "${demarrer}/contents/ui/${f}"
+done
 
-# 2. Les dimensions. Le rapport à gridUnit garde les 642 × 726 quand la
-#    police grandit, comme pour les 48 px de la barre.
-sed -i 's|^\( *\)width: leftColumnWidth + rightColumnWidth + Kirigami.Units.gridUnit \* 3$|\1// Ankh : 642 x 726, les mesures du menu de Windows 11 à 100 %.\n\1width: Math.round(642 * (Kirigami.Units.gridUnit / 18))|' \
-    "${demarrer}/contents/ui/MenuRepresentation.qml"
-sed -i 's|^\( *\)height: mainContentHeight + bottomBar.height + Kirigami.Units.gridUnit \* 3$|\1height: Math.round(726 * (Kirigami.Units.gridUnit / 18))|' \
-    "${demarrer}/contents/ui/MenuRepresentation.qml"
-grep -q "642 \* (Kirigami.Units.gridUnit / 18)" "${demarrer}/contents/ui/MenuRepresentation.qml" \
-    || { echo "Menu : la largeur de Windows 11 n'a pas été posée" >&2; exit 1; }
-grep -q "726 \* (Kirigami.Units.gridUnit / 18)" "${demarrer}/contents/ui/MenuRepresentation.qml" \
-    || { echo "Menu : la hauteur de Windows 11 n'a pas été posée" >&2; exit 1; }
+# Ce que le menu livré DOIT porter. Chaque ligne : fichier | motif | ce qui
+# serait faux sans lui.
+verifier_menu() { # $1 : fichier, $2 : motif, $3 : ce qu'on perdrait
+    grep -q "$2" "${demarrer}/contents/ui/$1" \
+        || { echo "Menu : ${1} ne porte pas « $2 » — $3" >&2; exit 1; }
+}
+verifier_menu MenuRepresentation.qml "642 \* (Kirigami.Units.gridUnit / 18)" "la largeur de Windows 11"
+verifier_menu MenuRepresentation.qml "726 \* (Kirigami.Units.gridUnit / 18)" "la hauteur de Windows 11"
+verifier_menu MenuRepresentation.qml "type: PlasmaCore.Dialog.AppletPopup"    "le menu ne prendrait pas le clavier"
+verifier_menu MenuRepresentation.qml "id: mainColumn"                         "la colonne unique de Windows 11"
+verifier_menu MenuRepresentation.qml "id: pageSlot"                           "SearchPage entrerait en boucle de liaison"
+verifier_menu MenuRepresentation.qml "Kicker.RecentUsageModel"                "la section « Recommandé »"
+verifier_menu MenuRepresentation.qml "id: bottomBarContent"                   "SearchPage l'atteint par ce nom"
+verifier_menu MenuRepresentation.qml "id: powerButton"                        "l'alimentation en bas à droite"
+verifier_menu components/BottomBar.qml "id: bottomBarContent"                 "idem, côté composant"
+verifier_menu components/BottomBar.qml "property alias searchText"            "SearchPage lit cet alias"
+verifier_menu components/BottomBar.qml "function focusSearch"                 "SearchPage appelle cette fonction"
+verifier_menu components/BottomBar.qml "Search for apps, settings, and documents" "le texte d'invite de Windows 7 resterait"
+verifier_menu components/PowerButton.qml "powerButton.menuRequested"          "le chevron n'ouvrirait plus le menu"
+verifier_menu pages/PinnedPage.qml "GridView"                                 "la grille 6 colonnes"
 
-# 3. Le texte d'invite de la recherche. « Search programs and files » est
-#    la chaîne de Windows 7, et elle sautait aux yeux sur la capture.
-sed -i 's|placeholderText: i18n("Search programs and files")|placeholderText: i18n("Search for apps, settings, and documents")|' \
-    "${demarrer}/contents/ui/components/BottomBar.qml"
-grep -q 'Search for apps, settings, and documents' "${demarrer}/contents/ui/components/BottomBar.qml" \
-    || { echo "Menu : le texte d'invite de Windows 7 est resté" >&2; exit 1; }
+# Et ce qu'il ne doit PLUS porter.
+for interdit in "width: parent.width" "shutdownSplit" "SystemLocationsColumn"; do
+    if grep -rqF "${interdit}" "${demarrer}/contents/ui/MenuRepresentation.qml" \
+                               "${demarrer}/contents/ui/components/BottomBar.qml"; then
+        echo "Menu : « ${interdit} » est resté ; la disposition de Windows 7 revient par là" >&2
+        exit 1
+    fi
+done
 
-# 4. La colonne « Places » n'existe pas dans Windows 11. L'amont la rend
-#    déjà facultative : on change SON DÉFAUT plutôt que son code — c'est
-#    configurer le natif avant d'y toucher (CLAUDE.md §0.1).
+# La colonne « Places » n'existe plus dans l'arbre : son réglage et le
+# composant qui la dessinait n'ont plus d'objet. Les laisser, ce serait une
+# case à cocher qui ne fait rien.
+rm -f "${demarrer}/contents/ui/components/SystemLocationsColumn.qml"
 python3 -I - "${demarrer}/contents/config/main.xml" << 'CONFIG'
 import re, sys
 chemin = sys.argv[1]
 with open(chemin, encoding="utf-8") as f:
     xml = f.read()
 avant = xml
-xml = re.sub(
-    r'(<entry name="showRightColumn" type="Bool">\s*<default>)true(</default>)',
-    r'\1false\2', xml, count=1)
+for cle in ("showRightColumn", "rightColumnItems"):
+    xml = re.sub(r'\s*<entry name="%s".*?</entry>' % cle, "", xml, flags=re.S)
 if xml == avant:
-    print("Menu : le défaut de showRightColumn n'a pas été trouvé", file=sys.stderr)
+    print("Menu : ni showRightColumn ni rightColumnItems dans main.xml", file=sys.stderr)
     sys.exit(1)
 with open(chemin, "w", encoding="utf-8") as f:
     f.write(xml)
 CONFIG
-grep -A2 'name="showRightColumn"' "${demarrer}/contents/config/main.xml" | grep -q '<default>false</default>' \
-    || { echo "Menu : la colonne « Places » est encore affichée par défaut" >&2; exit 1; }
+grep -q 'showRightColumn' "${demarrer}/contents/config/main.xml" \
+    && { echo "Menu : showRightColumn est resté dans la configuration" >&2; exit 1; }
 
-echo "org.ankh.demarrer : grille 6 colonnes, 642x726, sans colonne « Places »"
+echo "org.ankh.demarrer : une colonne, recherche en haut, grille 6x3, Recommandé, 642x726"
 # L'horloge et « Afficher le bureau » de KDE-Windows-Modern ne sont PLUS
 # reprises (DE-015). Plasma fait les deux, en natif :
 #   - org.kde.plasma.digitalclock met la date SOUS l'heure

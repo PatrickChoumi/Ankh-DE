@@ -60,6 +60,10 @@ ColumnLayout {
     function tryActivate(row) {
         if (favoritesGrid.count > 0) {
             favoritesGrid.currentIndex = Math.min(row, favoritesGrid.count - 1);
+            // Donner VRAIMENT le clavier à la grille : sans cela, seule la
+            // surbrillance bouge et les flèches gauche/droite restent des
+            // touches de curseur dans le champ de recherche.
+            favoritesGrid.forceActiveFocus();
         }
     }
 
@@ -139,7 +143,15 @@ ColumnLayout {
         interactive: true
         boundsBehavior: Flickable.StopAtBounds
         currentIndex: -1
-        focus: true
+        // PAS de « focus: true » ici, et c'est un correctif.
+        //
+        // PinnedPage est un ColumnLayout, pas un FocusScope : un
+        // « focus: true » sur la grille entrerait en concurrence avec celui
+        // du champ de recherche, dans le même FocusScope que le menu. La
+        // grille ne recevrait jamais le clavier, et « Keys.onLeftPressed » /
+        // « onRightPressed » ne pourraient pas se déclencher — une grille
+        // dont la navigation horizontale ne fait rien. Le focus est donné
+        // explicitement par tryActivate(), quand le menu le demande.
 
         // Une case par application : l'icône, puis deux lignes de libellé.
         cellWidth: Math.floor(width / pinnedPage.colonnes)
