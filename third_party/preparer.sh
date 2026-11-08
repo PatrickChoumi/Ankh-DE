@@ -620,6 +620,70 @@ sed -i 's|^\( *\)flags: Qt.WindowStaysOnTopHint$|\1flags: Qt.WindowStaysOnTopHin
 grep -q "type: PlasmaCore.Dialog.AppletPopup" "${menu_rep}" \
     || { echo "Menu : le type AppletPopup n'a pas été posé" >&2; exit 1; }
 echo "org.ankh.demarrer : type AppletPopup posé (focus clavier)"
+
+# ── La disposition de Windows 11, et non celle de Windows 7 ─────────────
+#
+# Constat du 2026-11-08, sur une capture de session réelle et non sur une
+# impression : le menu repris dessine DEUX colonnes — une liste verticale
+# d'épingles à gauche, une colonne « Places » (Home, Documents, Pictures,
+# This PC, Run…) à droite — avec la recherche TOUT EN BAS, portant le texte
+# littéral de Windows 7 : « Search programs and files ». C'est un menu de
+# Windows 7. Windows 11 met la recherche en haut et les épingles en grille.
+#
+# Les mesures viennent de sources publiées, jamais d'un fichier de Microsoft
+# (DE-005) : menu de 642 × 726 à l'échelle 100 %, épingles en 6 colonnes,
+# icône de 32 px à 100 % (page « Construct your Windows App's Icon » de
+# Microsoft Learn).
+demarrer="${sortie}/applets/org.ankh.demarrer"
+
+# 1. La page des épingles : notre grille remplace leur liste. L'API de la
+#    page est conservée — mêmes signaux, mêmes fonctions — donc
+#    MenuRepresentation n'a rien à savoir du changement.
+install -m 0644 "${racine}/src/demarrer/PinnedPage.qml" \
+    "${demarrer}/contents/ui/pages/PinnedPage.qml"
+grep -q "GridView" "${demarrer}/contents/ui/pages/PinnedPage.qml" \
+    || { echo "Menu : la grille des épingles n'a pas été posée" >&2; exit 1; }
+
+# 2. Les dimensions. Le rapport à gridUnit garde les 642 × 726 quand la
+#    police grandit, comme pour les 48 px de la barre.
+sed -i 's|^\( *\)width: leftColumnWidth + rightColumnWidth + Kirigami.Units.gridUnit \* 3$|\1// Ankh : 642 x 726, les mesures du menu de Windows 11 à 100 %.\n\1width: Math.round(642 * (Kirigami.Units.gridUnit / 18))|' \
+    "${demarrer}/contents/ui/MenuRepresentation.qml"
+sed -i 's|^\( *\)height: mainContentHeight + bottomBar.height + Kirigami.Units.gridUnit \* 3$|\1height: Math.round(726 * (Kirigami.Units.gridUnit / 18))|' \
+    "${demarrer}/contents/ui/MenuRepresentation.qml"
+grep -q "642 \* (Kirigami.Units.gridUnit / 18)" "${demarrer}/contents/ui/MenuRepresentation.qml" \
+    || { echo "Menu : la largeur de Windows 11 n'a pas été posée" >&2; exit 1; }
+grep -q "726 \* (Kirigami.Units.gridUnit / 18)" "${demarrer}/contents/ui/MenuRepresentation.qml" \
+    || { echo "Menu : la hauteur de Windows 11 n'a pas été posée" >&2; exit 1; }
+
+# 3. Le texte d'invite de la recherche. « Search programs and files » est
+#    la chaîne de Windows 7, et elle sautait aux yeux sur la capture.
+sed -i 's|placeholderText: i18n("Search programs and files")|placeholderText: i18n("Search for apps, settings, and documents")|' \
+    "${demarrer}/contents/ui/components/BottomBar.qml"
+grep -q 'Search for apps, settings, and documents' "${demarrer}/contents/ui/components/BottomBar.qml" \
+    || { echo "Menu : le texte d'invite de Windows 7 est resté" >&2; exit 1; }
+
+# 4. La colonne « Places » n'existe pas dans Windows 11. L'amont la rend
+#    déjà facultative : on change SON DÉFAUT plutôt que son code — c'est
+#    configurer le natif avant d'y toucher (CLAUDE.md §0.1).
+python3 -I - "${demarrer}/contents/config/main.xml" << 'CONFIG'
+import re, sys
+chemin = sys.argv[1]
+with open(chemin, encoding="utf-8") as f:
+    xml = f.read()
+avant = xml
+xml = re.sub(
+    r'(<entry name="showRightColumn" type="Bool">\s*<default>)true(</default>)',
+    r'\1false\2', xml, count=1)
+if xml == avant:
+    print("Menu : le défaut de showRightColumn n'a pas été trouvé", file=sys.stderr)
+    sys.exit(1)
+with open(chemin, "w", encoding="utf-8") as f:
+    f.write(xml)
+CONFIG
+grep -A2 'name="showRightColumn"' "${demarrer}/contents/config/main.xml" | grep -q '<default>false</default>' \
+    || { echo "Menu : la colonne « Places » est encore affichée par défaut" >&2; exit 1; }
+
+echo "org.ankh.demarrer : grille 6 colonnes, 642x726, sans colonne « Places »"
 # L'horloge et « Afficher le bureau » de KDE-Windows-Modern ne sont PLUS
 # reprises (DE-015). Plasma fait les deux, en natif :
 #   - org.kde.plasma.digitalclock met la date SOUS l'heure
