@@ -179,7 +179,16 @@ var horloge = panel.addWidget("org.kde.plasma.digitalclock")
 horloge.currentConfigGroup = ["Appearance"]
 horloge.writeConfig("showDate", true)
 horloge.writeConfig("dateDisplayFormat", "BelowTime")
-horloge.writeConfig("showSeconds", "Never")
+// 0 = « Never », et l'INDEX importe, pas le nom.
+//
+// Sur la capture du 2026-11-08 l'horloge affichait « 06:03:24 » alors qu'on
+// avait écrit la chaîne « Never ». La raison est dans le schéma amont
+// (applets/digital-clock/main.xml) : « dateDisplayFormat » déclare
+// « <choices name="Settings::dateDisplayFormat"> », un type nommé, dont
+// KConfig accepte le nom — c'est pourquoi « BelowTime » a pris. Mais
+// « showSeconds » déclare un « <choices> » SANS nom : KConfig le range en
+// index entier, et la chaîne « Never » n'y est pas lue comme un choix.
+horloge.writeConfig("showSeconds", 0)
 
 // --- La cloche, à droite de la date, comme Windows 11 --------------------
 // L'interface native des notifications (org.kde.plasma.notifications), en

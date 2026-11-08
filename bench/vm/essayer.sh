@@ -1528,6 +1528,14 @@ echo "   horloge, format de date : « ${format_date:-non écrit} » (attendu Bel
 [[ "${format_date}" == BelowTime ]] \
     || grief "l'horloge native n'est pas réglée sur « BelowTime » mais « ${format_date:-rien} » : la date ne sera pas sous l'heure"
 
+# Et les secondes, qui s'affichaient à tort le 2026-11-08. La clé attend un
+# INDEX entier, pas un nom : son « <choices> » n'est pas un type nommé,
+# contrairement à celui de dateDisplayFormat. 0 = Never.
+secondes="$(ssh_vm "grep -h '^showSeconds=' /home/ankh/.config/plasma-org.kde.plasma.desktop-appletsrc 2>/dev/null | head -1 | sed 's/^showSeconds=//'" || true)"
+echo "   horloge, secondes : « ${secondes:-non écrit} » (attendu 0 = Never)"
+[[ "${secondes}" == 0 ]] \
+    || grief "l'horloge affiche les secondes (showSeconds=${secondes:-rien}) : Windows 11 ne les montre pas"
+
 # --- 13. Le désinstallateur ramène-t-il à Plasma standard ? -------------
 # CLAUDE.md §3.8 : « desinstaller.sh doit ramener à l'état de départ. Une
 # pièce qu'on ne sait pas retirer ne s'installe pas. » C'était la dernière

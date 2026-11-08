@@ -238,9 +238,11 @@ echo "$(find "${theme}/cursors" -type f | wc -l) curseurs, $(find "${theme}/curs
 echo "== Thème GTK Fluent-Ankh"
 recuperer "${FLUENT_GTK_DEPOT}" "${FLUENT_GTK_COMMIT}" "${travail}/fluent-gtk" src
 fluent_gtk="${travail}/fluent-gtk"
-# Aucune recoloration (DE-017) : on construit la variante PAR DÉFAUT de
-# Fluent, qui est le bleu — « Default: blue » dans l'aide de son install.sh.
-# C'est l'accent de Windows 11. Jusqu'au 2026-11-08 on construisait la
+# On construit la variante PAR DÉFAUT de Fluent, qui est « bleue » — mais
+# PAS du bleu de Windows : l'écho du 2026-11-08 montre #1a73e8 (le bleu de
+# Google) comme couleur dominante de ses feuilles, 89 fois dans gtk-3.0.
+# C'est donc la SEULE recoloration qui reste du côté GTK, et elle va vers la
+# cible au lieu de s'en éloigner. Jusqu'au 2026-11-08 on construisait la
 # variante « purple » puis on la repeignait en violet d'Ankh : deux étapes
 # pour s'éloigner de la cible.
 themes="${travail}/themes"; mkdir -p "${themes}"
@@ -262,6 +264,17 @@ produit="${themes}/Fluent-round-Light"
     exit 1
 }
 cp -r "${produit}/"{gtk-2.0,gtk-3.0,gtk-4.0} "${theme}/"
+# #1a73e8 (bleu de Google) -> #0078D4 (accent de Windows 11), et sa variante
+# appuyée. Relevé sur les feuilles produites, pas deviné.
+for couple in '1a73e8:0078D4' '1967d2:005FB8' '8ab4f8:4CC2FF'; do
+    avant="${couple%%:*}"; apres="${couple##*:}"
+    grep -rqiF "#${avant}" "${theme}" \
+        || { echo "Fluent GTK : #${avant} a disparu de ses feuilles ; la variante a changé" >&2; exit 1; }
+    grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" \
+        | xargs -0 -r sed -i "s/#${avant}/#${apres}/gI"
+done
+grep -rqiF '#1a73e8' "${theme}" \
+    && { echo "Fluent-Ankh : le bleu de Google est resté" >&2; exit 1; }
 install -m 0644 "${fluent_gtk}/COPYING" "${theme}/COPYING"
 cat > "${theme}/index.theme" << 'THEME'
 [Desktop Entry]
@@ -709,14 +722,21 @@ verifier_menu components/BottomBar.qml "Search for apps, settings, and documents
 verifier_menu components/PowerButton.qml "powerButton.menuRequested"          "le chevron n'ouvrirait plus le menu"
 verifier_menu pages/PinnedPage.qml "GridView"                                 "la grille 6 colonnes"
 
-# Et ce qu'il ne doit PLUS porter.
-for interdit in "width: parent.width" "shutdownSplit" "SystemLocationsColumn"; do
-    if grep -rqF "${interdit}" "${demarrer}/contents/ui/MenuRepresentation.qml" \
-                               "${demarrer}/contents/ui/components/BottomBar.qml"; then
-        echo "Menu : « ${interdit} » est resté ; la disposition de Windows 7 revient par là" >&2
+# Et ce qu'il ne doit PLUS porter — fichier par fichier, et hors
+# commentaires. Mon premier jet cherchait « width: parent.width » dans les
+# DEUX fichiers : or il est légitime sur le Rectangle « bottomBar » de
+# MenuRepresentation, qui est ancré. Il n'est interdit que dans BottomBar,
+# où il se battrait avec le ColumnLayout.
+interdit_dans() { # $1 : fichier, $2 : motif, $3 : pourquoi
+    if grep -vE '^\s*(//|\*|/\*)' "${demarrer}/contents/ui/$1" | grep -qF "$2"; then
+        echo "Menu : « $2 » est resté dans $1 — $3" >&2
         exit 1
     fi
-done
+}
+interdit_dans components/BottomBar.qml "width: parent.width" "il se bat avec le ColumnLayout"
+interdit_dans components/BottomBar.qml "shutdownSplit"       "l'alimentation doit être dans PowerButton"
+interdit_dans MenuRepresentation.qml   "SystemLocationsColumn" "la colonne « Places » de Windows 7"
+interdit_dans MenuRepresentation.qml   "id: mainColumns"     "le RowLayout à deux colonnes"
 
 # La colonne « Places » n'existe plus dans l'arbre : son réglage et le
 # composant qui la dessinait n'ont plus d'objet. Les laisser, ce serait une
