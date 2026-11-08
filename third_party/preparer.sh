@@ -275,7 +275,12 @@ grep -rqiF '#1a73e8' "${theme}" \
     || { echo "Fluent GTK : #1a73e8 a disparu de ses feuilles ; la variante a changé" >&2; exit 1; }
 for couple in '1a73e8:0078D4' '1967d2:005FB8' '8ab4f8:4CC2FF'; do
     avant="${couple%%:*}"; apres="${couple##*:}"
-    grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" 2>/dev/null \
+    # « || true » OBLIGATOIRE, et c'est la troisième fois que ce dépôt y
+    # tombe. Sous « set -o pipefail », un grep qui ne trouve rien rend 1,
+    # le pipeline rend 1, et « set -e » tue le script SANS UN MOT. Le
+    # passage f9add82 est mort exactement là, juste après le « Done. » de
+    # install.sh, sans message : #1967d2 n'existe pas dans ces feuilles.
+    { grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" 2>/dev/null || true; } \
         | xargs -0 -r sed -i "s/#${avant}/#${apres}/gI"
 done
 grep -rqiF '#1a73e8' "${theme}" \

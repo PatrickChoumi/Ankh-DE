@@ -1599,6 +1599,18 @@ esac
 
 # 13.3 Et surtout : une session NEUVE doit s'ouvrir, et être celle de Plasma.
 # C'est ici qu'on éprouve la déconnexion et la reconnexion.
+# L'autologin désigne « ankh-de », dont le fichier de session VIENT d'être
+# supprimé. Le laisser tel quel ferait échouer la reconnexion et accuserait
+# le désinstallateur d'un défaut qui serait le nôtre : ce qu'on veut
+# établir, c'est qu'une session PLASMA STANDARD se rouvre, pas la nôtre.
+session_std="$(ssh_vm "ls /usr/share/wayland-sessions/ 2>/dev/null | sed -n 's/\.desktop$//p' | grep -x 'plasma\|plasmawayland' | head -1" || true)"
+if [[ -z "${session_std}" ]]; then
+    grief "aucune session Plasma standard dans /usr/share/wayland-sessions : le retour en arrière n'est pas testable"
+    session_std=plasma
+fi
+echo "   session standard visée après désinstallation : ${session_std}"
+ssh_vm "sudo sed -i 's/^Session=.*/Session=${session_std}/' /etc/sddm.conf.d/ankh-essai.conf" > /dev/null 2>&1 || true
+
 echo "   redémarrage de SDDM : déconnexion puis reconnexion"
 ssh_vm 'sudo systemctl restart sddm' > /dev/null 2>&1 || true
 session2=non
