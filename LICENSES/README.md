@@ -16,7 +16,7 @@
 | `src/decoration/` | [KDE Breeze](https://invent.kde.org/plasma/breeze), dossiers `kdecoration/` et `libbreezecommon/` | 6.7.5, commit `ca217f1` | GPL-2.0-or-later |
 | `src/colors/` | dérivé de `colors/BreezeDark.colors` de Breeze — mêmes rôles, couleurs d'Ankh | 6.7.5 | LGPL-2.0-or-later |
 | `src/qqc2/` | adaptations de `org.kde.desktop` de [qqc2-desktop-style](https://invent.kde.org/frameworks/qqc2-desktop-style) | 6.31 | LGPL-2.0-or-later |
-| `third_party/sortie/desktoptheme/ankh*` | [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern), `plasma/desktoptheme/` — commit `7ef6bfe` | 2026-07-19 | GPL-3.0 | Images SVG, jamais versionnées : fabriquées par `third_party/preparer.sh`. Accents de Windows et bleus de Breeze remplacés par les violets d'Ankh. Provenance détaillée : [docs/UPSTREAMS.md](../docs/UPSTREAMS.md) |
+| `third_party/sortie/desktoptheme/ankh*` | [KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern), `plasma/desktoptheme/` — commit `7ef6bfe` | 2026-07-19 | GPL-3.0 | Images SVG, jamais versionnées : fabriquées par `third_party/preparer.sh`. Bleus de Breeze (#3DAEE9…) remplacés par l'accent de Windows 11. Provenance détaillée : [docs/UPSTREAMS.md](../docs/UPSTREAMS.md) |
 | `third_party/sortie/wallpapers/Ankh-Prismes` | [AnduinOS](https://github.com/Anduin2017/AnduinOS), `src/mods/23-wallpaper-mod/Fluent-building-{light,night}.png` — commit `c659fae` | 2026-10-29 | GPL-3.0-or-later |
 | `org.ankh.demarrer` — sa lignée | KDE-Windows-Modern `startmenu`, lui-même dérivé d'[OnzeMenuKDE](https://github.com/adhec/OnzeMenuKDE) (GPL-3.0 / GPL-2.0-or-later, « ancêtre ») et de [menu-11-next](https://github.com/Eisteed/menu-11-next) (GPL-2.0-or-later, « référence de conception ») d'après leur `ATTRIBUTION.md` | `7ef6bfe` | GPL-3.0-or-later |
 | `third_party/sortie/applets/org.ankh.{etat,notifications,taches,vuetaches,separateur}` | [Tidewater](https://github.com/addition-official/tidewater), `plasmoids/{status,notifications,tasks,taskview,divider}` — commit `4484377` | 2026-10-11 | GPL-3.0-or-later |
@@ -32,7 +32,7 @@ Tous ces fichiers gardent l'en-tête de licence de KDE. L'ensemble du dépôt es
 
 | Fichier | Origine | Licence |
 |---|---|---|
-| `src/icons/ankh/**/start-here.svg` | **Dessinés pour ce projet** d'après le logo d'Ankh (dépôt [Ankh](https://github.com/PatrickChoumi/Ankh), `ankh-logo.svg`) : le A au trait barré de violet, recalé pour une barre des tâches, une version par taille | GPL-3.0-or-later |
+| `src/icons/ankh/**/start-here.svg` | **Dessinés pour ce projet** : quatre carreaux en grille 2 × 2, monochromes, qui suivent le jeu de couleurs par `ColorScheme-Text`, une version par taille. Ce n'est **pas** le logo de Windows, qui est une marque déposée : ni ses couleurs, ni ses proportions, ni sa perspective ([DE-017](../DECISIONS.md)) | GPL-3.0-or-later |
 | `docs/images/bureau-vm.png` | Capture de la session Ankh DE, prise par le moniteur de QEMU dans la VM de test. Aucun contenu tiers hors le thème livré | GPL-3.0-or-later |
 | `docs/images/comparaison-sombre.png` | Produit par `bench/captures.sh` : la galerie d'Ankh DE, photographiée par Qt sous Xvfb. Aucun contenu tiers | GPL-3.0-or-later, comme le reste |
 | `docs/images/comparaison-clair.png` | idem | GPL-3.0-or-later |
@@ -50,9 +50,9 @@ vérifié**, puis les recolore.
 | Pièce | Source | Commit | Licence | Ce qu'on en fait |
 |---|---|---|---|---|
 | Police Selawik | [microsoft/Selawik](https://github.com/microsoft/Selawik) | `89362e8` (2023-06-05) | OFL 1.1 | Compilée depuis ses sources UFO, **sans modification** : elle garde donc son nom réservé (« Reserved Font Name ») |
-| Curseurs Fluent | [vinceliuice/Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), dossier `cursors` | `c8a244f` (2026-08-31) | GPL-3.0 | Variante blanche, bleu `#0078d4` et `#23e6fa` remplacés par le violet d'Ankh |
-| Thème GTK Fluent | [vinceliuice/Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) | `7a49a46` (2026-08-18) | GPL-3.0 | Variante ronde et sans bord, violets Material remplacés par ceux d'Ankh |
-| Icônes Fluent (lot 9) | [vinceliuice/Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme) | à figer | GPL-3.0 | Dossiers recolorés au violet d'Ankh ; sa variante « purple » est en réalité rose-magenta `#dc63ee` |
+| Curseurs Fluent | [vinceliuice/Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), dossier `cursors` | `c8a244f` (2026-08-31) | GPL-3.0 | Variante blanche, bleus `#0078d4` et `#23e6fa` gardés : ce sont ceux de Windows 11 |
+| Thème GTK Fluent | [vinceliuice/Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) | `7a49a46` (2026-08-18) | GPL-3.0 | Variante ronde et sans bord, bleue ; le `#1a73e8` de Google ramené au `#0078D4` de Windows 11 |
+| Icônes Fluent (lot 9) | [vinceliuice/Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme) | à figer | GPL-3.0 | Variante `yellow` : les dossiers portent le `#ffcb52` de Windows 11, relevé sur une capture |
 
 ## Mesures reprises
 

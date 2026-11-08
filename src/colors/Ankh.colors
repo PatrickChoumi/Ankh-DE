@@ -1,22 +1,29 @@
-# Jeu de couleurs d'Ankh (D-037), par défaut : graphite et violet, comme le
-# logo et les fonds d'écran. Validé sur les aperçus en VM le 2026-10-09. Dérivé de Breeze sombre
-# (colors/BreezeDark.colors de https://invent.kde.org/plasma/breeze,
-# LGPL-2.0-or-later) : mêmes rôles, couleurs d'Ankh.
-# D-052, lot 1 : fonds rangés par couches comme ceux de Windows 11, en
-# sombre (Common_themeresources_any.xaml de WinUI). Chaque gris de Windows,
-# de niveau L, devient le graphite bleuté d'Ankh (L-4, L, L+7) :
-#   fenêtre (Mica, #202020) : 28,32,39 ; barre de titre et en-têtes de même,
-#     comme la barre de titre de Windows 11, continue avec la fenêtre ;
-#   contenu (listes, champs : #1C1C1C) : 24,28,35 ;
-#   carte (#0DFFFFFF sur la fenêtre, #2B2B2B) : 39,43,50 ;
-#   contrôle (#0FFFFFFF sur la fenêtre, #2D2D2D) : 41,45,52 ;
-#   volet passager, infobulle (#2C2C2C) : 40,44,51.
-#   Texte : #e6edf3, celui du logo ; texte secondaire au niveau de Windows
-#   (#C5FFFFFF, 77 % du texte sur la fenêtre) : 184,190,196.
-#   Accent : violet #8455f0 pour les sélections (texte blanc lisible
-#   dessus, contraste 4,6), violet du logo #a78bfa pour les liens, le survol
+# Jeu de couleurs sombre, aux valeurs de Windows 11 (DE-017).
+# Dérivé de Breeze sombre (colors/BreezeDark.colors de
+# https://invent.kde.org/plasma/breeze, LGPL-2.0-or-later) : mêmes rôles,
+# couleurs de Windows.
+#
+# Les valeurs viennent de la DOCUMENTATION de WinUI
+# (Common_themeresources_any.xaml), et non d'une capture : Mica et
+# l'acrylique y prennent la teinte du fond d'écran, donc une capture ne
+# donne pas la couleur déclarée. Les couches, telles qu'elles sont écrites
+# plus bas :
+#   fenêtre (SolidBackgroundFillColorBase #202020) : 32,32,32 ; barre de
+#     titre et en-têtes de même, continues avec la fenêtre comme dans
+#     Windows 11 ;
+#   contenu, listes et champs (…Secondary) : 27,27,27 ;
+#   carte et contrôle (CardBackgroundFillColorDefault #2B2B2B) : 43,43,43 ;
+#   infobulle et volet passager (#2D2D2D) : 45,45,45.
+#   Texte : TextFillColorPrimary, blanc ; secondaire 184,190,196.
+#   Accent : SystemAccentColorLight2 #4CC2FF — celui du thème sombre de
+#   Windows 11 — soit 76,194,255, pour les sélections, les liens, le survol
 #   et le focus.
-#   Les dossiers des icônes Breeze prennent la couleur d'accent.
+#   Les dossiers des icônes portent le jaune de Windows 11, #ffcb52.
+#
+# Le groupe [Colors:Complementary] — écran de verrouillage, surfaces
+# sombres des notifications — portait encore le graphite d'Ankh (#0D1117,
+# texte #E6EDF3) le 2026-11-08 : il est passé aux surfaces sombres de
+# Windows, fond 32,32,32 et texte blanc.
 
 [ColorEffects:Disabled]
 Color=56,56,56
@@ -53,18 +60,18 @@ ForegroundPositive=63,185,80
 ForegroundVisited=96,205,255
 
 [Colors:Complementary]
-BackgroundAlternate=0,95,184
-BackgroundNormal=13,17,23
+BackgroundAlternate=45,45,45
+BackgroundNormal=32,32,32
 DecorationFocus=76,194,255
 DecorationHover=76,194,255
 ForegroundActive=76,194,255
-ForegroundInactive=139,148,158
+ForegroundInactive=197,197,197
 ForegroundLink=76,194,255
-ForegroundNegative=248,81,73
-ForegroundNeutral=210,153,34
+ForegroundNegative=255,153,164
+ForegroundNeutral=252,225,0
 ForegroundNormal=255,255,255
-ForegroundPositive=63,185,80
-ForegroundVisited=96,205,255
+ForegroundPositive=108,203,95
+ForegroundVisited=153,235,255
 
 [Colors:Header]
 BackgroundAlternate=27,27,27

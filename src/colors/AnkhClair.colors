@@ -1,21 +1,28 @@
-# Jeu de couleurs clair d'Ankh (D-042), pour les thèmes globaux clairs :
-# « Ankh », « Ankh Clair » et Breeze clair. Dérivé de Breeze clair
+# Jeu de couleurs clair, aux valeurs de Windows 11 (DE-017). C'est celui de
+# la BOÎTE, comme dans Windows 11. Dérivé de Breeze clair
 # (colors/BreezeLight.colors de https://invent.kde.org/plasma/breeze,
-# LGPL-2.0-or-later) : mêmes rôles, couleurs d'Ankh.
-#   Fonds : gris très clair, légèrement bleuté (#f3f4f6), blanc pour les
-#   contenus.
-# D-052, lot 1 : fonds rangés par couches comme ceux de Windows 11, en clair
-# (Common_themeresources_any.xaml de WinUI) : fenêtre (Mica, #F3F3F3) et
-# barre de titre continue #f3f4f6 ; contenu blanc ; carte et contrôle
-# (#B3FFFFFF sur la fenêtre, #FBFBFB) #fbfbfc ; volet passager et infobulle
-# (#F9F9F9) #f9f9fa.
-#   Texte : graphite #1f2328 ; texte secondaire #656d76 (contraste 4,8 sur
-#   le fond des fenêtres).
-#   Accent : violet foncé du logo sur fond clair (#7c3aed) pour les
-#   sélections, le survol et le focus (texte blanc dessus : contraste 5,7) ;
-#   #6d28d9 pour les liens (contraste 7,1).
-#   Zones complémentaires (écran de verrouillage, notifications sombres) :
-#   graphite d'Ankh, comme dans le jeu sombre.
+# LGPL-2.0-or-later) : mêmes rôles, couleurs de Windows.
+#
+# Les valeurs viennent de la DOCUMENTATION de WinUI
+# (Common_themeresources_any.xaml), et non d'une capture : Mica et
+# l'acrylique y prennent la teinte du fond d'écran, donc une capture ne
+# donne pas la couleur déclarée. Les couches, telles qu'elles sont écrites
+# plus bas :
+#   fenêtre (SolidBackgroundFillColorBase #F3F3F3) : 243,243,243 ; barre de
+#     titre et en-têtes de même ;
+#   contenu, listes et champs : blanc ;
+#   carte et contrôle (CardBackgroundFillColorDefault #FBFBFB) : 251,251,251 ;
+#   infobulle et volet passager (…Secondary #F9F9F9) : 249,249,250.
+#   Texte : TextFillColorPrimary 26,26,26 ; secondaire 101,109,118.
+#   Accent : SystemAccentColorDark1 #0078D4 — celui du thème clair de
+#   Windows 11 — soit 0,120,212, pour les sélections, les liens, le survol
+#   et le focus.
+#   Les dossiers des icônes portent le jaune de Windows 11, #ffcb52.
+#
+# Le groupe [Colors:Complementary] — écran de verrouillage, surfaces
+# sombres des notifications — portait encore le graphite d'Ankh (#0D1117,
+# texte #E6EDF3) le 2026-11-08 : il est passé aux surfaces sombres de
+# Windows, fond 32,32,32 et texte blanc.
 
 [ColorEffects:Disabled]
 Color=56,56,56
@@ -52,18 +59,18 @@ ForegroundPositive=26,127,55
 ForegroundVisited=0,95,184
 
 [Colors:Complementary]
-BackgroundAlternate=0,95,184
-BackgroundNormal=13,17,23
+BackgroundAlternate=45,45,45
+BackgroundNormal=32,32,32
 DecorationFocus=76,194,255
 DecorationHover=76,194,255
 ForegroundActive=76,194,255
-ForegroundInactive=139,148,158
+ForegroundInactive=197,197,197
 ForegroundLink=76,194,255
-ForegroundNegative=248,81,73
-ForegroundNeutral=210,153,34
-ForegroundNormal=230,237,243
-ForegroundPositive=63,185,80
-ForegroundVisited=0,95,184
+ForegroundNegative=255,153,164
+ForegroundNeutral=252,225,0
+ForegroundNormal=255,255,255
+ForegroundPositive=108,203,95
+ForegroundVisited=153,235,255
 
 [Colors:Header]
 BackgroundAlternate=237,237,237
