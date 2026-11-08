@@ -1576,6 +1576,7 @@ for chemin in \
     /usr/local/share/plasma/plasmoids/org.ankh.demarrer \
     /usr/local/share/plasma/desktoptheme/ankh \
     /usr/local/share/color-schemes/Ankh.colors \
+    /usr/local/share/color-schemes/AnkhClair.colors \
     /usr/local/share/kstyle/themes/ankh.themerc \
     /usr/local/share/icons/Fluent-Ankh \
     /usr/local/share/wallpapers/Ankh-Prismes \
@@ -1583,7 +1584,7 @@ for chemin in \
     ssh_vm "test -e ${chemin}" 2>/dev/null && restes="${restes} ${chemin##*/}"
 done
 if [[ -z "${restes}" ]]; then
-    echo "   ok    les huit pièces nommées ont bien disparu"
+    echo "   ok    les neuf pièces nommées ont bien disparu"
 else
     grief "le désinstallateur a laissé des pièces :${restes}"
 fi

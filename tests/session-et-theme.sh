@@ -183,7 +183,8 @@ plasma-apply-lookandfeel -a org.ankh.de.desktop > /dev/null 2>&1 || true
 export XDG_CONFIG_DIRS="${XDG_CONFIG_HOME}/kdedefaults:${config}:/etc/xdg"
 
 attendre "style des contrôles"   "Ankh"                 "$(lire --group KDE --key widgetStyle)"
-attendre "jeu de couleurs"       "Ankh"                 "$(lire --group General --key ColorScheme)"
+# Clair par défaut depuis DE-017, comme Windows 11 sorti de la boîte.
+attendre "jeu de couleurs"       "AnkhClair"            "$(lire --group General --key ColorScheme)"
 attendre "décoration"            "org.ankh.decoration"  "$(lire --file kwinrc --group org.kde.kdecoration2 --key library)"
 attendre "bords des fenêtres"    "None"                 "$(lire --file kwinrc --group org.kde.kdecoration2 --key BorderSize)"
 attendre "thème du curseur"      "Ankh-curseurs"        "$(lire --file kcminputrc --group Mouse --key cursorTheme)"
