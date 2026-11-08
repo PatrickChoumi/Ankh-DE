@@ -266,11 +266,16 @@ produit="${themes}/Fluent-round-Light"
 cp -r "${produit}/"{gtk-2.0,gtk-3.0,gtk-4.0} "${theme}/"
 # #1a73e8 (bleu de Google) -> #0078D4 (accent de Windows 11), et sa variante
 # appuyée. Relevé sur les feuilles produites, pas deviné.
+# UNE seule couleur est exigée, #1a73e8, parce que c'est la seule que
+# l'écho a réellement montrée (89 fois dans gtk-3.0). Les deux autres sont
+# ses variantes probables : on les recolore SI elles sont là, sans les
+# exiger. Mon premier jet exigeait les trois et faisait échouer le banc sur
+# une couleur supposée — le garde-fou était faux, pas le thème.
+grep -rqiF '#1a73e8' "${theme}" \
+    || { echo "Fluent GTK : #1a73e8 a disparu de ses feuilles ; la variante a changé" >&2; exit 1; }
 for couple in '1a73e8:0078D4' '1967d2:005FB8' '8ab4f8:4CC2FF'; do
     avant="${couple%%:*}"; apres="${couple##*:}"
-    grep -rqiF "#${avant}" "${theme}" \
-        || { echo "Fluent GTK : #${avant} a disparu de ses feuilles ; la variante a changé" >&2; exit 1; }
-    grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" \
+    grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" 2>/dev/null \
         | xargs -0 -r sed -i "s/#${avant}/#${apres}/gI"
 done
 grep -rqiF '#1a73e8' "${theme}" \
