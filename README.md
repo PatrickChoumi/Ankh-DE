@@ -13,18 +13,18 @@ et se retire d'un geste.
 seule pièce de la barre lui appartient, le menu Démarrer. Tout le reste — tâches, zone système,
 horloge et calendrier, notifications, Alt+Tab — ce sont les applets **natives de Plasma**,
 habillées par notre style. L'audit qui a conduit là, composant par composant, est dans
-[docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md) ([DE-015](DECISIONS.md)).
+[DECISIONS.md](DECISIONS.md), décision DE-015.
 
 > ### État : **pré-version**, et ce qu'elle vaut est dit sans arrondi
 >
 > | Où | Ce qui est établi |
 > |---|---|
 > | **Fedora 44, Plasma 6.8.2** | la session s'ouvre depuis l'écran de connexion, installée par `installer.sh` dans une VM neuve. `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`. **48 vérifications clé par clé** passées *dans la session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | **la session s'ouvre** depuis l'écran de connexion et **tous les réglages s'appliquent** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh` — passage `42397366933`. Ce passage s'est néanmoins conclu en échec, sur un défaut du harnais sans rapport avec Ankh DE ; les vérifications clé par clé n'ont pas tourné. Détail : [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
+> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | **la session s'ouvre** depuis l'écran de connexion et **tous les réglages s'appliquent** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh` — passage `42397366933`. Ce passage s'est néanmoins conclu en échec, sur un défaut du harnais sans rapport avec Ankh DE ; les vérifications clé par clé n'ont pas tourné. Détail : [CLAUDE.md §6](CLAUDE.md) |
 > | **Arch** | le code compile. Ni installation, ni session |
 >
 > **L'état fonctionnel de chaque pièce — installée, chargée, interactive, validée — est dans
-> [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md), et nulle part ailleurs.** Ce README ne le
+> [CLAUDE.md §6](CLAUDE.md), et nulle part ailleurs.** Ce README ne le
 > redit pas : cinq documents en portaient cinq versions différentes le 2026-11-07, et
 > `ci/verifier-coherence.sh` le refuse désormais.
 >
@@ -49,7 +49,7 @@ habillées par notre style. L'audit qui a conduit là, composant par composant, 
 >
 > **27 jetons sur 53 mesurés et conformes** — 12 contrôles, 6 fenêtres, et **les 9 de la barre**,
 > relevés en VM sur `fbe7f47`. Détail et limites : [AVANCEMENT.md](AVANCEMENT.md),
-> [ROADMAP.md](ROADMAP.md), [DECISIONS.md](DECISIONS.md).
+> [CLAUDE.md §7](CLAUDE.md), [DECISIONS.md](DECISIONS.md).
 
 ## Le menu Démarrer, ouvert dans une vraie session
 
@@ -208,7 +208,7 @@ Détails : [docs/INSTALL.md](docs/INSTALL.md).
 
 Honnêteté d'abord. « Trait pour trait » s'arrête là où Plasma s'arrête. Ces points **ne seront
 pas corrigés** tant que KDE ne les ouvrira pas, et ils sont détaillés dans
-[ANKH-DE-SPEC.md §4](ANKH-DE-SPEC.md#4-ce-qui-nest-pas-atteignable) :
+[CLAUDE.md §1](CLAUDE.md) :
 
 - le **contenu** de l'OSD du volume et la **largeur** des notifications sont en dur dans Plasma ;
 - **pas de menu de disposition** au survol du bouton « Agrandir » : rien de tel dans KWin. On a
@@ -229,14 +229,18 @@ pas corrigés** tant que KDE ne les ouvrira pas, et ils sont détaillés dans
 
 | Fichier | Contenu |
 |---|---|
-| [ANKH-DE-SPEC.md](ANKH-DE-SPEC.md) | La cible : la référence Windows 11 mesure par mesure, l'identité d'Ankh, les limites, la liste NON |
-| [DECISIONS.md](DECISIONS.md) | Chaque choix, ses raisons, ses alternatives rejetées, sa vérification |
-| [ROADMAP.md](ROADMAP.md) | Les onze lots, et le critère de fin de chacun |
-| [AVANCEMENT.md](AVANCEMENT.md) | Ce qui est fait, et surtout ce qui n'est pas vérifié |
-| [AUDIT.md](AUDIT.md) | **Tout ce qui manque**, établi en exécutant, et ce qu'une semaine peut donner |
-| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) | Comment c'est agencé, et le rapport avec Ankh |
+| [CLAUDE.md](CLAUDE.md) | **Le seul document de règles** : la cible, les règles, l'état de chaque pièce, l'ordre des travaux |
+| [DECISIONS.md](DECISIONS.md) | Chaque choix, ses raisons, ses alternatives rejetées, sa vérification. Historique, jamais réécrit |
+| [AVANCEMENT.md](AVANCEMENT.md) | Le journal daté : ce qui a été fait, et ce qui s'est révélé faux |
+| [docs/INSTALL.md](docs/INSTALL.md) | Installer, essayer, retirer, dépanner |
+| [docs/UPSTREAMS.md](docs/UPSTREAMS.md) | D'où vient chaque pièce reprise, et ce qu'on en a modifié |
+| [docs/FIDELITE.md](docs/FIDELITE.md) | Les 53 mesures, générées depuis `bench/jetons.toml` |
 | [docs/REBASE.md](docs/REBASE.md) | Reporter le code sur une nouvelle version de Plasma |
-| [CONTRIBUTING.md](CONTRIBUTING.md) | Comment contribuer, et la règle du banc |
+| [LICENSES/](LICENSES/) | La licence de chaque fichier venu d'ailleurs |
+
+> Neuf documents de règles ont été supprimés le 2026-11-08 et fondus dans `CLAUDE.md` : ils se
+> contredisaient sur la version de Plasma visée, sur les composants encore actifs, et sur lequel
+> d'entre eux faisait foi. L'historique reste dans git.
 
 **Règle du projet** : ce dépôt est la source de vérité. Toute affirmation technique importante
 s'appuie sur une documentation officielle, un test reproductible, ou une mesure du banc. Sinon,

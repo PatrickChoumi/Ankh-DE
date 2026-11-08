@@ -10,7 +10,7 @@ Vide pour l'instant.
 **Avertissement** : les deux dépendent de modules **privés** de Plasma
 (`org.kde.plasma.private.kicker`, `…private.volume`, `…private.bluetooth`,
 `…private.brightnesscontrolplugin`). Aucune garantie d'une version à l'autre : c'est la partie la
-plus fragile du projet ([ANKH-DE-SPEC.md §4.3](../../ANKH-DE-SPEC.md#43-fragile-par-nature)).
+plus fragile du projet ([CLAUDE.md §1](../../CLAUDE.md)).
 C'est aussi ce que le test hebdomadaire contre l'amont surveille en premier
 ([docs/REBASE.md](../../docs/REBASE.md)).
 

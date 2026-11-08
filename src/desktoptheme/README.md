@@ -12,4 +12,4 @@ Windows 11 :
 | `ankh/metadata.json` | `FallbackTheme=breeze` : tout le reste vient de Breeze |
 
 Le CMake de la racine installe ce dossier dès qu'il contient quelque chose.
-Détail du lot : [ROADMAP.md](../../ROADMAP.md).
+Détail du lot : [CLAUDE.md §7](../../CLAUDE.md).

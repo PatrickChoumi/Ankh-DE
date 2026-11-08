@@ -1,268 +1,250 @@
-# CLAUDE.md — Guide du projet Ankh DE
+# CLAUDE.md — le seul document de règles d'Ankh DE
 
-> Claude Code lit ce fichier au début de chaque session. Il fixe **les règles, la méthode et
-> l'état**. Les détails vivent ailleurs et ne sont pas recopiés ici.
+> **Ce fichier fait foi, et lui seul.** Aucun autre document ne porte de règle,
+> d'état fonctionnel ni de priorité. S'il manque quelque chose ici, c'est ici
+> qu'on l'ajoute.
 >
-> | Je cherche… | Fichier |
-> |---|---|
-> | Ce qu'Ankh DE doit être, la référence Windows 11, les limites, la liste NON | [ANKH-DE-SPEC.md](ANKH-DE-SPEC.md) |
-> | Chaque choix, ses raisons, ses sources et ses tests (`DE-xxx`) | [DECISIONS.md](DECISIONS.md) |
-> | L'ordre des travaux, lot par lot | [ROADMAP.md](ROADMAP.md) |
-> | Ce qui est fait, et ce qui n'est pas vérifié | [AVANCEMENT.md](AVANCEMENT.md) |
-> | **Tout ce qui manque, et le plan d'une semaine** | [AUDIT.md](AUDIT.md) |
-> | Comment reporter sur une nouvelle version de Plasma | [docs/REBASE.md](docs/REBASE.md) |
-> | Comment c'est agencé, et le rapport avec Ankh | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) |
->
-> | **Quoi reprendre, où, et pourquoi pas** | [docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) |
-> | **Ce qui existe déjà : ne pas le réécrire** | [docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md) |
-> | **L'ÉTAT FONCTIONNEL — source unique, ne pas le redire ailleurs** | [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
-| **L'audit de simplification : garder, configurer le natif, supprimer** | [docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md) |
->
-> En cas de contradiction : **DECISIONS.md fait foi pour les choix**, **ANKH-DE-SPEC.md pour la
-> cible**. Ce fichier est alors à corriger.
+> Pourquoi cette règle existe : le 2026-11-08, dix-huit documents portaient
+> **4 557 lignes** de consignes qui se contredisaient — une règle corrigée
+> depuis trois jours répétée à quatorze endroits, huit applets retirés encore
+> présentés comme actifs à une soixantaine d'endroits, trois fichiers se
+> déclarant chacun « l'état courant », et un guide affirmant qu'il primait sur
+> celui-ci pendant que celui-ci affirmait l'inverse. Neuf fichiers ont été
+> supprimés et leurs règles encore vraies sont ici.
+
+| Je cherche… | Où |
+|---|---|
+| Les règles, l'état, l'ordre des travaux | **ce fichier** |
+| Pourquoi un choix a été fait, et ce qu'il a remplacé | [DECISIONS.md](DECISIONS.md) — historique, jamais réécrit |
+| Ce qui a été fait, daté | [AVANCEMENT.md](AVANCEMENT.md) — journal |
+| D'où vient chaque pièce reprise, et sous quelle licence | [docs/UPSTREAMS.md](docs/UPSTREAMS.md), [LICENSES/](LICENSES/) |
+| Installer, désinstaller, dépanner | [docs/INSTALL.md](docs/INSTALL.md) |
+| Les mesures | [bench/jetons.toml](bench/jetons.toml) → [docs/FIDELITE.md](docs/FIDELITE.md) (généré) |
+| Reporter sur une nouvelle version de Plasma | [docs/REBASE.md](docs/REBASE.md) |
 
 ---
 
-## 0. Les deux consignes permanentes — à lire AVANT d'écrire quoi que ce soit
+## 1. Ce qu'est Ankh DE
 
-Deux documents du propriétaire, déposés le 2026-11-07, sont **contraignants** et le restent :
-[docs/consignes/INTEGRATION-SOURCES.md](docs/consignes/INTEGRATION-SOURCES.md) et
-[docs/consignes/ANTI-DOUBLONS.md](docs/consignes/ANTI-DOUBLONS.md). Ils sont dans le dépôt pour
-être relus, pas cités de mémoire : quand une décision d'intégration se pose, on les ouvre.
+**Prendre KDE Plasma 6 et lui donner l'apparence de Windows 11.** Rien de plus.
 
-Ce qui suit en est le noyau, répété ici parce que CE fichier est chargé à chaque session et
-qu'une règle qu'on ne relit pas est une règle qu'on oublie.
+- Ce n'est **pas** un bureau écrit de zéro : ni compositeur, ni gestionnaire de
+  session, ni `plasmashell` ne sont remplacés.
+- Ce n'est **pas** une distribution, et **pas** un produit de Microsoft.
+- Une seule pièce de la barre nous appartient : le **menu Démarrer**. Tout le
+  reste est natif, habillé.
+- **Cible : Ubuntu 26.04 LTS, Plasma 6.6.** Plage éprouvée **6.6 à 6.8**,
+  Wayland.
 
-### 0.1 L'ordre de choix, et BUILD n'est jamais le défaut
+> **Le nom du projet reste « Ankh DE », mais l'apparence visée est celle de
+> Windows 11, sans identité Ankh.** Ce n'est pas une contradiction : l'identité
+> graphite et violet est **figée sur la branche `ankh`** et reviendra plus tard
+> comme variante. Sur la branche de travail, aucun violet.
 
-Pour toute fonctionnalité, une seule stratégie, choisie dans cet ordre :
+---
+
+## 2. L'ordre de choix — et BUILD n'est jamais le défaut
 
 | | |
 |---|---|
-| **KEEP** | c'est déjà là et correct — ne pas le réécrire |
+| **KEEP** | c'est déjà là et correct — ne pas y toucher |
 | **CONFIGURE** | KDE le fournit — configurer, exposer, habiller le natif |
 | **ADAPT** | un composant repris en est proche — l'adapter, sans en importer un second |
-| **IMPORT** | la fonction manque VRAIMENT — reprendre le minimum, après audit de licence |
+| **IMPORT** | la fonction manque VRAIMENT — le minimum, après audit de licence |
 | **BUILD** | rien ne convient — écrire, et seulement là |
-| **DEFER** | hors périmètre ou risqué — ne pas faire dans cette version |
+| **DEFER** | hors périmètre — ne pas faire dans cette version |
 
-> **Ne développe pas une fonctionnalité avant d'avoir prouvé qu'elle n'existe ni dans Ankh DE,
-> ni dans KDE Plasma, ni dans un composant libre réutilisable.**
+> **Avant d'importer : ouvrir le `main.xml` de l'applet natif.** Deux applets
+> ont été importés le 2026-11-06 sur la foi de valeurs fausses écrites de
+> mémoire — l'horloge de Plasma sait mettre la date sous l'heure
+> (`dateDisplayFormat=BelowTime`) et `iconSpacing` est un entier, pas une
+> énumération. Les deux ont été retirés le lendemain (DE-015).
 
-Cette règle a été enfreinte dans les deux sens, et DE-015 l'a corrigé le 2026-11-07 : huit
-applets avaient été **importés** là où Plasma fournissait déjà la fonction. IMPORT était devenu
-le défaut, à la place de CONFIGURE. Deux de ces imports reposaient même sur une valeur écrite de
-mémoire et fausse (l'horloge de Plasma sait mettre la date sous l'heure ; `iconSpacing` est un
-entier, pas une énumération). **Avant d'importer : ouvrir le `main.xml` de l'applet natif.**
+## 3. Les cinq états, qu'il ne faut jamais confondre
 
-### 0.2 Les cinq états, qu'il ne faut jamais confondre
+**présent** → **installé** → **chargé** → **interactif** → **validé**
 
-C'est l'erreur que ce projet a commise le plus souvent, et la plus coûteuse :
+Une compilation ne prouve pas qu'un greffon est chargé. Un applet installé ne
+prouve pas qu'il est dans la barre. Une capture ne prouve pas qu'un bouton
+répond. **Et un test vert ne prouve pas qu'on voit quelque chose à l'écran** :
+le 2026-11-08, le menu s'ouvrait, prenait le clavier, cherchait et lançait une
+application — avec une grille d'épingles **vide**. Tant qu'un critère manque,
+on écrit `PARTIEL` ou `BLOQUÉ`, jamais `FINI`.
 
-**code présent** → **installé** → **chargé dans la session** → **interactif** → **validé**
+## 4. Une seule implémentation par responsabilité
 
-Une compilation ne prouve pas qu'un greffon est chargé. Un applet installé ne prouve pas qu'il
-est dans la barre. Une capture ne prouve pas qu'un bouton répond. Tant qu'un critère manque, on
-écrit `PARTIEL`, `INTÉGRÉ-NON VÉRIFIÉ` ou `BLOQUÉ` — jamais `FINI`.
+Un seul lanceur, un seul gestionnaire de tâches, un seul hôte de zone système,
+un seul contrôleur de notifications, une seule horloge, un seul sélecteur
+Alt+Tab, un seul moteur de recherche, un seul gestionnaire réseau et énergie.
 
-### 0.3 Une seule implémentation par responsabilité
-
-Un seul lanceur, un seul gestionnaire de tâches, un seul hôte de zone système, un seul contrôleur
-de notifications, une seule horloge, un seul sélecteur Alt+Tab, un seul moteur de recherche, un
-seul gestionnaire clair/sombre, un seul gestionnaire réseau et énergie.
-
-Une interface d'Ankh peut remplacer l'APPARENCE d'une fonction native ; elle ne doit jamais
-démarrer un second service pour la même responsabilité.
-
-### 0.4 Ce qu'on ne fait pas, quoi qu'il arrive
-
-- ne pas remplacer `plasmashell`, KWin, le compositeur ou le gestionnaire de session ;
-- ne pas ajouter une deuxième barre, un deuxième menu, une deuxième horloge, un deuxième
-  gestionnaire de tâches ;
-- ne pas importer `icontasks` de KDE-Windows-Modern (identifiant `org.kde.plasma.icontasks`,
-  celui de l'applet standard, plus 11 fichiers C++) ni sa zone système (40 fichiers C++) ;
-- ne pas poser Kvantum à côté du QStyle d'Ankh ;
-- ne pas reprendre un installateur amont, qui réécrit la configuration de l'utilisateur ;
-- ne pas copier de code dont la licence n'est pas portée par un fichier (`menu-11-next`,
-  `quicksettings-plasma` : **STUDY ONLY**) ni d'actif Microsoft (sons de NeoWin, logos) ;
-- ne pas monter le plancher Qt/KF pour une fonction facultative (`PlasmaZones` exige Qt 6.10).
-
-### 0.5 La règle de CI, sans exception
-
-Tout contrôle qui échoue doit **sortir en code non nul**. Interdit : `|| true` sur un verdict,
-une assertion non bloquante, un script qui imprime « ÉCHEC » puis sort en 0. Ce dépôt l'a fait
-trois fois ; `bench/vm/essayer.sh` rassemble désormais ses griefs et c'est sa fin qui décide.
-
-Et une version n'est « stabilisée » que si **Construire, Banc et VM passent sur le MÊME SHA**.
+Une interface peut remplacer l'**apparence** d'une fonction native ; elle ne
+démarre jamais un second service pour la même responsabilité.
 
 ---
 
-## 1. Ankh DE en cinq lignes
-
-- Une suite de thèmes, de greffons et d'applets pour **KDE Plasma 6**, qui lui donne la géométrie
-  de Windows 11 sous les couleurs d'Ankh (DE-001, DE-003).
-- **Pas** un environnement de bureau écrit de zéro, **pas** un clone de Windows, **pas** une
-  distribution.
-- Installable sur Fedora, Arch et Ubuntu, sans toucher à un seul fichier de la distribution, et
-  réversible d'un geste (DE-002).
-- « Au pixel près » n'est dit que de ce que **le banc mesure** (DE-007). Le reste est `À VALIDER`.
-- Rien de Microsoft dans le dépôt : seules les mesures, publiées sous licence MIT (DE-005).
-
-## 2. État actuel
-
-- **2026-11-07, DE-015 : la barre est devenue native, sauf Démarrer.** Huit applets repris
-  (`etat`, `notifications`, `taches`, `vuetaches`, `separateur`, `horloge`, `bureau`,
-  `ankh-selecteur`) sont remplacés par ceux de Plasma. Un seul avait été prouvé interactif, et
-  pour faire place au volet d'état la disposition **masquait** les cinq applets natives de la
-  zone système : Ankh DE retirait le volume, le Wi-Fi, le Bluetooth et la luminosité. Ce qui
-  reste à nous est ce qui fait Ankh : style Qt, décoration, style Plasma, couleurs, Selawik,
-  icônes, curseurs, fond d'écran et menu Démarrer.
-- **2026-11-07, DE-016 : la cible est Ubuntu 26.04 LTS, donc Plasma 6.6**, avec une plage
-  éprouvée de 6.6 à 6.8. Le CMake exigeait l'égalité avec 6.8 : Ankh DE refusait de se construire
-  sur sa propre cible, et la CI ne le voyait pas parce qu'elle passait
-  `-DANKH_DE_PLASMA_NON_TESTE=ON` partout.
-- **Lot en cours : 4 — le shell.** Le lot 0 est **fini** : le DE se compile sur trois
-  distributions, s'installe, et sa session s'ouvre dans une VM. L'état complet, lot par lot, est
-  dans [ROADMAP.md](ROADMAP.md).
-- **Éprouvé dans une VRAIE VM** (Fedora 44, Plasma 6.8.2, `VM — session réelle`) : la session
-  s'ouvre, `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration
-  `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`, Selawik trouvée par
-  fontconfig, et les vérifications de `tests/session-et-theme.sh` passent *dans la session*.
-- **27 jetons sur 53 mesurés ET conformes** : 12 pour les contrôles (lot 3, sans VM, à chaque
-  PR), 6 pour les fenêtres (lot 2, par un vrai KWin en backend `--virtual`) et **les 9 du lot 4**
-  (barre), relevés en VM sur `fbe7f47` — sept dans la configuration de la session, deux sur
-  l'image : `barre.marge_bas` à 0 et `barre.hauteur_visible` à 48. Ces deux-là avaient été
-  relevés FAUX deux fois (800 et 0) avant qu'on comprenne que la barre, étant en verre, ne se
-  mesure qu'en la rendant opaque le temps du cliché.
-- **Le menu Démarrer s'ouvre**, vérifié en VM le 2026-11-06 (`a71432e`) par trois sondes
-  indépendantes : `plasmashell` journalise avoir évalué NOTRE disposition, `org.ankh.demarrer`
-  est dans la barre, et 9,48 % de l'écran change à l'ouverture, en une boîte de 662×696 centrée.
-  Deux diagnostics faux ont précédé le bon — `XDG_DATA_DIRS` ne manquait pas, et le silence du
-  script venait d'une catégorie de journal muette. La cause était
-  `kdeglobals [KDE] LookAndFeelPackage`, écrit nulle part (DE-014).
-- **L'état fonctionnel ne s'écrit QUE dans [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md)**, qui
-  déclare le SHA des preuves. Le 2026-11-07, cinq documents portaient cinq états différents du
-  menu Démarrer — chacun vrai à sa date, faux au présent. `ci/verifier-coherence.sh` §8 refuse
-  désormais qu'un document attribue une interaction à un autre SHA.
-- **Ce qui n'est PAS établi, et qu'il ne faut pas confondre** : une pièce *installée*, une pièce
-  *chargée dans la barre* et une pièce *qui répond*. Les applets repris de Tidewater
-  (`org.ankh.etat`, `notifications`, `taches`, `vuetaches`, `separateur`) sont installés et
-  chargés ; **aucune de leurs interactions n'est testée** — ni Wi-Fi, ni Bluetooth, ni volume,
-  ni Alt+Tab entre deux fenêtres. Et `icontasks` reste celui de Plasma pour les fenêtres
-  ouvertes : la barre est mixte, et le dire autrement serait faux.
-- Ne jamais présenter une mesure d'Ankh comme une mesure d'Ankh DE : citer le dépôt et le run.
-- **Version de Plasma visée : 6.8** (`src/*/VERSION-BREEZE`). La source reste Breeze 6.7.5, qui
-  compile tel quel contre 6.8. Monter de version est **notre** décision de release, pas une
-  contrainte de KDE (DE-008).
-- **Langue du projet** : français (documents, commits, échanges). `README.en.md` est la seule
-  pièce en anglais, parce que le public visé ne lit pas forcément le français.
-
-> Mettre cette section à jour à chaque changement de lot.
-
-## 3. Règles non négociables
-
-Elles ne se contournent pas. Si une règle bloque, on ouvre une décision dans DECISIONS.md.
+## 5. Règles non négociables
 
 ### Périmètre
-1. On ne remplace ni le compositeur, ni le gestionnaire de session, ni `plasmashell` (DE-001).
-2. **Reprendre du code libre est permis, et préféré à le réécrire** (DE-011, qui a remplacé
-   l'interdiction d'origine le 2026-11-06) — mais **après** avoir prouvé que Plasma ne fournit
-   pas déjà la fonction (DE-015, 2026-11-07). Cinq conditions, toutes vérifiables : licence
-   compatible GPL-3.0-or-later **portée par un fichier de licence** ; commit figé ; provenance
-   tracée dans [docs/UPSTREAMS.md](docs/UPSTREAMS.md) avec sa nature et ses modifications ; rien
-   de Microsoft, ni aucun motif qui ressemble à un de ses logos (DE-013) ; et **aucune pièce qui
-   en écrase une de la distribution**.
-   Ce qui reste écarté l'est pour une raison nommée : `menu-11-next` (licence déclarée en
-   métadonnées, sans fichier de licence), l'applet `icontasks` de KDE-Windows-Modern (il porte
-   l'identifiant de l'applet standard de Plasma), PlasmaZones (exige Qt 6.10+).
+1. Ne remplacer ni le compositeur, ni le gestionnaire de session, ni
+   `plasmashell`.
+2. Ne pas ajouter une deuxième barre, un deuxième menu, une deuxième horloge.
+3. Reprendre du code libre est **permis et préféré** à le réécrire — mais
+   **après** avoir prouvé que Plasma ne fournit pas déjà la fonction. Cinq
+   conditions, toutes vérifiables : licence compatible GPL-3.0-or-later
+   **portée par un fichier**, commit figé, provenance dans
+   [docs/UPSTREAMS.md](docs/UPSTREAMS.md) avec ses modifications, rien de
+   Microsoft, et **aucune pièce qui en écrase une de la distribution**.
+4. Écartés pour une raison nommée : `menu-11-next` (licence en métadonnées,
+   sans fichier), `icontasks` de KDE-Windows-Modern (il porte l'identifiant de
+   l'applet standard), PlasmaZones (exige Qt 6.10+).
 
-### Licence et actifs
-3. **Aucun fichier de Microsoft**, jamais : police, icône, son, curseur, fond d'écran, capture,
-   logo. Seules les **mesures** sont reprises, de sources MIT, chacune citée avec son commit
-   (DE-005).
-4. Tout fichier venu d'ailleurs est déclaré dans `LICENSES/`, et son en-tête de licence est
-   conservé tel quel.
-5. Le projet ne se présente jamais comme affilié à Microsoft, et n'emploie pas « Windows » dans
-   son nom.
+### Microsoft : ce qui est interdit, et ce qui ne l'est pas
+5. **Interdit : tout fichier dont Microsoft ne donne pas le droit de
+   redistribution** — la police Segoe UI, les icônes de Windows, ses sons, ses
+   curseurs, ses fonds d'écran, ses captures, et **son logo**, qui est une
+   marque déposée.
+6. **Autorisé : ce que Microsoft publie sous licence libre, et les mesures.**
+   La police **Selawik** est publiée par Microsoft sous **OFL 1.1** : elle est
+   livrée, compilée depuis ses sources, nom réservé respecté. Les **mesures**
+   (tailles, rayons, couleurs) sont des faits, pas des fichiers : elles se
+   reprennent, avec leur source citée dans `bench/jetons.toml`.
+   *Cette distinction remplace la formule « aucun fichier de Microsoft,
+   jamais : police… », qui interdisait littéralement la Selawik que le dépôt
+   livre depuis le lot 1.*
+7. Le projet ne se présente jamais comme affilié à Microsoft et n'emploie pas
+   « Windows » dans son nom.
 
 ### Ne rien casser
-6. Les réglages vivent **uniquement** dans `src/lookandfeel/org.ankh.de.desktop/contents/defaults`.
-   Jamais d'écriture dans `/etc/xdg`, jamais de modification d'un thème de la distribution, jamais
-   d'écriture silencieuse dans `~/.config` (DE-002).
-7. Toute action qui efface la configuration de l'utilisateur — en pratique `--resetLayout`, qui
-   remplace ses barres — est **en option** et **confirmée** par une question.
-8. `desinstaller.sh` doit ramener à l'état de départ. Une pièce qu'on ne sait pas retirer ne
-   s'installe pas.
+8. Les réglages vivent dans le thème global **et** dans `src/config/`, que la
+   session place dans `XDG_CONFIG_DIRS` — parce que
+   `plasma-apply-lookandfeel` ne recopie qu'un ensemble FIXE de clés et
+   ignore les autres **en silence** (DE-010, qui corrige DE-002). Jamais
+   d'écriture dans `/etc/xdg`, jamais de modification d'un thème de la
+   distribution.
+9. Toute action qui efface la configuration de l'utilisateur est **en option**
+   et **confirmée**.
+10. `desinstaller.sh` doit ramener à l'état de départ. Une pièce qu'on ne sait
+    pas retirer ne s'installe pas.
 
 ### Mesure
-9. Une affirmation de fidélité sans mesure du banc est marquée `À VALIDER`. On ne dit pas « au
-   pixel près » d'une surface que le banc ne mesure pas (DE-007).
-10. Une mesure d'Ankh n'est pas une mesure d'Ankh DE : citer le dépôt et le run.
-11. Aucune PR de lot ne fusionne sans ses mesures conformes, ses captures avant/après (sombre et
-    clair, 100/125/150 %) et mon accord.
+11. Une affirmation de fidélité sans mesure du banc s'écrit `À VALIDER`. Une
+    valeur de Windows 11 ne s'écrit jamais de mémoire : elle se lit dans une
+    source publiée, citée dans `bench/jetons.toml`.
+12. **La preuve est proportionnée au changement** : une correction de texte
+    n'en demande aucune ; un changement visible demande une capture ; un
+    changement de mesure demande le banc. *L'ancienne règle exigeait des
+    captures en clair et sombre à 100, 125 et 150 % pour toute PR de lot —
+    alors que le banc ne tourne qu'à 100 %. Elle était intenable, et trois
+    lots étaient marqués FINI sans l'avoir suivie.*
 
 ### Code
-12. `set -euo pipefail` dans chaque script. Jamais `|| true` pour masquer une erreur. Une
-    construction qui rencontre un problème **échoue**.
-13. Le code dérivé de KDE reste aussi proche de l'original que possible : chaque écart rend le
-    report plus coûteux (DE-008, `docs/REBASE.md`). Un changement de confort qui n'atteint pas une
-    mesure de `bench/jetons.toml` ne se fait pas.
-14. La construction échoue si une bibliothèque ou un symbole manque (`ldd -r`), et si un texte
-    qu'on remplace dans un fichier de KDE a changé en amont — plutôt que de laisser un contrôle
-    à moitié adapté.
+13. `set -euo pipefail` dans chaque script. Jamais `|| true` sur un verdict.
+14. Le code dérivé de Breeze reste aussi proche de l'original que possible :
+    chaque écart rend le report plus coûteux.
+15. La construction échoue si une bibliothèque ou un symbole manque
+    (`ldd -r`), et si un texte qu'on remplace dans un fichier amont a changé.
 
-## 4. Règles de travail pour Claude Code
+### CI, sans exception
+16. Tout contrôle qui échoue **sort en code non nul**. Interdit : une
+    assertion non bloquante, un script qui imprime « ÉCHEC » puis sort en 0.
+17. **Un garde-fou qu'on ne peut pas faire échouer ne garde rien.** Tout
+    nouveau contrôle est éprouvé par **mutation** : on réintroduit le défaut,
+    et on vérifie qu'il crie. Ce dépôt a écrit trois contrôles qui ne
+    pouvaient pas échouer.
+18. Une version n'est « stabilisée » que si **Construire, Banc et VM passent
+    sur le MÊME SHA**.
+
+---
+
+## 6. État — qui tient quoi, et ce qui est prouvé
+
+Dernières preuves : passage VM `42456335669`, **Ubuntu 26.04.1 LTS,
+Plasma 6.6.6**, session ouverte depuis SDDM.
+
+| Responsabilité | Implémentation | État |
+|---|---|---|
+| Lanceur | `org.ankh.demarrer` (KDE-Windows-Modern `7ef6bfe`) | **interactif** : s'ouvre, prend le clavier sans clic, cherche, **lance** (`pgrep` le confirme), se ferme sur Échap. **Disposition encore fausse** : grille vide corrigée le 2026-11-08, recherche pas encore en haut, pas de « Recommandé » |
+| Gestionnaire de tâches | `org.kde.plasma.icontasks` — natif | **interactif** : un clic minimise, un second rétablit |
+| Zone système | `org.kde.plasma.systemtray` — natif | chargé ; ne masque **que** la cloche |
+| Réseau, Bluetooth, volume, luminosité | applets natives | **visibles** ; aucune tuile pressée nommément |
+| Notifications | `org.kde.plasma.notifications` — natif | **interactif** : une notification envoyée s'affiche. « Ne pas déranger » **n'inhibe pas** |
+| Horloge et calendrier | `org.kde.plasma.digitalclock` — natif | chargé, date sous l'heure. **Affiche les secondes** à tort. Calendrier non essayé nommément |
+| Afficher le bureau | `org.kde.plasma.showdesktop` — natif | **interactif** : masque et rétablit les fenêtres |
+| Alt+Tab | `thumbnail_grid` — natif (KWin) | **jamais montré à l'écran** |
+| Vue des tâches | effet Overview de KWin (Meta+W) | **DEFER** hors de 0.1 |
+| Style des contrôles | `org.ankh.style` (Breeze `ca217f1`) | **validé** : 12 jetons conformes |
+| Décoration | `org.ankh.decoration` (Breeze `ca217f1`) | 6 jetons sur 11. Chargement dans KWin **6.6** non établi |
+| Verrouillage | KScreenLocker — natif | jamais essayé |
+| Fond d'écran | `Ankh-Prismes` (AnduinOS `c659fae`) | installé et posé |
+
+**27 jetons sur 53** mesurés et conformes : 12 contrôles, 6 fenêtres, 9 barre.
+
+**Ce qui n'est pas prouvé** : les tuiles réseau/Bluetooth/volume/luminosité,
+Alt+Tab, le calendrier, le verrouillage, la déconnexion, le désinstallateur en
+VM, Arch.
+
+---
+
+## 7. Ordre des travaux
+
+1. **L'apparence de Windows 11 par défaut** — retirer la recoloration violette
+   de `preparer.sh`, schémas de couleurs depuis WinUI, **clair par défaut**,
+   glyphe neutre pour le bouton Démarrer.
+2. **Le menu Démarrer** — recherche en haut, grille 6 × 3, section
+   « Recommandé » (2 × 3, ~40 % de la hauteur utile), bas avec utilisateur à
+   gauche et alimentation à droite. Mesures : **642 × 726** à 100 %, icône
+   d'épingle **32 px**.
+3. **Les défauts résiduels** — secondes de l'horloge, Alt+Tab, « Ne pas
+   déranger », mesure de la barre.
+4. **Éprouver** — désinstallation en VM, Arch, échelles 125 et 150 %.
+
+---
+
+## 8. Méthode de travail
 
 ### Avant d'agir
-- Lire les `DE-xxx` et les sections de la SPEC concernées.
-- Vérifier que le **lot en cours** (§2) autorise la tâche.
-- Ne jamais inventer une réponse à une question ouverte (SPEC §7) : la poser.
-- Pour un choix d'architecture : présenter les options **et une recommandation**. C'est moi qui
-  tranche, puis la décision est écrite dans DECISIONS.md.
+- Lire ce fichier. Il suffit.
+- Pour un choix d'architecture : présenter les options **et une
+  recommandation**. Le propriétaire tranche, puis la décision est écrite dans
+  DECISIONS.md.
 
 ### Pendant
-- Ne citer comme fait que ce qui est vérifié, avec sa source ou son test. Distinguer « lu dans la
-  doc », « relevé par le banc » et « supposé ».
-- Une valeur de Windows 11 ne s'écrit jamais de mémoire : elle se lit dans WinUI, et son commit
-  est cité dans `bench/jetons.toml`.
-- DECISIONS.md : on ne supprime pas une entrée ; une décision qui change en cite l'ancienne ;
-  l'index reste à jour.
-- **Une décision qui modifie une règle corrige les documents qui la portent DANS LE MÊME
-  COMMIT** — ce fichier, ANKH-DE-SPEC.md, ROADMAP.md. Le 2026-11-06, DE-011 a autorisé la
-  reprise de code libre sans que le §3.2 d'ici soit touché : le dépôt a porté deux règles
-  contradictoires pendant plusieurs commits. `ci/verifier-coherence.sh` le refuse désormais.
-- **Un lot terminé se marque dans ROADMAP.md dans le commit qui le termine**, avec ce qui est
-  prouvé et ce qui ne l'est pas. Un tableau en retard donne une vision fausse de l'état.
+- Ne citer comme fait que ce qui est vérifié, avec sa source. Distinguer « lu
+  dans la doc », « relevé par le banc » et « supposé ».
+- **Regarder les captures.** Trois défauts en deux jours ne se voyaient qu'à
+  l'image, aucun test ne les signalait : la barre mesurée à 800/0 parce
+  qu'elle est en verre, un menu de Windows 7 pris pour un menu de Windows 11,
+  et une grille d'épingles vide.
+- Une décision qui change une règle corrige **ce fichier**, dans le même
+  commit.
 
 ### Git
-- Travailler sur une branche dédiée. Pas de push direct sur `main`, pas de force-push.
-- Claude commite et pousse sur la branche de travail sans demander. Un commit par changement
-  cohérent, message en français, qui dit **pourquoi**.
+- Branche dédiée, pas de force-push. Un commit par changement cohérent,
+  message en français, qui dit **pourquoi**.
 
 ### Après
-- Rendre compte de : ce qui a changé (avec le commit), ce qui est vérifié, ce qui reste
-  `À VALIDER`, et ce que **je** dois faire moi-même (VM, machine réelle, dépôt).
-- Mettre à jour [AVANCEMENT.md](AVANCEMENT.md).
-- Joindre les captures du banc. Si une capture manque, dire pourquoi.
-- Claude ne peut pas tester sur ma machine. Le dire, plutôt que de présenter un résultat non
-  testé comme acquis.
+- Rendre compte de : ce qui a changé (avec le commit), ce qui est vérifié, ce
+  qui reste `À VALIDER`, et ce que le propriétaire doit faire lui-même.
+- Mettre à jour le §6 de ce fichier et [AVANCEMENT.md](AVANCEMENT.md).
+- Joindre les captures. Si une capture manque, dire pourquoi.
 
-## 5. Déroulé type d'une tâche
-
-1. **Comprendre** : quel lot ? quelles décisions, quelles mesures de `jetons.toml` ?
-2. **Vérifier** : aucune question ouverte bloquante, aucune décision `À DÉCIDER` nécessaire.
-3. **Proposer**, si la tâche touche l'architecture. J'arbitre, on écrit la décision.
-4. **Réaliser** sur une branche, sans contourner le §3.
-5. **Mesurer** : le banc, la CI, la VM. Noter ce qui n'a pas pu être mesuré.
-6. **Rendre compte** (§4).
-
-## 6. Construire et essayer
+## 9. Construire et essayer
 
 ```bash
-./third_party/preparer.sh      # police, curseurs, thème GTK (une fois)
+./third_party/preparer.sh
 cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
 cmake --build build -j"$(nproc)"
+./installer.sh --utilisateur    # essayer sans toucher au système
+./desinstaller.sh               # tout défaire
 ```
 
-Pour essayer sans toucher au système : `./installer.sh --utilisateur`, puis se reconnecter.
-Pour tout défaire : `./desinstaller.sh`.
+Contrôles locaux avant tout envoi :
+
+```bash
+./tests/garde-version.sh && ./tests/barres.sh && ./ci/verifier-coherence.sh
+python3 tests/ordre-des-fonctions.py $(git ls-files '*.sh')
+python3 tests/qml-imports.py $(git ls-files 'src/**/*.qml')
+shellcheck -x -i SC2154,SC2034 $(git ls-files '*.sh')
+```
+
+**Langue du projet** : français. `README.en.md` est la seule pièce en anglais.

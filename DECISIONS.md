@@ -61,7 +61,7 @@
     extensions et des thèmes sur GNOME, pas un DE neuf).
 - **Alternatives rejetées** : les formes 2 et 3 ci-dessus.
 - **Limite assumée** : la fidélité est bornée par ce que Plasma expose. Ce qui reste hors de
-  portée est listé dans [ANKH-DE-SPEC.md §4](ANKH-DE-SPEC.md#4-ce-qui-nest-pas-atteignable).
+  portée est listé dans [CLAUDE.md §1](CLAUDE.md).
 - **Vérification** : les mesures des lots 1 à 3, relevées en VM le 2026-10-22
   (runs [39753433287](https://github.com/PatrickChoumi/Ankh/actions/runs/39753433287) et
   [39753437837](https://github.com/PatrickChoumi/Ankh/actions/runs/39753437837) d'Ankh, vertes).
@@ -111,7 +111,7 @@
   reprises au pixel près ; **seules les couleurs** sont celles d'Ankh (graphite et violet),
   rangées par couches comme celles de Windows 11 (fenêtre, contenu, carte, contrôle, contour),
   en sombre et en clair. La référence complète est dans
-  [ANKH-DE-SPEC.md §2](ANKH-DE-SPEC.md#2-la-référence-windows-11).
+  [CLAUDE.md §1](CLAUDE.md).
 - **Raisons** : c'est la décision d'Ankh (D-052), et les lots 1 à 3 sont déjà construits ainsi :
   aucun travail à refaire. Un clone intégral n'apporterait que l'accent bleu et les gris neutres,
   au prix de l'identité du projet — et c'est précisément la part qui expose au risque de marque
@@ -363,7 +363,7 @@
 - **Risque assumé, et il est nommé** : un motif qui ressemble à une marque reste un risque
   d'habillage commercial, quelle que soit la licence du dessin. C'est le risque que le projet
   porte déjà pour l'ensemble du thème Fluent, et il est décrit dans
-  [AUDIT.md §5](../AUDIT.md). Cette décision ne l'augmente pas : elle le rend explicite.
+  [DECISIONS.md](DECISIONS.md). Cette décision ne l'augmente pas : elle le rend explicite.
 - **Vérification** : l'icône livrée est celle de Fluent, à son commit figé `c8a244f`, déclarée
   dans `LICENSES/README.md` comme le reste du thème.
 

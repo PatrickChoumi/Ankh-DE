@@ -103,4 +103,4 @@ Par honnêteté, et parce que c'est la règle du projet (CLAUDE.md §3.9) : on n
 - les mesures de Démarrer et des paramètres rapides tant que les lots 5 et 6 ne sont pas faits ;
 - tout ce qui dépend du matériel réel : écrans à haute résolution multiples, VRR, HDR.
 
-Voir [ANKH-DE-SPEC.md §4](../ANKH-DE-SPEC.md#4-ce-qui-nest-pas-atteignable).
+Voir [CLAUDE.md §1](../CLAUDE.md).

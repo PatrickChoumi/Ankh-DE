@@ -19,7 +19,7 @@
 `ankhvm`. **Rien de cela n'existe dans ce dépôt.**
 
 Le porter sur une VM Plasma nue est la tâche **0.5** du
-[lot 0](../ROADMAP.md#lot-0--autonomie). Tant qu'elle n'est pas faite :
+[CLAUDE.md §7](../CLAUDE.md). Tant qu'elle n'est pas faite :
 
 - `jetons.toml`, `fidelite.py` et `mesurer.py` sont utilisables tels quels ;
 - les mesures citées dans le README et dans `AVANCEMENT.md` sont celles **d'Ankh**, relevées sur

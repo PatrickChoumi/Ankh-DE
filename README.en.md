@@ -14,18 +14,18 @@ distribution, and it uninstalls in one command.
 Plasma: exactly one piece of the panel is ours, the Start menu. Everything else — tasks, system
 tray, clock and calendar, notifications, Alt+Tab — are Plasma's **native** applets, wearing our
 style. The component-by-component audit that led there is in
-[docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md) (French, [DE-015](DECISIONS.md)).
+[DECISIONS.md, DE-015](DECISIONS.md) (French, [DE-015](DECISIONS.md)).
 
 > ### Status: pre-release, stated without rounding
 >
 > | Where | What is established |
 > |---|---|
 > | **Fedora 44, Plasma 6.8.2** | the session opens from the login screen, installed by `installer.sh` in a fresh VM. `ANKH_DE_SESSION=1`, style `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh`. **48 key-by-key checks** passing *inside the session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **the target** | **the session opens** from the login screen and **every setting applies** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, Plasma style `ankh` — run `42397366933`. That run nonetheless ended in failure, on a harness defect unrelated to Ankh DE; the key-by-key checks did not run. Detail: [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) |
+> | **Ubuntu 26.04, Plasma 6.6** — **the target** | **the session opens** from the login screen and **every setting applies** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, Plasma style `ankh` — run `42397366933`. That run nonetheless ended in failure, on a harness defect unrelated to Ankh DE; the key-by-key checks did not run. Detail: [CLAUDE.md §6](CLAUDE.md) |
 > | **Arch** | the code builds. No install, no session |
 >
 > **The functional state of each piece — installed, loaded, interactive, validated — lives in
-> [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) and nowhere else.** This README does not restate
+> [CLAUDE.md §6](CLAUDE.md) and nowhere else.** This README does not restate
 > it: on 2026-11-07 five documents carried five different versions of it, and
 > `ci/verifier-coherence.sh` now refuses that.
 >
@@ -137,7 +137,7 @@ opens them up:
 ## Contributing
 
 The one rule that matters: **a claim of fidelity without a bench measurement is not accepted**.
-See [CONTRIBUTING.md](CONTRIBUTING.md). Project documents are in French; issues and pull requests
+See [CLAUDE.md](CLAUDE.md). Project documents are in French; issues and pull requests
 in English are welcome.
 
 Help is most useful on the recurring cost: **rebasing onto each Plasma release**

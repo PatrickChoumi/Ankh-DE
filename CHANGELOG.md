@@ -45,7 +45,7 @@ qu'elle passait `-DANKH_DE_PLASMA_NON_TESTE=ON` sur les trois distributions.
 
 ### Corrigé — les documents ne racontent plus qu'une histoire
 
-[docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md) est la **source unique** de l'état fonctionnel.
+[CLAUDE.md §6](CLAUDE.md) est la **source unique** de l'état fonctionnel.
 `ci/verifier-coherence.sh` §8 refuse qu'un autre document attribue une interaction à un autre
 SHA. Le 2026-11-07, cinq documents portaient cinq états différents du menu Démarrer.
 

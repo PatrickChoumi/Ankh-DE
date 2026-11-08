@@ -171,6 +171,14 @@ jobs:
       - name: Cohérence des décisions et des règles
         run: ./ci/verifier-coherence.sh
 
+      # Neuf documents de règles ont été supprimés le 2026-11-08 et fondus
+      # dans CLAUDE.md. Vingt-neuf liens les désignaient encore, dans douze
+      # fichiers — y compris des README de sous-dossiers que personne ne
+      # pense à relire. Un lien mort renvoie vers une règle qu'on croit
+      # toujours en vigueur.
+      - name: Aucun lien vers un document disparu
+        run: ./ci/verifier-liens.sh
+
       # CLAUDE.md §3.8 : on doit pouvoir revenir à l'état de départ.
       # « installer.sh --barre » détruisait les barres de l'utilisateur sans
       # retour possible jusqu'au 2026-11-07 ; ce test fait le tour complet

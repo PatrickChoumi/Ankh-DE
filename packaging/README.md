@@ -18,7 +18,7 @@
      archives amont en `Source:`, chacune à son commit ;
    - **ou** ne pas les empaqueter, et dépendre des paquets existants de la distribution là où ils
      existent.
-   C'est la question 6 de [ANKH-DE-SPEC.md §7](../ANKH-DE-SPEC.md#7-questions-ouvertes), `À DÉCIDER`.
+   C'est la question 6 de [CLAUDE.md §1](../CLAUDE.md), `À DÉCIDER`.
 2. **Le paquet ne doit pas appliquer le thème.** Installer les fichiers, oui ; écrire la
    configuration de l'utilisateur, jamais
    ([DE-002](../DECISIONS.md#de-002--tous-les-réglages-vivent-dans-notre-thème-global-jamais-dans-etcxdg-ni-dans-les-thèmes-de-la-distribution)).

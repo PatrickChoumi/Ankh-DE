@@ -203,29 +203,37 @@ else
              | grep -v '^\./docs/consignes/')
 fi
 
-# --- 6. Les consignes permanentes du propriétaire -------------------------
-# Deux documents déposés le 2026-11-07 sont contraignants. Ils ont déjà un
-# précédent fâcheux dans ce dépôt : une règle qui n'est pas contrôlée finit
-# par être contredite ailleurs sans que rien ne le dise (DE-011 contre
-# CLAUDE.md, l'interdiction du code tiers dans UPSTREAMS.md).
+# --- 6. CLAUDE.md est le seul document de règles --------------------------
+# Les deux « consignes permanentes » et sept autres documents de règles ont
+# été supprimés le 2026-11-08 : ils prescrivaient de garder des applets que
+# DE-015 avait retirés, annonçaient Plasma 6.7, et l'un d'eux s'arrogeait la
+# préséance sur CLAUDE.md. Ce qui restait vrai est dans CLAUDE.md.
 #
-# On vérifie donc qu'ils existent, qu'ils ne sont pas vidés, et que CLAUDE.md
-# — le seul fichier lu à chaque session — y renvoie.
-CONSIGNES=(
+# Ce qu'on surveille désormais n'est plus leur présence mais leur ABSENCE :
+# si l'un d'eux reparaît, le dépôt porte de nouveau deux jeux de règles.
+RESSUSCITES=(
     "docs/consignes/INTEGRATION-SOURCES.md"
     "docs/consignes/ANTI-DOUBLONS.md"
+    "docs/ANTI_DOUBLONS.md"
+    "docs/SIMPLIFICATION.md"
+    "docs/ARCHITECTURE.md"
+    "ANKH-DE-SPEC.md"
+    "AUDIT.md"
+    "ROADMAP.md"
+    "CONTRIBUTING.md"
 )
-for consigne in "${CONSIGNES[@]}"; do
-    if [[ ! -s "${consigne}" ]]; then
-        signaler "la consigne permanente ${consigne} est absente ou vide"
-        continue
-    fi
-    lignes="$(wc -l < "${consigne}")"
-    (( lignes >= 100 )) \
-        || signaler "${consigne} ne fait que ${lignes} lignes : elle a été tronquée"
-    grep -qF -- "${consigne}" CLAUDE.md \
-        || signaler "CLAUDE.md ne renvoie pas à ${consigne}, qui ne sera donc jamais lue"
+for revenant in "${RESSUSCITES[@]}"; do
+    [[ -e "${revenant}" ]] \
+        && signaler "${revenant} est revenu : CLAUDE.md doit rester le seul document de règles"
 done
+# Et CLAUDE.md doit exister, être substantiel, et se déclarer seul à faire foi.
+if [[ ! -s CLAUDE.md ]]; then
+    signaler "CLAUDE.md est absent ou vide : le dépôt n'a plus de règles"
+elif (( $(wc -l < CLAUDE.md) < 80 )); then
+    signaler "CLAUDE.md ne fait que $(wc -l < CLAUDE.md) lignes : il a été vidé"
+elif ! grep -q "le seul document de règles" CLAUDE.md; then
+    signaler "CLAUDE.md ne se déclare plus comme le seul document de règles"
+fi
 
 # --- 7. Le compte des jetons MESURÉS, et non plus seulement le total ------
 # Le contrôle n° 4 vérifie le dénominateur (« sur 53 »). Il ne regardait pas
@@ -246,38 +254,14 @@ if [[ -n "${mesures_citees}" ]] && (( nb_valeurs > 1 )); then
         --exclude-dir=.git --exclude=AUDIT.md | sed 's/^/        /' | cut -c1-120 >&2
 fi
 
-# --- 8. Un seul état fonctionnel, un seul SHA de preuve -------------------
-# Le 2026-11-07, cinq documents portaient cinq états différents du menu
-# Démarrer : le README le disait interactif, la ROADMAP disait l'inverse,
-# AVANCEMENT disait qu'aucune interaction n'était testée. Chacun était vrai à
-# sa date et faux au présent — exactement le défaut que le §5 corrige pour la
-# version de Plasma et le §7 pour le compte des jetons.
-#
-# docs/ANTI_DOUBLONS.md est la source unique (son en-tête le déclare). Tout
-# autre document qui parle d'une interaction PROUVÉE doit citer le même SHA.
-#
-# AVANCEMENT.md est exclu, et pour une raison de fond : c'est un JOURNAL. Ses
-# entrées datées doivent garder ce qui était vrai à leur date, sinon elles ne
-# servent plus à rien. Son tableau « ce qui est vérifié » renvoie ici.
-canonique="$(sed -n 's/^| \*\*SHA des preuves d.interaction\*\* | `\([0-9a-f]\{7,40\}\)` |.*/\1/p'     docs/ANTI_DOUBLONS.md 2>/dev/null | head -1)"
-if [[ -z "${canonique}" ]]; then
-    signaler "docs/ANTI_DOUBLONS.md ne déclare plus de « SHA des preuves d'interaction » : l'état fonctionnel n'a plus de source"
-else
-    # Les mots qui font d'une phrase une affirmation d'interaction. « ouvre »
-    # seul ne suffit pas : on veut les verdicts, pas les descriptions.
-    MOTS_INTERACTION='interactif|interaction|prend le clavier|se referme sur Échap|closes on Esc|takes the keyboard|lance réellement|really launches'
-    while IFS=: read -r fichier ligne texte; do
-        [[ -n "${fichier}" ]] || continue
-        # Les SHA cités sur cette ligne, en 7 caractères pour comparer.
-        while read -r cite; do
-            [[ -n "${cite}" ]] || continue
-            [[ "${cite:0:7}" == "${canonique:0:7}" ]] && continue
-            signaler "${fichier}:${ligne} attribue une interaction au SHA ${cite}, alors que docs/ANTI_DOUBLONS.md déclare ${canonique}"
-        done < <(grep -oE '`[0-9a-f]{7,40}`' <<< "${texte}" | tr -d '`' || true)
-    done < <(grep -rnE "${MOTS_INTERACTION}" --include='README.md' --include='README.en.md' \
-                 --include='ROADMAP.md' --include='CLAUDE.md' . 2>/dev/null \
-             | grep -v '^\./\.git' | grep -E '`[0-9a-f]{7,40}`' || true)
-fi
+# --- 8. L'état fonctionnel ne vit que dans CLAUDE.md ----------------------
+# Ce contrôle comparait le SHA des preuves déclaré par docs/ANTI_DOUBLONS.md à
+# celui que citaient les autres documents. Ce fichier a été absorbé par
+# CLAUDE.md : il n'y a plus d'accord à surveiller ENTRE documents, puisqu'il
+# n'y en a plus qu'un. Ce qui reste utile, c'est que CLAUDE.md porte bien un
+# tableau d'état — sans quoi l'état ne serait écrit nulle part.
+grep -q "^## 6. État" CLAUDE.md \
+    || signaler "CLAUDE.md n'a plus de section « État » : l'état fonctionnel n'est écrit nulle part"
 
 # --- Bilan ---------------------------------------------------------------
 if (( echecs )); then

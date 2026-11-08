@@ -1,7 +1,7 @@
 # AVANCEMENT — Ankh DE
 
 > Tout ce qui a été fait, et ce qui reste. Mis à jour à chaque compte rendu, comme dans Ankh
-> (D-029). L'ordre des travaux est dans [ROADMAP.md](ROADMAP.md).
+> (D-029). L'ordre des travaux est dans [CLAUDE.md §7](CLAUDE.md).
 
 ## 2026-11-05 — Création du dépôt (lot 0, en cours)
 
@@ -300,11 +300,11 @@ dans le vide :
   dans son propre fichier. Elles passent par `systemd-cat`, et le harnais regarde trois
   endroits.
 
-**Phase A des consignes faite** : [docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md). Une seule
+**Phase A des consignes faite** : [CLAUDE.md §6](CLAUDE.md). Une seule
 implémentation par responsabilité, aucun doublon. Et le constat qui comptait **à cette date** :
 sur douze responsabilités, aucune interaction n'était testée. Ce n'est plus vrai du menu
 Démarrer depuis `09e4950` — l'état courant est dans
-[docs/ANTI_DOUBLONS.md](docs/ANTI_DOUBLONS.md), qui en est la source unique.
+[CLAUDE.md §6](CLAUDE.md), qui en est la source unique.
 
 ## 2026-11-07 — la barre devient native, et Ankh DE se construit enfin sur Ubuntu
 
@@ -335,7 +335,7 @@ Deux de ces imports reposaient sur une valeur **fausse**, écrite de mémoire : 
 sait mettre la date **sous** l'heure (`dateDisplayFormat=BelowTime`, lu dans
 `applets/digital-clock/main.xml`), et `iconSpacing` d'icontasks est un `Int`, pas une
 énumération. Deux applets importés pour contourner des limites qui n'existaient pas. L'audit
-complet est dans [docs/SIMPLIFICATION.md](docs/SIMPLIFICATION.md).
+complet est dans [DECISIONS.md, DE-015](DECISIONS.md).
 
 Et un piège évité par le même réflexe : `org.kde.plasma.marginsseparator` aurait été plus propre
 pour l'écart de 9 px, mais il **n'existe pas en Plasma 6.6** — 404 sur la branche `Plasma/6.6`,
