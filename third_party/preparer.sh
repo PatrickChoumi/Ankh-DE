@@ -280,7 +280,12 @@ for couple in '1a73e8:0078D4' '1967d2:005FB8' '8ab4f8:4CC2FF'; do
     # le pipeline rend 1, et « set -e » tue le script SANS UN MOT. Le
     # passage f9add82 est mort exactement là, juste après le « Done. » de
     # install.sh, sans message : #1967d2 n'existe pas dans ces feuilles.
-    { grep -rliZ --include='*.css' --include='*.rc' -i "#${avant}" "${theme}" 2>/dev/null || true; } \
+    # TOUS les fichiers texte, pas seulement *.css et *.rc : le contrôle
+    # final, lui, cherche partout. Le passage 97aed4f l'a montré — « le
+    # bleu de Google est resté » alors que la recoloration ne regardait que
+    # deux extensions. « -I » saute les binaires, où un « #1a73e8 » écrit
+    # en toutes lettres n'a de toute façon pas de sens.
+    { grep -rlIZi "#${avant}" "${theme}" 2>/dev/null || true; } \
         | xargs -0 -r sed -i "s/#${avant}/#${apres}/gI"
 done
 grep -rqiF '#1a73e8' "${theme}" \
