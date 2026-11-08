@@ -366,6 +366,51 @@ C'était la règle que ce script s'était donnée, et cet endroit ne la suivait 
 de l'état fonctionnel, et `ci/verifier-coherence.sh` §8 refuse qu'un autre document attribue une
 interaction à un autre SHA. Éprouvé par mutation.
 
+## 2026-11-08 — L'interface prend l'apparence de Windows 11, et les règles tiennent en un fichier
+
+Le propriétaire a tranché : « tout ce que je veux c'est que l'interface ressemble **exactement**
+à celle de Windows ». Ankh n'est pas jeté, il est **mis de côté** : la branche `ankh` porte
+l'état du 2026-11-08 avant ce virage, et elle est figée. Les identifiants internes
+(`org.ankh.*`, `Ankh.colors`, `Fluent-Ankh`) ne changent pas — les renommer casse un passage en
+VM pour rien ([DE-017](DECISIONS.md)).
+
+**Un seul document de règles.** Neuf fichiers se contredisaient : `ANKH-DE-SPEC.md`,
+`docs/ANTI_DOUBLONS.md`, `docs/AUDIT.md`, `docs/SIMPLIFICATION.md` et cinq autres, 4 557 lignes
+au total. Ils disaient à la fois « la géométrie de Windows, les couleurs d'Ankh » et
+« ressembler à Windows 11 ». `CLAUDE.md` fait désormais 250 lignes et porte seul les règles,
+l'ordre de choix (GARDER / CONFIGURER / ADAPTER / IMPORTER / CONSTRUIRE / DIFFÉRER), les cinq
+états et le tableau de l'état fonctionnel. 29 liens morts ont été réécrits, et
+`ci/verifier-liens.sh` refuse qu'un lien pointe dans le vide.
+
+**Les couleurs viennent de la documentation de WinUI, pas des captures.** Une capture de
+Windows 11 ne donne pas ses couleurs : Mica et l'acrylique prennent la teinte du fond d'écran.
+Les 124 valeurs de `Ankh.colors` et `AnkhClair.colors` sont celles que Microsoft publie —
+`SolidBackgroundFillColorBase` `#F3F3F3` en clair, `#202020` en sombre ; l'accent `#0078D4` en
+clair, `#4CC2FF` en sombre. Ce qui est **opaque** se relève bien à l'image, et seulement
+ça : le jaune des dossiers, `#ffcb52`, mesuré sur une capture.
+
+**Le thème clair par défaut**, comme Windows 11 sorti de la boîte. Deux contrôles attendaient
+encore le sombre ; c'est le dernier échec du banc qui l'a dit.
+
+**Le menu Démarrer a la disposition de Windows 11** : la recherche en haut, une grille de
+6 × 3 épingles, « Recommandé » dessous, l'utilisateur et l'alimentation en bas. Il avait la
+forme de Windows 7 — une colonne de favoris à gauche, les lieux à droite — et personne ne
+l'avait vu parce que personne n'avait regardé la capture.
+
+**Ce que les captures ont trouvé et que les tests taisaient**, trois fois en trois jours :
+la grille des épingles s'affichait **vide** (`Plasmoid.configuration` employé sans son import,
+donc `cellWidth` à `NaN`) ; la barre se mesurait « 800 / 0 » sur un fond noir ; le menu de
+Windows 7 passait pour celui de 11. Trois défauts qu'aucun test ne signalait. D'où
+`tests/qml-imports.py`, et la mesure de la barre sur **magenta** — ni le noir ni le blanc ne
+conviennent aux deux thèmes.
+
+**Les garde-fous qui mentaient**, corrigés et éprouvés par mutation : un `grep` sans résultat
+dans un tuyau sous `set -o pipefail` tuait le script **sans un mot** (troisième fois) ; un
+garde-fou exigeait trois couleurs GTK dont deux supposées ; la recoloration ne regardait que
+`*.css` et `*.rc` quand le contrôle regardait tout, et `gtk-2.0/gtkrc` n'a pas d'extension ;
+le contrôle de désinstallation nommait huit pièces sans `AnkhClair.colors`, devenu le jeu par
+défaut.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 > **Relu le 2026-11-06.** Ce tableau se lit au présent : trois de ses lignes étaient devenues

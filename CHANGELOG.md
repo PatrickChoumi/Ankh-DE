@@ -1,5 +1,75 @@
 # Journal des versions
 
+## Non publié — 2026-11-08
+
+### Changé — l'apparence par défaut est celle de Windows 11 ([DE-017](DECISIONS.md))
+
+Ankh DE ne mélange plus « la géométrie de Windows 11 » et « les couleurs d'Ankh ». Sorti de la
+boîte, il ressemble à Windows 11. L'identité d'Ankh n'est pas jetée : la branche `ankh` porte
+l'état d'avant ce virage, figée, et reviendra plus tard en **variante**. Les identifiants
+internes (`org.ankh.*`, `Ankh.colors`, `Fluent-Ankh`) ne changent pas.
+
+- **Les couleurs** : 124 valeurs de `Ankh.colors` et `AnkhClair.colors` sont désormais celles
+  que Microsoft publie pour WinUI — `#F3F3F3` en clair, `#202020` en sombre, accent `#0078D4`
+  en clair et `#4CC2FF` en sombre. Elles ne sont **pas** relevées sur une capture : Mica et
+  l'acrylique prennent la teinte du fond d'écran, donc une capture ne donne pas la couleur
+  déclarée. Ce qui est opaque, lui, se relève bien à l'image, et seulement ça : le jaune des
+  dossiers, `#ffcb52`.
+- **Le thème clair par défaut**, comme Windows 11.
+- **Le bouton Démarrer** porte un glyphe neutre à quatre volets, et l'applet garde son réglage
+  d'image personnalisée.
+- **Le fond d'écran** est le bleu de Windows 11, copié tel quel : `recolorer-fond.py` et les
+  cinq tables de recoloration violette de `third_party/preparer.sh` sont supprimés.
+- **Le thème GTK** est construit sur la variante bleue, puis `#1a73e8` — le bleu de Google —
+  devient `#0078D4` dans **tous** ses fichiers texte, `gtk-2.0/gtkrc` compris, qui n'a pas
+  d'extension.
+
+### Changé — le menu Démarrer prend la disposition de Windows 11
+
+Il avait celle de Windows **7** : une colonne de favoris à gauche, les lieux à droite. Personne
+ne l'avait vu, parce que personne n'avait regardé la capture.
+
+- la recherche **en haut**, une grille de **6 × 3** épingles, « Recommandé » dessous,
+  l'utilisateur et l'alimentation **en bas** ;
+- `MenuRepresentation.qml` est refait depuis l'amont : une seule `ColumnLayout`, trois pages
+  ancrées dans un `Item`, et `Kicker.RecentUsageModel` déclaré directement — `findRowModel` ne
+  sait pas trouver les lignes récentes ;
+- `BottomBar.qml` et `PowerButton.qml` sont séparés ; l'abscisse de la zone cliquable du second
+  décide entre « éteindre » et « ouvrir le menu », donc il est copié tel quel.
+
+### Changé — un seul document de règles ([DE-017](DECISIONS.md))
+
+Neuf fichiers se contredisaient, 4 557 lignes : `ANKH-DE-SPEC.md`, `docs/ANTI_DOUBLONS.md`,
+`docs/AUDIT.md`, `docs/SIMPLIFICATION.md` et cinq autres. `CLAUDE.md` fait 250 lignes et porte
+seul les règles, l'ordre de choix, les cinq états et l'état fonctionnel. 29 liens morts
+réécrits, et `ci/verifier-liens.sh` refuse qu'un lien pointe dans le vide.
+
+### Corrigé — ce que seules les captures ont trouvé
+
+Trois défauts en trois jours, qu'aucun test ne signalait :
+
+- la **grille des épingles s'affichait vide** : `Plasmoid.configuration.numberColumns` sans
+  l'import de `org.kde.plasma.plasmoid` rend `undefined`, donc `cellWidth` vaut `NaN`. Les
+  types attachés de QML se résolvent dans les imports du **document qui les emploie**, sans
+  repli. D'où `tests/qml-imports.py` ;
+- la **barre se mesurait « 800 / 0 »** sur un fond noir. Elle se mesure maintenant sur du
+  **magenta** : ni le noir ni le blanc ne conviennent aux deux thèmes ;
+- l'**horloge affichait les secondes**. `showSeconds` déclare un `<choices>` **sans nom**, donc
+  KConfig attend l'indice entier `0`, et non la chaîne `"Never"`.
+
+### Corrigé — des garde-fous qui mentaient
+
+- un `grep` sans résultat dans un tuyau sous `set -o pipefail` tue le script **sans un mot**
+  (troisième fois dans ce dépôt) ;
+- un garde-fou GTK exigeait trois couleurs dont **deux supposées** : l'écho n'en avait montré
+  qu'une ;
+- la recoloration ne regardait que `*.css` et `*.rc` quand le contrôle regardait **tout** ;
+- le contrôle de désinstallation nommait huit pièces sans `AnkhClair.colors`, devenu le jeu
+  par défaut ;
+- `tests/session-et-theme.sh` exigeait encore le jeu **sombre** ;
+- `tests/ordre-des-fonctions.py`, écrit pour attraper un appel avant définition, ne vérifiait
+  **rien** : les fonctions d'une seule ligne faussaient son compte d'accolades.
+
 ## Non publié — 2026-11-07
 
 ### Changé — la barre devient native, sauf Démarrer ([DE-015](DECISIONS.md))
