@@ -284,8 +284,11 @@ fi
 # Ce qu'on affiche, c'est la couleur d'accent RÉELLEMENT présente, et non
 # un hexadécimal deviné : le premier jet cherchait #0078d4 et ne trouvait
 # rien, donc n'apprenait rien.
+# On ne devine plus quel hexadécimal chercher — les deux tentatives
+# précédentes n'affichaient rien du tout, donc n'apprenaient rien. On montre
+# les trois couleurs les plus fréquentes, quelles qu'elles soient.
 for feuille in gtk-3.0/gtk.css gtk-4.0/gtk.css; do
-    echo "Fluent-Ankh, ${feuille} : accents $(grep -ohiE '#(0067c0|0078d4|005fb8|2196f3|4cc2ff)' "${theme}/${feuille}" | sort | uniq -c | tr '\n' ' ')"
+    echo "Fluent-Ankh, ${feuille} : $(grep -ohiE '#[0-9a-f]{6}' "${theme}/${feuille}" | tr 'A-F' 'a-f' | sort | uniq -c | sort -rn | head -3 | tr '\n' ' ')"
 done
 
 echo "== Thème d'icônes Fluent-Ankh (lot 9)"
@@ -696,7 +699,10 @@ verifier_menu MenuRepresentation.qml "id: pageSlot"                           "S
 verifier_menu MenuRepresentation.qml "Kicker.RecentUsageModel"                "la section « Recommandé »"
 verifier_menu MenuRepresentation.qml "id: bottomBarContent"                   "SearchPage l'atteint par ce nom"
 verifier_menu MenuRepresentation.qml "id: powerButton"                        "l'alimentation en bas à droite"
-verifier_menu components/BottomBar.qml "id: bottomBarContent"                 "idem, côté composant"
+# Le composant s'appelle « bottomBar » chez lui ; « bottomBarContent » est
+# le nom de SON INSTANCE dans MenuRepresentation. J'avais confondu les deux,
+# et le banc me l'a dit.
+verifier_menu components/BottomBar.qml "id: bottomBar"                        "le composant perdrait son identité"
 verifier_menu components/BottomBar.qml "property alias searchText"            "SearchPage lit cet alias"
 verifier_menu components/BottomBar.qml "function focusSearch"                 "SearchPage appelle cette fonction"
 verifier_menu components/BottomBar.qml "Search for apps, settings, and documents" "le texte d'invite de Windows 7 resterait"
