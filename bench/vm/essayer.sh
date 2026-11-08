@@ -451,7 +451,29 @@ preuve "c'est notre lanceur"                "1"       "$(environ_de ANKH_DE_SESS
 # On attend donc que l'écran se peuple, et on dit AU BOUT DE COMBIEN DE
 # TEMPS : la durée est elle-même une information, et un échec dit alors
 # « jamais en N secondes », ce qui est vérifiable.
+# Réveiller l'écran avant une capture prise à l'aveugle.
+#
+# Le 2026-11-08, « vm-bureau.png » était NOIRE d'un bout à l'autre et la
+# barre « introuvable sur l'image après 36 s » — sur Ubuntu, pas sur Fedora.
+# La session s'était ouverte à 13:48 et la capture a été prise à 13:56 :
+# huit minutes sans la moindre entrée. PowerDevil éteint l'écran au bout de
+# cinq. Ce n'était ni la barre ni l'instrument : c'était l'écran de veille,
+# et les captures d'interaction qui ont suivi — elles, précédées de clics —
+# montraient tout.
+#
+# On bouge donc le pointeur de deux pixels avant chaque capture aveugle.
+# Deux pixels ne cliquent rien, ne déplacent aucune fenêtre, et suffisent à
+# faire dire à PowerDevil que l'utilisateur est là. Les helpers d'entrée
+# complets (pointer, cliquer) ne sont définis que plus bas, avec la taille
+# d'écran mesurée : celle-ci se suffit du milieu de l'écran en absolu.
+reveiller_ecran() {
+    printf '{ "execute": "qmp_capabilities" }\n{ "execute": "input-send-event", "arguments": { "events": [ { "type": "abs", "data": { "axis": "x", "value": 16000 } }, { "type": "abs", "data": { "axis": "y", "value": 16000 } } ] } }\n{ "execute": "input-send-event", "arguments": { "events": [ { "type": "abs", "data": { "axis": "x", "value": 16384 } }, { "type": "abs", "data": { "axis": "y", "value": 16384 } } ] } }\n' \
+        | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+    sleep 1.5
+}
+
 variete() { # rend « écart-type couleurs » du cliché courant
+    reveiller_ecran
     printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
         "${travail}/preuve.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
     [[ -s "${travail}/preuve.ppm" ]] || { echo "0 0"; return; }
@@ -577,6 +599,7 @@ echo "- vérifications clé par clé passées dans la session : ${compte_tests:-
     >> "${sortie}/vm-rapport.md"
 
 etape "9. Capture du bureau"
+reveiller_ecran
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
     "${travail}/bureau.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
 if [[ -s "${travail}/bureau.ppm" ]]; then
@@ -735,6 +758,7 @@ fi
 # Une image AVANT, prise juste maintenant, pour que la comparaison ne porte
 # que sur l'ouverture. (La capture de l'étape 9 est trop vieille : l'horloge
 # a pu changer entre-temps.)
+reveiller_ecran
 printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
     "${travail}/avant-menu.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
 
@@ -916,8 +940,9 @@ plasma_script 'panels().forEach(function(p){ p.opacity="opaque" })' > /dev/null 
 # qu'on le sache.
 mesure_barre="? ? ?"
 attente_barre=0
-for essai in $(seq 12); do          # 12 × 3 s = 36 secondes
-    sleep 3
+for essai in $(seq 25); do          # 25 × 3 s = 75 secondes
+    reveiller_ecran                 # sinon l'écran s'éteint et « la colonne
+    sleep 3                         # est uniforme » décrit la veille, pas nous
     attente_barre=$((essai * 3))
     printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
         "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
@@ -1108,7 +1133,14 @@ essai_interaction() { # $1 : nom court (sert au fichier), $2 : libellé,
     local nom="$1" libelle="$2" attendu="$3" seuil="$4"
     shift 4
     cliche "av.ppm"
-    "$@"
+    # « || true » n'est pas de la complaisance : sans lui, une action qui
+    # rend non-zéro tue le script sous « set -e », AU MILIEU d'un essai,
+    # et emporte tout ce qui suit. Le 2026-11-08, « loginctl lock-session »
+    # a répondu « Session does not support lock screen » et le passage est
+    # mort là, sans faire l'étape 13 — la désinstallation. Une action qui
+    # échoue doit donner un essai qui ÉCHOUE, pas un script qui meurt :
+    # l'écran ne changera pas, et la comparaison le dira.
+    "$@" || echo "   (l'action a rendu non-zéro ; l'écran tranchera)"
     sleep 2.5
     cliche "ap.ppm"
     local part obtenu
@@ -1138,7 +1170,7 @@ essai_fait() { # $1 : nom court, $2 : libellé, $3 : commande de verdict
                # lancée dans l'invité, $4… : l'action à exécuter
     local nom="$1" libelle="$2" verdict_cmd="$3"
     shift 3
-    "$@"
+    "$@" || echo "   (l'action a rendu non-zéro ; le verdict tranchera)"
     local atteint=0 i
     for (( i = 0; i < 20; i++ )); do
         ssh_vm "${verdict_cmd}" > /dev/null 2>&1 && { atteint=1; break; }
@@ -1515,12 +1547,27 @@ if [[ -z "${verrou_id}" ]]; then
     grief "aucune session loginctl pour l'utilisateur ankh : le verrouillage n'est pas testable"
 else
     echo "   session loginctl : ${verrou_id}"
-    essai_interaction verrouillage \
-        "l'écran se verrouille" oui 3 \
-        ssh_vm "loginctl lock-session ${verrou_id}"
-    essai_interaction deverrouillage \
-        "et se déverrouille" oui 3 \
-        ssh_vm "loginctl unlock-session ${verrou_id}"
+    # Le 2026-11-08, « loginctl lock-session » a répondu « Session does not
+    # support lock screen » : logind refuse quand la session n'est pas
+    # marquée comme graphique. Ce n'est pas le chemin de l'utilisateur non
+    # plus — Meta+L passe par org.freedesktop.ScreenSaver, le service de
+    # KScreenLocker, sur le bus de SESSION. On prend donc ce chemin-là, et
+    # logind ne sert plus que de repli.
+    verrouiller() {
+        dans_session 'dbus-send --session --print-reply \
+            --dest=org.freedesktop.ScreenSaver /ScreenSaver \
+            org.freedesktop.ScreenSaver.Lock' > /dev/null 2>&1 \
+            || ssh_vm "loginctl lock-session ${verrou_id}" > /dev/null 2>&1
+    }
+    # Déverrouiller SANS mot de passe n'a qu'un chemin : logind le demande à
+    # la session. S'il refuse, l'essai échouera — et c'est la bonne réponse,
+    # parce qu'alors le déverrouillage n'est pas prouvé.
+    deverrouiller() {
+        ssh_vm "sudo loginctl unlock-session ${verrou_id}" > /dev/null 2>&1 \
+            || ssh_vm "sudo loginctl unlock-sessions" > /dev/null 2>&1
+    }
+    essai_interaction verrouillage   "l'écran se verrouille" oui 3 verrouiller
+    essai_interaction deverrouillage "et se déverrouille"    oui 3 deverrouiller
 fi
 
 # --- 12.6 L'horloge est bien sur deux lignes ---------------------------
@@ -1637,6 +1684,7 @@ else
     esac
     [[ -z "${marque}" ]] \
         || grief "la session rouverte porte encore ANKH_DE_SESSION=${marque} : le fichier de session n'a pas été retiré"
+    reveiller_ecran
     cliche "apres-desinstallation.ppm"
     python3 -I -c "
 from PIL import Image
