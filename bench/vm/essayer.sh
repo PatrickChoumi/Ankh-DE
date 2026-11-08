@@ -868,11 +868,21 @@ echo "   horloge=${horloge_date:-?} notifications=${notif_position:-?}"
 # Fond uni avant de mesurer l'image : la barre est en verre, et un papier
 # peint coloré se lirait à travers elle.
 #
-# BLANC, et non noir. Le 2026-11-07, ce fond était noir et la barre est
-# translucide sombre : les deux se confondaient, et le relevé rendait
-# « marge_bas=800, hauteur_visible=0 » — l'écran entier pris pour du vide.
-# Une barre en verre ne se mesure que sur un fond qui tranche avec elle.
-plasma_script 'desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin="org.kde.color"; d.currentConfigGroup=["Wallpaper","org.kde.color","General"]; d.writeConfig("Color","255,255,255"); })' > /dev/null || true
+# MAGENTA, et ni blanc ni noir — c'est la troisième tentative, et la
+# dernière raison est la bonne.
+#
+# Le 2026-11-07 ce fond était noir : la barre, translucide sombre, s'y
+# confondait, et le relevé rendait « 800 / 0 ». On est passé au blanc. Puis
+# DE-017 a fait du CLAIR le thème par défaut : la barre est devenue claire
+# sur un fond blanc, et la colonne est redevenue uniforme — le même défaut,
+# par l'autre bout.
+#
+# Un fond neutre ne peut pas convenir aux deux thèmes. On prend donc une
+# couleur qu'AUCUN thème n'emploie : du magenta saturé. La barre tranche
+# dessus qu'elle soit claire ou sombre, et le jour où elle s'y confondrait,
+# c'est qu'elle aurait viré au magenta.
+readonly FOND_MESURE='255,0,255'
+plasma_script "desktopsForActivity(currentActivity()).forEach(function(d){ d.wallpaperPlugin=\"org.kde.color\"; d.currentConfigGroup=[\"Wallpaper\",\"org.kde.color\",\"General\"]; d.writeConfig(\"Color\",\"${FOND_MESURE}\"); })" > /dev/null || true
 
 # Le menu Démarrer est resté ouvert depuis l'étape 10 : il couvre une partie
 # du bas de l'écran. On le referme avant de mesurer.
@@ -883,8 +893,8 @@ sleep 2
 # La barre OPAQUE, le temps de la mesure — et c'est la correction qui compte.
 #
 # Capture du 2026-11-07 à l'appui : la barre est bien dessinée, mais son fond
-# est en verre. Sur un papier peint blanc elle devient blanche, et il ne
-# reste que les icônes. À l'abscisse 200 il n'y a donc rien à voir, et deux
+# est en verre. Sur un papier peint uni elle en prend la couleur, et il ne
+# reste que les icônes. À l'abscisse 200 il n'y a donc rien à voir, et trois
 # passages ont conclu « colonne uniforme » — l'instrument avait raison, c'est
 # le protocole qui était faux.
 #

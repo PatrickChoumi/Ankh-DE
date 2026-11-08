@@ -141,15 +141,23 @@ def zone_rouge(image, x0, y0, x1, y1):
     return max(xs) - min(xs) + 1, max(ys) - min(ys) + 1, hexa(couleur)
 
 
-def barre(image, x, fond=(255, 255, 255)):
+def barre(image, x, fond=(255, 0, 255)):
     """Espace sous la barre, hauteur visible, couleur — à l'abscisse x.
 
-    « fond » est la couleur du papier peint uni posé pour la mesure, et ce
-    n'est plus le noir. Le 2026-11-07, le harnais posait un fond NOIR puis
-    cherchait une barre translucide SOMBRE dessus : les deux se confondaient,
-    et le relevé rendait « marge_bas=800, hauteur=0 » — soit l'écran entier
-    pris pour du vide. Une barre en verre ne se mesure que sur un fond qui
-    tranche avec elle.
+    « fond » est la couleur du papier peint uni posé pour la mesure, et
+    c'est du MAGENTA — ni noir, ni blanc. Trois tentatives :
+
+      - fond NOIR (2026-11-06) : la barre, translucide sombre, s'y confondait.
+      - fond BLANC (2026-11-07) : bon tant que le thème était sombre ; DE-017
+        a fait du clair le défaut, la barre est devenue claire sur du blanc,
+        et le même défaut est revenu par l'autre bout.
+      - fond MAGENTA : une couleur qu'aucun thème n'emploie. La barre tranche
+        dessus qu'elle soit claire ou sombre.
+
+    Chaque fois, le relevé fautif annonçait « marge_bas=800, hauteur=0 » —
+    l'écran entier pris pour du vide. L'instrument avait raison ; le
+    protocole était faux. Une barre en verre ne se mesure que sur un fond
+    qui tranche avec elle, dans les deux thèmes.
     """
     y = image.hauteur - 1
     espace = 0
@@ -161,8 +169,9 @@ def barre(image, x, fond=(255, 255, 255)):
         y -= 1
     hauteur = bas - y
     # Aucune barre trouvée : la colonne est de la couleur du fond de bout en
-    # bout. Deux passages l'ont déjà rencontré — sur fond noir le 2026-11-06,
-    # sur fond blanc le 2026-11-07 — et le relevé annonçait chaque fois
+    # bout. Trois passages l'ont rencontré — fond noir le 2026-11-06, fond
+    # blanc le 2026-11-07, fond blanc à nouveau le 2026-11-08 une fois le
+    # thème clair devenu le défaut — et le relevé annonçait chaque fois
     # « marge 800, hauteur 0 », c'est-à-dire l'écran entier pris pour du vide.
     #
     # On rend None plutôt qu'un nombre. Un appelant qui écrit « 800 » là où
