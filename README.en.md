@@ -1,14 +1,18 @@
 # Ankh DE
 
-**Windows 11 geometry. Ankh colours. On KDE Plasma 6.**
+**The look of Windows 11. On KDE Plasma 6.**
 
 *[Version française](README.md) — the project's primary language is French; this file is
 maintained in English because the people who would install this don't all read French.*
 
-Ankh DE gives Plasma the metrics, typography, materials, motion and shell layout of Windows 11 —
-to the pixel **where the bench measures it** — in the graphite-and-violet identity of
-[Ankh](https://github.com/PatrickChoumi/Ankh). It modifies no file belonging to your
-distribution, and it uninstalls in one command.
+Ankh DE gives Plasma the metrics, colours, typography, materials, motion and shell layout of
+Windows 11 — to the pixel **where the bench measures it**. The colours are the ones Microsoft
+publishes for WinUI, and **light** is the out-of-the-box theme, as in Windows 11. It modifies no
+file belonging to your distribution, and it uninstalls in one command.
+
+> The graphite-and-violet identity of [Ankh](https://github.com/PatrickChoumi/Ankh) is not
+> abandoned: it is **frozen on the `ankh` branch** and will come back later as a variant
+> ([DE-017](DECISIONS.md)).
 
 **It is not a desktop written from scratch, and that is deliberate.** Ankh DE *dresses* KDE
 Plasma: exactly one piece of the panel is ours, the Start menu. Everything else — tasks, system
@@ -60,10 +64,10 @@ style. The component-by-component audit that led there is in
 | **Widget style** | A Qt 6 `QStyle` derived from Breeze: 4 and 8 px radii, 32 px buttons and fields, thin scrollbars, two-line focus ring, to WinUI metrics |
 | **Window decoration** | A KDecoration3 plugin: 32 px title bar, title on the left, 46×32 buttons, `#C42B1C` close on hover, 8 px corners, Windows 11 shadows |
 | **Global theme** | `org.ankh.de.desktop` — carries every default, with the stuck 48 px taskbar as an opt-in |
-| **Colours** | Windows 11's greys rendered as Ankh's blue-tinted graphite, layered, dark and light. The accent follows the wallpaper, like Windows 11's "Automatic" accent |
+| **Colours** | The ones Microsoft publishes for WinUI, layered, light (the default) and dark: `#F3F3F3` and `#202020` for window backgrounds, accent `#0078D4` light and `#4CC2FF` dark. They are not sampled from a screenshot — Mica and acrylic take the wallpaper's tint there |
 | **Font** | [Selawik](https://github.com/microsoft/Selawik), the free Segoe UI lookalike Microsoft published under OFL 1.1, built from source |
-| **Cursors and icons** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), recoloured to Ankh's violet |
-| **GTK apps** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), in Ankh's violet |
+| **Cursors and icons** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), yellow variant: the `#ffcb52` of Windows 11's folders, measured from a screenshot |
+| **GTK apps** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), blue variant, Google's `#1a73e8` brought back to Windows's `#0078D4` |
 | **Measurement bench** | 53 measurements, each with its Windows 11 target, tolerance and source. A deviation fails CI |
 
 ## What it is not
@@ -124,7 +128,7 @@ opens them up:
 - **no snap-layout flyout** when hovering the maximise button — KWin has nothing for it. You get
   Super+arrows and the tile editor (Super+T);
 - **libadwaita** apps (Bottles, ProtonPlus…) keep their own look: they only receive the accent
-  colour, which libadwaita snaps to its own violet;
+  colour, which libadwaita snaps to its own blue;
 - **Chrome, VS Code and Electron apps** draw their own title bars;
 - **Flatpak GTK apps** don't see the system GTK theme;
 - **quick settings** are **not** a single flyout as in Windows 11, but four native icons in the

@@ -1,13 +1,17 @@
 # Ankh DE
 
-**La géométrie de Windows 11, les couleurs d'Ankh, sur KDE Plasma 6.**
+**L'apparence de Windows 11, sur KDE Plasma 6.**
 
 *[English version](README.en.md)*
 
-Ankh DE donne à Plasma les mesures, la typographie, les matières, les animations et la disposition
-de Windows 11 — au pixel près là où **le banc le mesure** — sous l'identité graphite et violet
-d'[Ankh](https://github.com/PatrickChoumi/Ankh). Il ne modifie aucun fichier de la distribution,
-et se retire d'un geste.
+Ankh DE donne à Plasma les mesures, les couleurs, la typographie, les matières, les animations et
+la disposition de Windows 11 — au pixel près là où **le banc le mesure**. Les couleurs sont celles
+que Microsoft publie pour WinUI, et le thème **clair** est celui de la boîte, comme dans
+Windows 11. Il ne modifie aucun fichier de la distribution, et se retire d'un geste.
+
+> L'identité graphite et violet d'[Ankh](https://github.com/PatrickChoumi/Ankh) n'est pas
+> abandonnée : elle est **figée sur la branche `ankh`** et reviendra plus tard comme variante
+> ([DE-017](DECISIONS.md)).
 
 **Ce n'est pas un bureau écrit de zéro, et c'est volontaire.** Ankh DE *habille* KDE Plasma : une
 seule pièce de la barre lui appartient, le menu Démarrer. Tout le reste — tâches, zone système,
@@ -96,8 +100,8 @@ est soulignée, et l'horloge est sur deux lignes, comme dans Windows 11.
 
 ## À quoi ça ressemble
 
-Le même contenu, les mêmes couleurs d'Ankh, la même police, la même échelle. **Seul le style
-change** : à gauche Breeze, à droite Ankh DE.
+Le même contenu, la même police, la même échelle. **Seul le style change** : à gauche Breeze, à
+droite Ankh DE.
 
 ![Breeze et Ankh DE, thème sombre](docs/images/comparaison-sombre.png)
 
@@ -128,10 +132,10 @@ Ces planches sont **produites par la CI à chaque changement**, pas prises à la
 | **Style des contrôles** | Un `QStyle` Qt 6 dérivé de Breeze : rayons de 4 et 8, boutons et champs de 32 px, barres de défilement fines, focus en double trait, aux mesures de WinUI |
 | **Décoration des fenêtres** | Un greffon KDecoration3 : barre de titre de 32 px, titre à gauche, boutons de 46×32, Fermer rouge `#C42B1C` au survol, coins de 8 px, ombres de Windows 11 |
 | **Thème global** | `org.ankh.de.desktop` : il porte tous les réglages, et la barre des tâches collée de 48 px en option |
-| **Couleurs** | Les gris de Windows 11 rendus en graphite bleuté d'Ankh, rangés par couches, en sombre et en clair. L'accent suit le fond d'écran, comme l'accent « Automatique » de Windows 11 |
+| **Couleurs** | Celles que Microsoft publie pour WinUI, rangées par couches, en clair (le défaut) et en sombre : `#F3F3F3` et `#202020` pour le fond des fenêtres, accent `#0078D4` en clair et `#4CC2FF` en sombre. Elles ne sont pas relevées sur une capture — Mica et l'acrylique y prennent la teinte du fond d'écran |
 | **Police** | [Selawik](https://github.com/microsoft/Selawik), le sosie libre de Segoe UI publié par Microsoft sous OFL 1.1, compilée depuis ses sources |
-| **Curseurs et icônes** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), recolorés au violet d'Ankh |
-| **Applications GTK** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), au violet d'Ankh |
+| **Curseurs et icônes** | [Fluent](https://github.com/vinceliuice/Fluent-icon-theme) (GPL-3.0), variante jaune : le `#ffcb52` des dossiers de Windows 11, relevé sur une capture |
+| **Applications GTK** | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) (GPL-3.0), variante bleue, le `#1a73e8` de Google ramené au `#0078D4` de Windows |
 | **Banc de mesure** | 53 mesures, chacune avec sa cible Windows 11, sa tolérance et sa source. Un écart fait échouer la CI |
 
 ## Ce que ce n'est pas
@@ -214,7 +218,7 @@ pas corrigés** tant que KDE ne les ouvrira pas, et ils sont détaillés dans
 - **pas de menu de disposition** au survol du bouton « Agrandir » : rien de tel dans KWin. On a
   Windows+flèches et l'éditeur de tuiles (Windows+T) ;
 - les applications **libadwaita** (Bottles, ProtonPlus…) gardent leur allure : elles ne reçoivent
-  que la couleur d'accent, ramenée au violet d'Adwaita ;
+  que la couleur d'accent, ramenée au bleu d'Adwaita ;
 - **Chrome, VS Code et les applications Electron** dessinent leur propre barre de titre ;
 - les applications **GTK en Flatpak** ne voient pas le thème GTK du système ;
 - les **paramètres rapides** ne sont **pas** un volet unique comme dans Windows 11, mais quatre
