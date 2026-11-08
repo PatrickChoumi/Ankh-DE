@@ -768,11 +768,52 @@ for cle in ("showRightColumn", "rightColumnItems"):
 if xml == avant:
     print("Menu : ni showRightColumn ni rightColumnItems dans main.xml", file=sys.stderr)
     sys.exit(1)
+
+# Les épingles par défaut.
+#
+# L'amont livre « preferred://browser,kontact.desktop,systemsettings.desktop,
+# org.kde.dolphin.desktop,ktp-contactlist.desktop,org.kde.kate.desktop ».
+# Dans une machine neuve, kontact et ktp-contactlist n'existent pas, et
+# « preferred://browser » sans navigateur installé retombe sur la première
+# application venue : la capture du 2026-11-08 montrait « Kate, System
+# Settings, Dolphin, Kate » — Kate DEUX FOIS, et quatre épingles au lieu
+# de dix-huit.
+#
+# On nomme donc les applications, sans « preferred:// », dans l'ordre de
+# Windows 11 : le navigateur, l'explorateur, les paramètres, le terminal,
+# le bloc-notes, la logithèque, les photos, le lecteur de documents. Une
+# entrée dont le .desktop est absent ne s'affiche pas — c'est la seule
+# dégradation acceptable, et elle ne crée pas de doublon.
+EPINGLES = ",".join([
+    "firefox.desktop",
+    "org.kde.dolphin.desktop",
+    "systemsettings.desktop",
+    "org.kde.konsole.desktop",
+    "org.kde.kate.desktop",
+    "org.kde.discover.desktop",
+    "org.kde.gwenview.desktop",
+    "org.kde.okular.desktop",
+])
+avant_ep = xml
+xml, n = re.subn(
+    r'(<entry name="favoriteApps" type="StringList">\s*<default>)[^<]*(</default>)',
+    lambda m: m.group(1) + EPINGLES + m.group(2), xml, flags=re.S)
+if n != 1:
+    print("Menu : favoriteApps introuvable dans main.xml (%d remplacement)" % n,
+          file=sys.stderr)
+    sys.exit(1)
+if "preferred://" in xml:
+    print("Menu : « preferred:// » est resté dans les épingles", file=sys.stderr)
+    sys.exit(1)
 with open(chemin, "w", encoding="utf-8") as f:
     f.write(xml)
 CONFIG
 grep -q 'showRightColumn' "${demarrer}/contents/config/main.xml" \
     && { echo "Menu : showRightColumn est resté dans la configuration" >&2; exit 1; }
+grep -q 'org.kde.konsole.desktop' "${demarrer}/contents/config/main.xml" \
+    || { echo "Menu : les épingles de Windows 11 ne sont pas posées" >&2; exit 1; }
+grep -q 'kontact.desktop\|ktp-contactlist.desktop' "${demarrer}/contents/config/main.xml" \
+    && { echo "Menu : les épingles de l'amont sont restées" >&2; exit 1; }
 
 echo "org.ankh.demarrer : une colonne, recherche en haut, grille 6x3, Recommandé, 642x726"
 # L'horloge et « Afficher le bureau » de KDE-Windows-Modern ne sont PLUS
