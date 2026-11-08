@@ -203,6 +203,23 @@ jobs:
       - name: Aucune fonction appelée avant d'être définie
         run: python3 tests/ordre-des-fonctions.py $(git ls-files '*.sh')
 
+      # Une variable renommée à moitié ne se voit NI à la syntaxe, NI au
+      # lint d'ordre : « set -u » la transforme en « unbound variable » à
+      # l'exécution. Le 2026-11-07, « selecteur_present » a tué un passage en
+      # VM après dix-huit minutes, et shellcheck en a trouvé deux autres du
+      # même genre à la ligne suivante — « nouvelles » et « module_present »,
+      # restes de la réécriture de DE-015 — qui auraient tué les deux
+      # passages d'après.
+      #
+      # Le jeu de codes est VOLONTAIREMENT étroit : SC2154 (référencée mais
+      # jamais affectée) et SC2034 (affectée mais jamais lue), les deux faces
+      # d'un renommage incomplet. Le reste de shellcheck donne 21 remarques
+      # de style sur ce dépôt, dont des guillemets simples délibérés pour les
+      # commandes passées à ssh : les activer en bloc ferait du bruit, et le
+      # bruit finit par être ignoré.
+      - name: Aucune variable renommée à moitié
+        run: shellcheck -x -i SC2154,SC2034 -f gcc $(git ls-files '*.sh')
+
       - name: Syntaxe du Python
         run: |
           set -euo pipefail
