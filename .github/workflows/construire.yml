@@ -220,6 +220,16 @@ jobs:
       - name: Aucune variable renommée à moitié
         run: shellcheck -x -i SC2154,SC2034 -f gcc $(git ls-files '*.sh')
 
+      # QML ne se plaint pas à la construction : un identifiant non résolu
+      # rend undefined, la liaison donne NaN, et l'élément s'affiche VIDE.
+      # Le 2026-11-08, PinnedPage.qml lisait « Plasmoid.configuration » sans
+      # importer org.kde.plasma.plasmoid : le menu Démarrer est sorti à la
+      # bonne taille, avec sa recherche et son bouton, et SANS UNE SEULE
+      # ICÔNE. Vingt minutes de VM, et seulement vu parce qu'on a ouvert la
+      # capture.
+      - name: Aucun module QML employé sans être importé
+        run: python3 tests/qml-imports.py $(git ls-files 'src/**/*.qml')
+
       - name: Syntaxe du Python
         run: |
           set -euo pipefail

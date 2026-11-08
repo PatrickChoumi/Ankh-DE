@@ -43,10 +43,16 @@ ColumnLayout {
     // reste, la vue change de nature.
     property alias favoritesList: favoritesGrid
 
-    // Nombre de colonnes. Réglable, et à 6 par défaut comme Windows 11 —
-    // c'est déjà la valeur par défaut de « numberColumns » dans le
-    // main.xml de l'amont, qui ne s'en servait pas pour cette page.
-    readonly property int colonnes: Math.max(1, Plasmoid.configuration.numberColumns || 6)
+    // Six colonnes, la valeur de Windows 11, écrite en dur et non lue dans
+    // la configuration — et c'est un correctif, pas un raccourci.
+    //
+    // Le premier jet lisait « Plasmoid.configuration.numberColumns ». Or ce
+    // fichier n'importe PAS « org.kde.plasma.plasmoid » (l'amont ne l'y
+    // importait pas non plus) : « Plasmoid » n'était donc pas résolu, la
+    // propriété valait undefined, « cellWidth » devenait NaN, et la grille
+    // s'affichait VIDE. La capture du passage 42456335669 le montre : un
+    // menu à la bonne taille, sans une seule icône dedans.
+    readonly property int colonnes: 6
 
     signal showAllAppsRequested
     signal keyNavUpFromList
@@ -163,9 +169,11 @@ ColumnLayout {
                 id: fond
                 anchors.fill: parent
                 anchors.margins: Math.round(Kirigami.Units.smallSpacing / 2)
-                radius: Kirigami.Units.cornerRadius !== undefined
-                    ? Kirigami.Units.cornerRadius
-                    : 4
+                // 4 px en dur : « Kirigami.Units.cornerRadius » n'existe pas
+                // dans toutes les versions de Kirigami, et une propriété
+                // absente rend undefined — soit un rayon nul, sans erreur
+                // visible. On ne prend pas ce risque pour un arrondi.
+                radius: 4
                 color: Kirigami.Theme.textColor
                 opacity: caseEpingle.actif ? 0.14 : (souris.containsMouse ? 0.08 : 0)
                 Behavior on opacity {
