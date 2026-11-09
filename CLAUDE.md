@@ -158,10 +158,15 @@ démarre jamais un second service pour la même responsabilité.
 
 ## 6. État — qui tient quoi, et ce qui est prouvé
 
-Dernières preuves : passage VM `42486646380` du 2026-11-08, **Ubuntu 26.04.1
-LTS, Plasma 6.6.6**, session ouverte depuis SDDM. Ce passage s'est conclu en
-échec, et ce qu'il a prouvé reste prouvé : un échec sur un essai n'efface pas
-les essais qui ont réussi avant lui.
+Dernières preuves : passage VM `42569636275` du 2026-11-09, **Ubuntu 26.04.1
+LTS, Plasma 6.6.6**, session ouverte depuis SDDM. Un échec sur un essai
+n'efface pas les essais qui ont réussi avant lui.
+
+Ce passage a ramené les échecs de **8 à 1** sur la cible et de **6 à 2** sur
+Fedora. L'unique échec d'Ubuntu est **de l'instrument, pas du produit**, et
+il le dit lui-même : « plasmashell déclare 1 barre(s) mais l'image est
+uniforme après 120 s ». La barre existe ; c'est la capture QEMU qui ne la
+voit pas.
 
 | Responsabilité | Implémentation | État |
 |---|---|---|
@@ -173,21 +178,28 @@ les essais qui ont réussi avant lui.
 | « Ne pas déranger » | service de Plasma | **non éprouvé** : le serveur ne se déclare pas inhibé après écriture de `plasmanotifyrc`, donc l'essai négatif ne prouverait rien |
 | Horloge et calendrier | `org.kde.plasma.digitalclock` — natif | **interactif** : un panneau s'ouvre. Date **sous** l'heure, **sans secondes** — vérifié clé par clé et à l'écran |
 | Afficher le bureau | `org.kde.plasma.showdesktop` — natif | **interactif** : masque et rétablit les fenêtres |
-| Alt+Tab | `thumbnail_grid` — natif (KWin) | **non éprouvé** : ni le raccourci global ni « Alt maintenu » par QEMU n'ont montré le sélecteur. L'instrument est en cause ; rien n'est infirmé |
+| Alt+Tab | `thumbnail_grid` — natif (KWin) | **interactif** sur Ubuntu 26.04 / Plasma 6.6 : le sélecteur change **45,07 %** de l'écran. Il fallait passer par le raccourci global de KWin, et non par « Alt maintenu » injecté par QEMU — c'est l'injection qui était en cause, pas la pièce |
 | Vue des tâches | effet Overview de KWin (Meta+W) | **DEFER** hors de 0.1 |
 | Style des contrôles | `org.ankh.style` (Breeze `ca217f1`) | **validé** : 12 jetons conformes, banc vert |
 | Décoration | `org.ankh.decoration` (Breeze `ca217f1`) | 6 jetons sur 11. Chargement dans KWin **6.6** non établi |
 | Couleurs | `Ankh.colors` / `AnkhClair.colors` | **validé** : valeurs de WinUI, **clair par défaut**, vu à l'écran le 2026-11-08 |
-| Verrouillage | KScreenLocker — natif | **jamais atteint** : le passage mourait avant. Corrigé le 2026-11-09, verdict attendu |
-| Désinstallation | `desinstaller.sh` | **a tourné pour la première fois** le 2026-11-08, et a trouvé trois défauts réels : cinq dossiers laissés, `LookAndFeelPackage` vide, marque de session survivante. Corrigés le 2026-11-09, verdict attendu |
+| Verrouillage | KScreenLocker — natif | **interactif** sur Ubuntu : l'écran se verrouille (**96,83 %**) et se déverrouille (**96,83 %**). Sur Fedora, le déverrouillage reste à 0,00 % — logind y refuse `unlock-session` |
+| Désinstallation | `desinstaller.sh` | **validée sur Ubuntu** : les neuf pièces nommées disparaissent, le thème global revient à Breeze, une session **neuve** se rouvre (PID différent) et le style d'Ankh n'est plus appliqué. Sur Fedora, aucune session ne se rouvre en 180 s après le redémarrage de SDDM — **non tenu**, et c'est un vrai défaut à chercher |
 | Fond d'écran | `Ankh-Prismes` (AnduinOS `c659fae`) | installé et posé, paire clair / sombre |
 
 **27 jetons sur 53** mesurés et conformes : 12 contrôles, 6 fenêtres, 9 barre.
 
 **Ce qui n'est pas prouvé** : les tuiles réseau / Bluetooth / volume /
 luminosité nommément (le repérage rend une abscisse, pas un identifiant),
-Alt+Tab, « Ne pas déranger », le verrouillage, la déconnexion, Arch, les
-échelles 125 % et 150 %.
+« Ne pas déranger » (le serveur de Plasma ne se déclare pas inhibé après
+écriture de `plasmanotifyrc`, donc l'essai négatif ne prouverait rien), le
+chargement de la décoration par KWin (demandé à KWin depuis `33a36c6`, pas
+encore observé), Arch, les échelles 125 % et 150 %.
+
+**Ce qui est cassé sur Fedora 44 / Plasma 6.8, et pas sur la cible** : le
+déverrouillage, et la réouverture d'une session après désinstallation. Les
+deux sont à chercher — mais aucun ne touche Ubuntu 26.04, qui est la cible
+de 0.1.
 
 **Ce qu'on ne fera pas**, et la raison : la **barre de menu globale** et la
 **barre des tâches flottante** de KDE-Windows-Modern. Ses captures sont plus

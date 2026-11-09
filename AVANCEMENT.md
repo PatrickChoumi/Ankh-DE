@@ -519,24 +519,35 @@ seule preuve de fidélité est celle d'Ankh, sur Fedora.
 L'état des pièces est dans **[CLAUDE.md §6](CLAUDE.md)**, et nulle part ailleurs. Ce qui suit
 n'est que l'ordre des opérations.
 
-**1. Le verdict du passage en VM.** Au moment où ces lignes sont écrites, le passage sur
-`eca4be3` tourne encore — il est le premier à aller jusqu'à la désinstallation, donc il dure une
-douzaine de minutes de plus que les précédents.
+**1. Le verdict est tombé** — passage `42569636275` sur `eca4be3` : **8 échecs → 1** sur
+Ubuntu, **6 → 2** sur Fedora. Ce qui a été gagné, et qui n'avait jamais été montré :
+
+| | |
+|---|---|
+| **Alt+Tab** | le sélecteur change **45,07 %** de l'écran. Trois passages l'avaient donné pour mort : c'était l'injection « Alt maintenu » de QEMU, pas la pièce. Le raccourci global de KWin le déclenche |
+| **Verrouillage / déverrouillage** | **96,83 %** dans les deux sens, sur Ubuntu |
+| **Désinstallation** | les neuf pièces disparaissent, le thème global revient à Breeze, une session **neuve** se rouvre (PID différent), le style d'Ankh n'est plus appliqué |
+
+**2. Les trois échecs qui restent**, et ce qu'ils sont vraiment :
+
+- **Ubuntu, le seul** : « plasmashell déclare 1 barre(s) mais l'image est uniforme après
+  120 s ». C'est le message que j'ai écrit exprès pour séparer les deux causes, et il tranche :
+  **la barre existe, c'est la capture QEMU qui ne la voit pas.** Défaut d'instrument. La piste la
+  plus probable est que la bande du bas n'est pas redessinée dans le tampon tant que rien ne s'y
+  passe ; un clic dans la barre avant le cliché devrait suffire ;
+- **Fedora, le déverrouillage** : 0,00 %. `logind` y refuse `unlock-session`. Ubuntu, lui, passe ;
+- **Fedora, la réouverture de session** après désinstallation : SDDM redémarre bien (le journal
+  le montre) mais aucune session n'apparaît en 180 s. Ubuntu, lui, passe. **C'est le seul des
+  trois qui puisse être un vrai défaut du produit**, et il ne touche pas la cible.
+
+**3. Ensuite** : télécharger l'artefact `vm-session-ubuntu` et **regarder les captures** — c'est
+l'étape qui a attrapé les quatre derniers défauts qu'aucun test ne signalait — puis remplacer
+celles de `docs/images/`, et lancer « Publier » si les trois épreuves sont vertes sur un même
+SHA.
 
 ```
 gh run list --branch simplification-plasma-6.6 --limit 3
 ```
-
-**2. S'il est vert**, les trois épreuves le sont sur un même SHA, et il reste à :
-
-- télécharger l'artefact `vm-session-ubuntu` et **regarder les captures**. C'est l'étape qui a
-  attrapé les trois derniers défauts — grille d'épingles vide, barre mesurée « 800 / 0 », menu de
-  Windows 7 pris pour celui de 11 — qu'aucun test ne signalait ;
-- remplacer les captures de `docs/images/` par celles de ce passage ;
-- lancer « Publier ».
-
-**3. S'il est rouge**, le rapport nomme la pièce. Les sept échecs du 2026-11-08 sont corrigés et
-expliqués un par un dans le journal ci-dessus ; un échec nouveau est donc un fait nouveau.
 
 **4. La finition qui reste**, dans l'ordre du rapport qualité / coût, et aucune n'est bloquante :
 

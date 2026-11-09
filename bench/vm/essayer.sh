@@ -474,6 +474,29 @@ reveiller_ecran() {
     sleep 1.5
 }
 
+# Forcer la BARRE à se redessiner avant qu'on la photographie.
+#
+# Le passage 42569636275 a tranché, parce que le message le demandait :
+# « plasmashell déclare 1 barre(s) mais l'image est uniforme après 120 s ».
+# La barre existe. C'est le tampon de QEMU qui ne la porte pas : rien ne s'y
+# passe, donc rien n'y est redessiné, et la bande du bas garde le fond.
+#
+# On promène donc le pointeur SUR la barre — trois positions, sans s'y
+# arrêter — puis on le ramène au centre. Le survol fait repeindre les
+# applets ; repartir aussitôt évite l'infobulle, qui demande environ une
+# demi-seconde d'immobilité et fausserait la mesure.
+reveiller_barre() {
+    local bas=32400          # ~98 % de la hauteur, en absolu QEMU
+    local x
+    for x in 8000 16384 24000; do
+        printf '{ "execute": "qmp_capabilities" }\n{ "execute": "input-send-event", "arguments": { "events": [ { "type": "abs", "data": { "axis": "x", "value": %d } }, { "type": "abs", "data": { "axis": "y", "value": %d } } ] } }\n' \
+            "${x}" "${bas}" \
+            | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+        sleep 0.2
+    done
+    reveiller_ecran          # ramène le pointeur au centre, loin de la barre
+}
+
 variete() { # rend « écart-type couleurs » du cliché courant
     reveiller_ecran
     printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
@@ -967,8 +990,9 @@ plasma_script 'panels().forEach(function(p){ p.opacity="opaque" })' > /dev/null 
 mesure_barre="? ? ?"
 attente_barre=0
 for essai in $(seq 40); do          # 40 × 3 s = 120 secondes
-    reveiller_ecran                 # sinon l'écran s'éteint et « la colonne
-    sleep 3                         # est uniforme » décrit la veille, pas nous
+    reveiller_barre                 # sinon l'écran s'éteint, ou la barre n'est
+    sleep 3                         # pas redessinée, et « la colonne est
+                                    # uniforme » décrit cela et non la barre
     attente_barre=$((essai * 3))
     printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
         "${travail}/barre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
