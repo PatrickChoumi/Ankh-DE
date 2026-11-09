@@ -411,6 +411,59 @@ garde-fou exigeait trois couleurs GTK dont deux supposées ; la recoloration ne 
 le contrôle de désinstallation nommait huit pièces sans `AnkhClair.colors`, devenu le jeu par
 défaut.
 
+## 2026-11-09 — Les sept échecs de la VM, et le menu qui se remplit
+
+Le passage du 2026-11-08 est allé **jusqu'au bout pour la première fois** :
+l'étape 13, la désinstallation, n'avait jamais tourné. Elle a immédiatement
+trouvé trois défauts réels.
+
+**Le désinstallateur laissait cinq dossiers.** `rm -f` ne retire que des
+fichiers. `org.ankh.de.desktop`, `org.ankh.demarrer`, `ankh`, `Fluent-Ankh`
+et `Ankh-Prismes` restaient, vides — et un thème global dont le dossier
+existe encore est vu par Plasma. Retirés par `rmdir`, du plus profond vers
+la racine, et seulement ceux dont un segment porte notre nom. `rmdir` et non
+`rm -rf` : il **refuse** un dossier non vide, c'est le garde-fou voulu.
+
+**`LookAndFeelPackage` était vide après désinstallation**, parce que ces
+clés ne vivaient que dans notre couche de valeurs par défaut (DE-010), que
+la désinstallation supprime. « Plasma reprendra Breeze par défaut » est une
+supposition ; « la configuration désigne Breeze » se lit. Les trois clés
+sont écrites en clair, et le retour se fait au Breeze **clair**, qui est le
+défaut de Plasma et le nôtre depuis DE-017.
+
+**`ANKH_DE_SESSION` survivait à la reconnexion** : le harnais se contentait
+de « un plasmashell existe », donc il relisait l'**ancien**, pas encore mort.
+Il attend maintenant un PID différent.
+
+**Trois essais ont changé de verdict, et aucun n'est passé de l'échec au
+succès.** Alt+Tab et « Ne pas déranger » sont désormais **NON ÉPROUVÉS** :
+ni le raccourci global de KWin ni « Alt maintenu » par QEMU ne montrent le
+sélecteur, et le serveur de notifications ne se déclare pas inhibé après
+écriture de `plasmanotifyrc`. Un essai dont la prémisse est fausse n'a pas
+eu lieu ; le compter comme un échec du produit était aussi faux que le
+compter comme un succès. Le rapport porte maintenant les deux comptes.
+
+Et « un second clic rétablit les fenêtres » rendait 0,75 % alors que le
+premier en avait masqué 69,96 % : l'écran n'avait pas fini. Un essai
+**positif** a une seconde chance à 5 s ; un essai négatif n'en a pas, parce
+que laisser plus de temps à un écran qui doit rester immobile ne peut que
+révéler un défaut, et le masquer serait transformer un échec en succès.
+
+**Le menu se remplit.** Quatre épingles sur dix-huit, et un grand trou blanc
+entre la grille et la barre du bas : c'est ce que montrait la capture.
+Dix-huit épingles nommées dans l'ordre de Windows 11, et « Recommandé »
+garde son en-tête avec un mot à la place de la liste quand la machine est
+neuve.
+
+**Ce qu'on a appris de l'amont.** KDE-Windows-Modern v1.0.0, téléchargé et
+regardé : ses captures sont plus finies que les nôtres, et sa disposition
+est **moins** fidèle. Son menu Démarrer a la forme de Windows 7 — colonne de
+catégories à gauche, barre d'actions en bas. Sa barre des tâches flotte,
+détachée, façon Latte. Il pose une barre de menu globale en haut de l'écran.
+Rien de tout cela n'est dans Windows 11. Ce qu'il a et qui nous manque : un
+thème SDDM, et des icônes de dossiers avec du relief. On lui emprunte sa
+finition, jamais sa disposition.
+
 ## Ce qui est vérifié, et ce qui ne l'est pas
 
 > **Relu le 2026-11-06.** Ce tableau se lit au présent : trois de ses lignes étaient devenues

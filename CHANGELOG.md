@@ -1,5 +1,55 @@
 # Journal des versions
 
+## Non publié — 2026-11-09
+
+### Corrigé — le désinstallateur ne défaisait pas tout
+
+L'étape 13 du harnais (« désinstallation, et retour à Plasma standard ») a tourné pour la
+**première fois** le 2026-11-08 ; les passages précédents mouraient avant de l'atteindre. Elle a
+trouvé trois défauts réels :
+
+- **cinq dossiers restaient**, vides : `rm -f` ne retire que des fichiers, et un thème global
+  dont le dossier existe encore est vu par Plasma. Ils sont retirés par `rmdir` — qui refuse un
+  dossier non vide, c'est le garde-fou voulu — du plus profond vers la racine, et seulement ceux
+  dont un segment porte notre nom ;
+- **`LookAndFeelPackage` restait vide** : ces clés ne vivaient que dans notre couche de valeurs
+  par défaut ([DE-010](DECISIONS.md)), que la désinstallation supprime. Elles sont désormais
+  écrites en clair dans le `kdeglobals` de l'utilisateur ;
+- le retour se fait au **Breeze clair**, défaut de Plasma et le nôtre depuis
+  [DE-017](DECISIONS.md), et non plus au sombre.
+
+### Changé — le menu Démarrer se remplit
+
+- **dix-huit épingles** au lieu de quatre, dans l'ordre de Windows 11. Une entrée dont le
+  `.desktop` est absent ne s'affiche pas : la grille se remplit de ce que la machine a, sans
+  jamais de doublon ;
+- **« Recommandé » garde son en-tête** même quand il n'y a rien à montrer, avec un mot à la place
+  de la liste. Le masquer laissait un grand trou blanc entre la grille et la barre du bas, dans
+  toute machine neuve.
+
+### Changé — trois états, et non deux
+
+Alt+Tab et « Ne pas déranger » ne sont plus comptés comme des **échecs** mais comme **NON
+ÉPROUVÉS** : ni le raccourci global de KWin ni « Alt maintenu » par QEMU ne montrent le
+sélecteur, et le serveur de notifications ne se déclare pas inhibé après écriture de
+`plasmanotifyrc`. Un essai dont la prémisse est fausse n'a pas eu lieu. Le rapport porte les deux
+comptes, et `CLAUDE.md` §6 les distingue.
+
+Un essai **positif** a une seconde chance à 5 s — un rétablissement de fenêtres dans une VM sans
+accélération ne tient pas toujours en 2,5 s. Un essai **négatif** n'en a pas : laisser plus de
+temps à un écran qui doit rester immobile ne peut que révéler un défaut, et le masquer serait
+transformer un échec en succès.
+
+### Corrigé — le harnais accusait le produit à la place de l'écran de veille
+
+Sur Ubuntu, `vm-bureau.png` était noire d'un bout à l'autre, la barre « introuvable », le menu
+n'avait « rien ouvert ». La session s'était ouverte huit minutes plus tôt sans la moindre entrée,
+et PowerDevil éteint l'écran au bout de cinq. Le pointeur bouge maintenant de deux pixels avant
+chaque capture prise à l'aveugle.
+
+Et « la barre est introuvable sur l'image » a deux causes — la barre n'existe pas, ou l'image ne
+la montre pas. `plasmashell` sait laquelle ; on le lui demande.
+
 ## Non publié — 2026-11-08
 
 ### Changé — l'apparence par défaut est celle de Windows 11 ([DE-017](DECISIONS.md))
