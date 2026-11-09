@@ -713,6 +713,29 @@ echo "   Alt+Tab : kwinrc demande « ${selecteur_voulu:-rien} », paquet à nous
 [[ "${notre_paquet}" == non ]] \
     || grief "nous installons un sélecteur nommé « ${selecteur_voulu} » : il masquerait celui de KWin"
 
+# La décoration est-elle CHARGÉE, ou seulement demandée ?
+#
+# Jusqu'ici le passage lisait « kwinrc [org.kde.kdecoration2] library » et
+# s'en contentait. Or cette clé dit ce qu'on DEMANDE : un nom de greffon
+# erroné s'y lit tout aussi bien, et KWin retombe alors sur Breeze sans rien
+# dire. CLAUDE.md §6 porte la conséquence depuis le 2026-11-06 :
+# « chargement dans KWin 6.6 non établi ».
+#
+# KWin, lui, sait quel greffon il a chargé : il le publie dans son
+# « supportInformation », section « Decoration ». On le lui demande.
+deco_chargee="$(dans_session "${QDBUS} org.kde.KWin /KWin org.kde.KWin.supportInformation 2>/dev/null \
+    | awk '/^Decoration\$/{d=1; next} d && /^Plugin:/{print \$2; exit}'" || true)"
+deco_voulue="$(dans_session 'kreadconfig6 --file kwinrc --group org.kde.kdecoration2 --key library' || true)"
+echo "   décoration : kwinrc demande « ${deco_voulue:-rien} », KWin a chargé « ${deco_chargee:-sans réponse} »"
+if [[ -z "${deco_chargee}" ]]; then
+    echo "   NON ÉPROUVÉ le chargement de la décoration : KWin n'a pas répondu à" >&2
+    echo "   supportInformation. La clé de kwinrc ne dit que ce qu'on demande." >&2
+elif [[ "${deco_chargee}" == "${deco_voulue}" ]]; then
+    echo "   ok    KWin a bien chargé NOTRE décoration, et non un repli sur Breeze"
+else
+    grief "KWin a chargé « ${deco_chargee} » alors que kwinrc demande « ${deco_voulue} » : repli silencieux"
+fi
+
 fond_present=non
 ssh_vm 'test -s /usr/local/share/wallpapers/Ankh-Prismes/contents/images_dark/3840x2160.png' \
     2>/dev/null && fond_present=oui
@@ -856,6 +879,7 @@ fi
     echo "- l'écran a changé à l'ouverture : ${ecran_change} (\`${mesure_menu}\`)"
     echo "- applets natives dans la barre : ${natives[*]}"
     echo "- Alt+Tab : kwinrc demande \`${selecteur_voulu:-rien}\` (sélecteur natif de KWin), paquet à nous sous ce nom : ${notre_paquet}"
+    echo "- décoration : kwinrc demande \`${deco_voulue:-rien}\`, KWin a CHARGÉ \`${deco_chargee:-sans réponse}\` (demandé à KWin, pas déduit de la configuration)"
     echo "- reste du module QML partagé (doit être « non ») : ${module_reste}"
     echo "- zone système, icônes masquées : \`${masquees:-aucune}\`"
     echo "- fond d'écran : paquet ${fond_present}, posé \`${fond_pose:-?}\`"
