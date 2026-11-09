@@ -158,30 +158,42 @@ démarre jamais un second service pour la même responsabilité.
 
 ## 6. État — qui tient quoi, et ce qui est prouvé
 
-Dernières preuves : passage VM `42456335669`, **Ubuntu 26.04.1 LTS,
-Plasma 6.6.6**, session ouverte depuis SDDM.
+Dernières preuves : passage VM `42486646380` du 2026-11-08, **Ubuntu 26.04.1
+LTS, Plasma 6.6.6**, session ouverte depuis SDDM. Ce passage s'est conclu en
+échec, et ce qu'il a prouvé reste prouvé : un échec sur un essai n'efface pas
+les essais qui ont réussi avant lui.
 
 | Responsabilité | Implémentation | État |
 |---|---|---|
-| Lanceur | `org.ankh.demarrer` (KDE-Windows-Modern `7ef6bfe`) | **interactif** : s'ouvre, prend le clavier sans clic, cherche, **lance** (`pgrep` le confirme), se ferme sur Échap. **Disposition encore fausse** : grille vide corrigée le 2026-11-08, recherche pas encore en haut, pas de « Recommandé » |
+| Lanceur | `org.ankh.demarrer` (KDE-Windows-Modern `7ef6bfe`) | **interactif** : s'ouvre, prend le clavier sans clic, cherche, **lance** (`pgrep` le confirme), se ferme sur Échap. **Disposition de Windows 11 VUE à l'écran** le 2026-11-08 : recherche en haut, grille d'épingles, utilisateur et alimentation en bas |
 | Gestionnaire de tâches | `org.kde.plasma.icontasks` — natif | **interactif** : un clic minimise, un second rétablit |
 | Zone système | `org.kde.plasma.systemtray` — natif | chargé ; ne masque **que** la cloche |
 | Réseau, Bluetooth, volume, luminosité | applets natives | **visibles** ; aucune tuile pressée nommément |
-| Notifications | `org.kde.plasma.notifications` — natif | **interactif** : une notification envoyée s'affiche. « Ne pas déranger » **n'inhibe pas** |
-| Horloge et calendrier | `org.kde.plasma.digitalclock` — natif | chargé, date sous l'heure. **Affiche les secondes** à tort. Calendrier non essayé nommément |
+| Notifications | `org.kde.plasma.notifications` — natif | **interactif** : une notification envoyée s'affiche |
+| « Ne pas déranger » | service de Plasma | **non éprouvé** : le serveur ne se déclare pas inhibé après écriture de `plasmanotifyrc`, donc l'essai négatif ne prouverait rien |
+| Horloge et calendrier | `org.kde.plasma.digitalclock` — natif | **interactif** : un panneau s'ouvre. Date **sous** l'heure, **sans secondes** — vérifié clé par clé et à l'écran |
 | Afficher le bureau | `org.kde.plasma.showdesktop` — natif | **interactif** : masque et rétablit les fenêtres |
-| Alt+Tab | `thumbnail_grid` — natif (KWin) | **jamais montré à l'écran** |
+| Alt+Tab | `thumbnail_grid` — natif (KWin) | **non éprouvé** : ni le raccourci global ni « Alt maintenu » par QEMU n'ont montré le sélecteur. L'instrument est en cause ; rien n'est infirmé |
 | Vue des tâches | effet Overview de KWin (Meta+W) | **DEFER** hors de 0.1 |
-| Style des contrôles | `org.ankh.style` (Breeze `ca217f1`) | **validé** : 12 jetons conformes |
+| Style des contrôles | `org.ankh.style` (Breeze `ca217f1`) | **validé** : 12 jetons conformes, banc vert |
 | Décoration | `org.ankh.decoration` (Breeze `ca217f1`) | 6 jetons sur 11. Chargement dans KWin **6.6** non établi |
-| Verrouillage | KScreenLocker — natif | jamais essayé |
-| Fond d'écran | `Ankh-Prismes` (AnduinOS `c659fae`) | installé et posé |
+| Couleurs | `Ankh.colors` / `AnkhClair.colors` | **validé** : valeurs de WinUI, **clair par défaut**, vu à l'écran le 2026-11-08 |
+| Verrouillage | KScreenLocker — natif | **jamais atteint** : le passage mourait avant. Corrigé le 2026-11-09, verdict attendu |
+| Désinstallation | `desinstaller.sh` | **a tourné pour la première fois** le 2026-11-08, et a trouvé trois défauts réels : cinq dossiers laissés, `LookAndFeelPackage` vide, marque de session survivante. Corrigés le 2026-11-09, verdict attendu |
+| Fond d'écran | `Ankh-Prismes` (AnduinOS `c659fae`) | installé et posé, paire clair / sombre |
 
 **27 jetons sur 53** mesurés et conformes : 12 contrôles, 6 fenêtres, 9 barre.
 
-**Ce qui n'est pas prouvé** : les tuiles réseau/Bluetooth/volume/luminosité,
-Alt+Tab, le calendrier, le verrouillage, la déconnexion, le désinstallateur en
-VM, Arch.
+**Ce qui n'est pas prouvé** : les tuiles réseau / Bluetooth / volume /
+luminosité nommément (le repérage rend une abscisse, pas un identifiant),
+Alt+Tab, « Ne pas déranger », le verrouillage, la déconnexion, Arch, les
+échelles 125 % et 150 %.
+
+**Ce qu'on ne fera pas**, et la raison : la **barre de menu globale** et la
+**barre des tâches flottante** de KDE-Windows-Modern. Ses captures sont plus
+finies que les nôtres, mais ce sont celles de macOS, et son menu Démarrer a
+la forme de Windows 7 — colonne de catégories à gauche, barre d'actions en
+bas. On lui emprunte sa finition, jamais sa disposition.
 
 ---
 

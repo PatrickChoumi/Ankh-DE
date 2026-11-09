@@ -24,8 +24,8 @@ style. The component-by-component audit that led there is in
 >
 > | Where | What is established |
 > |---|---|
-> | **Fedora 44, Plasma 6.8.2** | the session opens from the login screen, installed by `installer.sh` in a fresh VM. `ANKH_DE_SESSION=1`, style `Ankh`, colours `Ankh`, font `Selawik 10.5`, decoration `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh`. **48 key-by-key checks** passing *inside the session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **the target** | **the session opens** from the login screen and **every setting applies** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, Plasma style `ankh` — run `42397366933`. That run nonetheless ended in failure, on a harness defect unrelated to Ankh DE; the key-by-key checks did not run. Detail: [CLAUDE.md §6](CLAUDE.md) |
+> | **Fedora 44, Plasma 6.8** — the other end of the range | the session opens from the login screen, installed by `installer.sh` in a fresh VM. `ANKH_DE_SESSION=1`, style `Ankh`, colours `AnkhClair`, font `Selawik 10.5`, decoration `org.ankh.decoration`, icons `Fluent-Ankh`, Plasma style `ankh-clair`, and the key-by-key checks passing *inside the session* |
+> | **Ubuntu 26.04, Plasma 6.6** — **the target** | **the session opens** from the login screen, every setting applies — style `Ankh`, colours `AnkhClair`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, Plasma style `ankh-clair` — and the Start menu **opens, searches and launches** (run `42486646380`, 2026-11-08). That run ended in failure on other checks; the piece-by-piece detail is in [CLAUDE.md §6](CLAUDE.md) |
 > | **Arch** | the code builds. No install, no session |
 >
 > **The functional state of each piece — installed, loaded, interactive, validated — lives in

@@ -23,8 +23,8 @@ habillées par notre style. L'audit qui a conduit là, composant par composant, 
 >
 > | Où | Ce qui est établi |
 > |---|---|
-> | **Fedora 44, Plasma 6.8.2** | la session s'ouvre depuis l'écran de connexion, installée par `installer.sh` dans une VM neuve. `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `Ankh`, police `Selawik 10.5`, décoration `org.ankh.decoration`, icônes `Fluent-Ankh`, style Plasma `ankh`. **48 vérifications clé par clé** passées *dans la session* |
-> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | **la session s'ouvre** depuis l'écran de connexion et **tous les réglages s'appliquent** — style `Ankh`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh` — passage `42397366933`. Ce passage s'est néanmoins conclu en échec, sur un défaut du harnais sans rapport avec Ankh DE ; les vérifications clé par clé n'ont pas tourné. Détail : [CLAUDE.md §6](CLAUDE.md) |
+> | **Fedora 44, Plasma 6.8** — l'autre bout de la plage | la session s'ouvre depuis l'écran de connexion, installée par `installer.sh` dans une VM neuve. `ANKH_DE_SESSION=1`, style `Ankh`, couleurs `AnkhClair`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh-clair`, et les vérifications clé par clé passées *dans la session* |
+> | **Ubuntu 26.04, Plasma 6.6** — **la cible** | **la session s'ouvre** depuis l'écran de connexion, tous les réglages s'appliquent — style `Ankh`, couleurs `AnkhClair`, `Selawik 10.5`, `org.ankh.decoration`, `Fluent-Ankh`, style Plasma `ankh-clair` — et le menu Démarrer **s'ouvre, cherche et lance** (passage `42486646380`, 2026-11-08). Ce passage s'est conclu en échec sur d'autres essais ; le détail, pièce par pièce, est dans [CLAUDE.md §6](CLAUDE.md) |
 > | **Arch** | le code compile. Ni installation, ni session |
 >
 > **L'état fonctionnel de chaque pièce — installée, chargée, interactive, validée — est dans
@@ -82,17 +82,23 @@ amont désigne lui-même : `type: PlasmaCore.Dialog.AppletPopup`.
 
 ![Un panneau ouvert depuis la zone de droite de la barre](docs/images/volet-droite-vm.png)
 
-**Ce que cette capture ne dit pas** : lequel des applets a répondu. Le harnais repère les amas
-de pixels dans la barre et clique leur centre ; il obtient une abscisse, pas un identifiant.
-Écrire « c'est le volet d'état » serait inventer.
+Ici l'**image** tranche ce que le harnais ne sait pas dire : c'est un calendrier, donc c'est
+l'horloge qui a répondu. Et derrière, les Paramètres système dans le thème — fenêtre claire,
+barre de titre continue, bouton « Agrandir » carré comme dans Windows 11.
+
+**Ce que cette capture ne dit toujours pas** : lequel des *autres* amas correspond à quel applet.
+Le harnais repère les amas de pixels dans la barre et clique leur centre ; il obtient une
+abscisse, pas un identifiant. Écrire « c'est le Wi-Fi » serait inventer.
 
 ## La barre des tâches
 
 ![La barre des tâches d'Ankh DE dans une VM](docs/images/barre-vm.png)
 
-Les 120 px du bas de l'écran, à l'échelle 3. Le bouton Démarrer porte **le logo d'Ankh** —
-aucun motif qui ressemble à un logo de Microsoft ([DE-013](DECISIONS.md)). L'application ouverte
-est soulignée, et l'horloge est sur deux lignes, comme dans Windows 11.
+Les 120 px du bas de l'écran, à l'échelle 3. Le bouton Démarrer porte **quatre carreaux
+monochromes** — un motif d'interface courant, et surtout **pas** le logo de Microsoft, qui est une
+marque déposée ([DE-017](DECISIONS.md)). L'application ouverte est soulignée, et l'horloge est
+sur deux lignes, **sans secondes**, comme dans Windows 11. Le fond magenta est celui que le
+harnais pose pour mesurer la barre : ni le noir ni le blanc ne conviennent aux deux thèmes.
 
 ## Le bureau
 
