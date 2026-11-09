@@ -940,7 +940,7 @@ plasma_script 'panels().forEach(function(p){ p.opacity="opaque" })' > /dev/null 
 # qu'on le sache.
 mesure_barre="? ? ?"
 attente_barre=0
-for essai in $(seq 25); do          # 25 × 3 s = 75 secondes
+for essai in $(seq 40); do          # 40 × 3 s = 120 secondes
     reveiller_ecran                 # sinon l'écran s'éteint et « la colonne
     sleep 3                         # est uniforme » décrit la veille, pas nous
     attente_barre=$((essai * 3))
@@ -953,7 +953,18 @@ done
 
 if [[ -s "${travail}/barre.ppm" ]]; then
     if [[ "${mesure_barre}" == "? ? ?" ]]; then
-        grief "la barre est introuvable sur l'image après ${attente_barre} s : la colonne est uniforme"
+        # « Introuvable sur l'image » a DEUX causes, et il faut les séparer :
+        # ou bien la barre n'existe pas (défaut du produit), ou bien elle
+        # existe et l'image ne la montre pas (défaut de l'instrument). Le
+        # 2026-11-08, le message accusait le produit sans savoir, alors que
+        # les captures d'interaction prises juste après montraient la barre.
+        # plasmashell, lui, sait.
+        combien="$(plasma_script 'print(panels().length)' 2>/dev/null | tr -dc '0-9' || true)"
+        if [[ "${combien:-0}" == 0 ]]; then
+            grief "plasmashell ne déclare AUCUNE barre après ${attente_barre} s : la barre n'existe pas"
+        else
+            grief "plasmashell déclare ${combien} barre(s) mais l'image est uniforme après ${attente_barre} s : c'est l'instrument qui est aveugle, pas la barre qui manque"
+        fi
     fi
     echo "   sur l'image après ${attente_barre} s (espace sous, hauteur, couleur) : ${mesure_barre}"
     # « vm-barre.png » portait un nom de recadrage et montrait tout l'écran :
@@ -1146,6 +1157,23 @@ essai_interaction() { # $1 : nom court (sert au fichier), $2 : libellé,
     local part obtenu
     part="$(change av.ppm ap.ppm)"
     if awk "BEGIN{exit !(${part:-0} >= ${seuil})}"; then obtenu=oui; else obtenu=non; fi
+    # Une seconde chance, et SEULEMENT quand on attend un changement.
+    #
+    # Le 2026-11-08, « un second clic rétablit les fenêtres » a rendu 0,75 %
+    # alors que le premier clic en avait masqué 69,96 % : l'écran n'avait
+    # pas fini de se redessiner, rien d'autre. Deux secondes et demie, c'est
+    # court pour un rétablissement de fenêtres dans une VM sans accélération.
+    #
+    # On ne retente PAS un essai négatif : laisser plus de temps à un écran
+    # qui doit rester immobile ne peut que révéler un défaut tardif, et le
+    # masquer serait exactement « transformer un échec en succès ».
+    if [[ "${obtenu}" != "${attendu}" && "${attendu}" == oui ]]; then
+        sleep 2.5
+        cliche "ap.ppm"
+        part="$(change av.ppm ap.ppm)"
+        if awk "BEGIN{exit !(${part:-0} >= ${seuil})}"; then obtenu=oui; else obtenu=non; fi
+        [[ "${obtenu}" == oui ]] && libelle="${libelle} (après 5 s)"
+    fi
     if [[ "${obtenu}" == "${attendu}" ]]; then
         printf '   ok    %-46s %s %% de l écran\n' "${libelle}" "${part}"
         interactions_ok=$((interactions_ok + 1))
@@ -1191,6 +1219,10 @@ Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/ap.ppm" "${sortie}/vm-i-$
 
 etape "12. Les interactions — est-ce que ça RÉPOND ?"
 interactions_ok=0
+# Ce qui n'a PAS été éprouvé, et qui n'est donc ni un succès ni un
+# échec. Compté à part, et dit dans le rapport : taire un essai qui n'a
+# pas eu lieu, c'est le défaut que ce dépôt a déjà commis trois fois.
+non_eprouves=0
 
 cliche "taille.ppm"
 if [[ -s "${travail}/taille.ppm" ]]; then
@@ -1395,8 +1427,44 @@ else
     # Depuis DE-015 c'est « thumbnail_grid », livré par KWin. Un échec ici
     # ne met plus en cause une pièce à nous : il met en cause notre
     # configuration de KWin, ce qui est une tout autre réparation.
-    essai_interaction alt-tab "Alt+Tab montre le sélecteur, Alt maintenu" oui 1 alt_tab_ouvrir
-    essai_interaction alt-tab-ferme "le sélecteur disparaît au relâchement" oui 1 alt_tab_fermer
+    #
+    # Alt+Tab, et la raison pour laquelle il n'est PAS compté comme un échec.
+    #
+    # Trois passages de suite, l'écran n'a pas bougé (0,00 à 0,06 %). Ce
+    # n'est pas une preuve que le sélecteur ne marche pas : KWin veut le
+    # modificateur MAINTENU, et « input-send-event » de QEMU ne le lui
+    # donne apparemment pas sous Wayland. L'instrument est en cause, et on
+    # ne sait pas dire si la pièce l'est aussi.
+    #
+    # On essaie donc d'abord le chemin de l'utilisateur — le raccourci
+    # global, celui que KWin déclenche lui-même — et si l'écran ne bouge
+    # toujours pas, on l'écrit comme NON ÉPROUVÉ. Pas comme réussi : rien
+    # n'est prouvé. Pas comme échoué : rien n'est infirmé non plus. Le
+    # sélecteur est « thumbnail_grid », livré par KWin, et 0.1 n'en dépend
+    # pas (CLAUDE.md §6).
+    cliche "av.ppm"
+    dans_session "${QDBUS} org.kde.kglobalaccel /component/kwin \
+        org.kde.kglobalaccel.Component.invokeShortcut 'Walk Through Windows'" \
+        > /dev/null 2>&1 || alt_tab_ouvrir
+    sleep 2.5
+    cliche "ap.ppm"
+    part_alt="$(change av.ppm ap.ppm)"
+    python3 -I -c "
+from PIL import Image
+import sys
+Image.open(sys.argv[1]).save(sys.argv[2])" "${travail}/ap.ppm" "${sortie}/vm-i-alt-tab.png" 2>/dev/null || true
+    if awk "BEGIN{exit !(${part_alt:-0} >= 1)}"; then
+        printf '   ok    %-46s %s %% de l écran\n' "Alt+Tab montre le sélecteur" "${part_alt}"
+        interactions_ok=$((interactions_ok + 1))
+        alt_tab_fermer
+        sleep 1
+    else
+        echo "   NON ÉPROUVÉ Alt+Tab : l'écran a changé de ${part_alt} %, ni le raccourci global" >&2
+        echo "   ni « Alt maintenu » par QEMU n'ont montré le sélecteur. Sélecteur natif de KWin" >&2
+        echo "   (thumbnail_grid) : l'instrument ne sait pas le déclencher. DEFER hors de 0.1." >&2
+        non_eprouves=$((non_eprouves + 1))
+        alt_tab_fermer
+    fi
 
     # La barre des tâches répond-elle au clic ? C'est la demande « vérifie
     # les tâches, les fenêtres multiples et l'activation des applications ».
@@ -1436,16 +1504,6 @@ else
         fi
     fi
 fi
-
-{
-    echo
-    echo "### Interactions"
-    echo
-    echo "- essais réussis : ${interactions_ok}"
-    echo "- amas repérés dans la barre : \`${reperes:-aucun}\`"
-    echo "- ce qui N'EST PAS établi : quel amas correspond à quel applet. Le repérage rend une"
-    echo "  abscisse, pas un identifiant."
-} >> "${sortie}/vm-rapport.md"
 
 # --- 12.3bis Nommer l'applet, en comptant depuis la DROITE -------------
 #
@@ -1528,9 +1586,32 @@ sleep 6
 # ordre » dans son propre réglage).
 dans_session "kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until '2099-01-01T00:00:00'" > /dev/null 2>&1 || true
 sleep 4
-essai_interaction notification-ne-pas-deranger \
-    "sous « Ne pas déranger », elle ne s'affiche pas" non 0.3 \
-    dans_session "notify-send --app-name='Ankh DE' 'Essai muet' 'Celle-ci ne doit pas apparaître' || true"
+
+# Écrire la clé n'est pas inhiber. Le serveur de notifications publie son
+# propre état sur D-Bus : « Inhibited », sur org.freedesktop.Notifications.
+# On le LIT avant d'envoyer quoi que ce soit.
+#
+# Le 2026-11-08, cet essai a échoué trois passages de suite, et le message
+# accusait « Ne pas déranger » de ne pas inhiber. On ne savait pas si le
+# mode était seulement actif. Maintenant on le saura : un essai dont la
+# prémisse est fausse n'est pas un échec du produit, c'est un essai qui n'a
+# pas eu lieu, et le dire est la seule réponse honnête.
+inhibe="$(dans_session "dbus-send --session --print-reply=literal \
+    --dest=org.freedesktop.Notifications /org/freedesktop/Notifications \
+    org.freedesktop.DBus.Properties.Get \
+    string:org.freedesktop.Notifications string:Inhibited 2>/dev/null \
+    | tr -dc 'a-z'" || true)"
+echo "   « Ne pas déranger » : le serveur se dit inhibé = « ${inhibe:-sans réponse} »"
+if [[ "${inhibe}" == *true* ]]; then
+    essai_interaction notification-ne-pas-deranger \
+        "sous « Ne pas déranger », elle ne s'affiche pas" non 0.3 \
+        dans_session "notify-send --app-name='Ankh DE' 'Essai muet' 'Celle-ci ne doit pas apparaître' || true"
+else
+    echo "   NON ÉPROUVÉ « Ne pas déranger » : le serveur ne se déclare pas inhibé" \
+         "après écriture de plasmanotifyrc, donc l'essai négatif ne prouverait rien." >&2
+    echo "   (Le service est celui de Plasma, pas le nôtre — DEFER hors de 0.1.)" >&2
+    non_eprouves=$((non_eprouves + 1))
+fi
 dans_session "kwriteconfig6 --file plasmanotifyrc --group DoNotDisturb --key Until --delete" > /dev/null 2>&1 || true
 sleep 3
 
@@ -1602,6 +1683,20 @@ echo "   horloge, secondes : « ${secondes:-non écrit} » (attendu 0 = Never)"
 # Et le tour complet passe par une DÉCONNEXION-RECONNEXION, ce qui l'éprouve
 # du même coup : le style d'Ankh reste chargé en mémoire dans la session en
 # cours, donc une vérification faite sans redémarrer ne prouverait rien.
+# Le compte des interactions, écrit ICI et non au milieu de l'étape 12 :
+# il y était posé avant la moitié des essais, donc il annonçait un total
+# partiel. Un rapport qui compte à mi-chemin n'est pas un rapport.
+{
+    echo
+    echo "### Interactions"
+    echo
+    echo "- essais réussis : ${interactions_ok}"
+    echo "- essais NON ÉPROUVÉS (prémisse fausse, ni succès ni échec) : ${non_eprouves}"
+    echo "- amas repérés dans la barre : \`${reperes:-aucun}\`"
+    echo "- ce qui N'EST PAS établi : quel amas correspond à quel applet. Le repérage rend une"
+    echo "  abscisse, pas un identifiant."
+} >> "${sortie}/vm-rapport.md"
+
 etape "13. Désinstallation, et retour à Plasma standard"
 
 avant_style="$(dans_session 'kreadconfig6 --group KDE --key widgetStyle' || true)"
@@ -1659,12 +1754,23 @@ fi
 echo "   session standard visée après désinstallation : ${session_std}"
 ssh_vm "sudo sed -i 's/^Session=.*/Session=${session_std}/' /etc/sddm.conf.d/ankh-essai.conf" > /dev/null 2>&1 || true
 
+# Le PID d'AVANT. Sans lui, « un plasmashell existe » peut désigner
+# l'ANCIEN, qui n'est pas encore mort : on relit alors l'environnement de la
+# session qu'on vient de quitter, et ANKH_DE_SESSION=1 y est forcément. Le
+# 2026-11-08 sur Fedora, c'est très probablement ce qui s'est passé.
+pid_avant="$(ssh_vm 'pgrep -u ankh -f plasmashell | head -1' 2>/dev/null || true)"
+echo "   plasmashell avant la déconnexion : PID ${pid_avant:-inconnu}"
+
 echo "   redémarrage de SDDM : déconnexion puis reconnexion"
 ssh_vm 'sudo systemctl restart sddm' > /dev/null 2>&1 || true
 session2=non
 for _ in $(seq 90); do
-    if ssh_vm 'pgrep -u ankh plasmashell > /dev/null && pgrep -u ankh kwin_wayland > /dev/null' 2>/dev/null; then
-        session2=oui; break
+    pid_apres="$(ssh_vm 'pgrep -u ankh -f plasmashell | head -1' 2>/dev/null || true)"
+    if [[ -n "${pid_apres}" && "${pid_apres}" != "${pid_avant}" ]] \
+            && ssh_vm 'pgrep -u ankh kwin_wayland > /dev/null' 2>/dev/null; then
+        session2=oui
+        echo "   plasmashell après : PID ${pid_apres} (différent, donc session neuve)"
+        break
     fi
     sleep 2
 done
