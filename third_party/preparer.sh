@@ -725,6 +725,7 @@ verifier_menu MenuRepresentation.qml "type: PlasmaCore.Dialog.AppletPopup"    "l
 verifier_menu MenuRepresentation.qml "id: mainColumn"                         "la colonne unique de Windows 11"
 verifier_menu MenuRepresentation.qml "id: pageSlot"                           "SearchPage entrerait en boucle de liaison"
 verifier_menu MenuRepresentation.qml "Kicker.RecentUsageModel"                "la section « Recommandé »"
+verifier_menu MenuRepresentation.qml "recommendedModel.count === 0"           "le mot qui remplace la liste vide, et le grand trou blanc reviendrait"
 verifier_menu MenuRepresentation.qml "id: bottomBarContent"                   "SearchPage l'atteint par ce nom"
 verifier_menu MenuRepresentation.qml "id: powerButton"                        "l'alimentation en bas à droite"
 # Le composant s'appelle « bottomBar » chez lui ; « bottomBarContent » est
@@ -784,6 +785,12 @@ if xml == avant:
 # le bloc-notes, la logithèque, les photos, le lecteur de documents. Une
 # entrée dont le .desktop est absent ne s'affiche pas — c'est la seule
 # dégradation acceptable, et elle ne crée pas de doublon.
+# Dix-huit, comme Windows 11 : trois rangées de six. L'ordre suit le sien —
+# navigateur, explorateur, paramètres, terminal, bloc-notes, logithèque,
+# puis photos, lecteur, musique, vidéo, calculatrice, archives, capture,
+# courrier, agenda, horloge, dessin, moniteur. Une entrée dont le .desktop
+# est absent ne s'affiche pas : la grille se remplit de ce que la machine a,
+# sans jamais de doublon.
 EPINGLES = ",".join([
     "firefox.desktop",
     "org.kde.dolphin.desktop",
@@ -793,7 +800,20 @@ EPINGLES = ",".join([
     "org.kde.discover.desktop",
     "org.kde.gwenview.desktop",
     "org.kde.okular.desktop",
+    "org.kde.elisa.desktop",
+    "org.kde.haruna.desktop",
+    "org.kde.kcalc.desktop",
+    "org.kde.ark.desktop",
+    "org.kde.spectacle.desktop",
+    "org.kde.kmail2.desktop",
+    "org.kde.korganizer.desktop",
+    "org.kde.kclock.desktop",
+    "org.kde.kolourpaint.desktop",
+    "org.kde.plasma-systemmonitor.desktop",
 ])
+if len(EPINGLES.split(",")) != 18:
+    print("Menu : les épingles ne sont plus dix-huit", file=sys.stderr)
+    sys.exit(1)
 avant_ep = xml
 xml, n = re.subn(
     r'(<entry name="favoriteApps" type="StringList">\s*<default>)[^<]*(</default>)',

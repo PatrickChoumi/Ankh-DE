@@ -356,7 +356,13 @@ Item {
                     Layout.fillWidth: true
                     Layout.preferredHeight: rootItem.recommendedHeight
                     Layout.fillHeight: false
-                    visible: root.leftColumnState === 0 && recommendedModel.count > 0
+                    // Visible dès que la page des épingles l'est, même quand
+                    // le modèle est vide : Windows 11 garde l'en-tête et met
+                    // un mot à la place de la liste. La masquer laissait un
+                    // grand trou blanc entre la grille et la barre du bas —
+                    // c'est ce que montrait la capture du 2026-11-08, dans
+                    // une machine neuve où rien n'a encore été ouvert.
+                    visible: root.leftColumnState === 0
                     spacing: Kirigami.Units.smallSpacing
 
                     PlasmaComponents3.Label {
@@ -367,23 +373,41 @@ Item {
                         Layout.leftMargin: Kirigami.Units.smallSpacing
                     }
 
-                    ListView {
-                        id: recommendedList
+                    // Un Item porteur : un enfant non-délégué d'une ListView
+                    // devient enfant de son contentItem et DÉFILE avec elle.
+                    // Le mot « rien à montrer » doit rester immobile.
+                    Item {
                         Layout.fillWidth: true
                         Layout.fillHeight: true
-                        model: recommendedModel
-                        clip: true
-                        currentIndex: -1
-                        spacing: Math.round(Kirigami.Units.smallSpacing / 2)
-                        boundsBehavior: Flickable.StopAtBounds
 
-                        PlasmaComponents3.ScrollBar.vertical: PlasmaComponents3.ScrollBar {
-                            policy: PlasmaComponents3.ScrollBar.AsNeeded
+                        ListView {
+                            id: recommendedList
+                            anchors.fill: parent
+                            model: recommendedModel
+                            clip: true
+                            currentIndex: -1
+                            spacing: Math.round(Kirigami.Units.smallSpacing / 2)
+                            boundsBehavior: Flickable.StopAtBounds
+
+                            PlasmaComponents3.ScrollBar.vertical: PlasmaComponents3.ScrollBar {
+                                policy: PlasmaComponents3.ScrollBar.AsNeeded
+                            }
+
+                            delegate: ListItemDelegate {
+                                iconSize: Kirigami.Units.iconSizes.smallMedium
+                                showDescription: true
+                            }
                         }
 
-                        delegate: ListItemDelegate {
-                            iconSize: Kirigami.Units.iconSizes.smallMedium
-                            showDescription: true
+                        PlasmaComponents3.Label {
+                            anchors.centerIn: parent
+                            width: parent.width - Kirigami.Units.gridUnit * 2
+                            visible: recommendedModel.count === 0
+                            horizontalAlignment: Text.AlignHCenter
+                            wrapMode: Text.WordWrap
+                            opacity: 0.6
+                            color: Kirigami.Theme.textColor
+                            text: i18n("Your recent files and newly installed apps will show up here")
                         }
                     }
                 }

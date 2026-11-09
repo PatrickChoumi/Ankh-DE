@@ -248,6 +248,7 @@ if [[ "${DISTRIB}" == ubuntu ]]; then
         fontmake librsvg2-bin x11-apps sassc fontconfig git \
         python3-pil libnotify-bin \
         konsole dolphin systemsettings \
+        gwenview okular kcalc ark kde-spectacle \
         > /tmp/paquets.log 2>&1' || {
             echo "L'installation de Plasma a échoué :" >&2
             ssh_vm 'tail -30 /tmp/paquets.log' >&2 || true
@@ -267,6 +268,7 @@ else
         fontmake librsvg2-tools xcursorgen sassc fontconfig git \
         python3-pillow libnotify \
         konsole dolphin plasma-systemsettings \
+        gwenview okular kcalc ark spectacle \
         > /tmp/paquets.log 2>&1' || {
             echo "L'installation de Plasma a échoué :" >&2
             ssh_vm 'tail -30 /tmp/paquets.log' >&2 || true
