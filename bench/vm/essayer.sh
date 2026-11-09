@@ -988,6 +988,37 @@ fi
 # dans un état qu'il a lui-même fabriqué pour mesurer.
 plasma_script 'panels().forEach(function(p){ p.opacity="translucent" })' > /dev/null || true
 
+# Et UNE capture de plus, celle-là en verre.
+#
+# Toutes les images de la barre sont prises en « opaque », parce que c'est
+# ce qu'il faut pour la mesurer. On ne savait donc pas si la translucidité
+# est réellement rendue — « mesures-barre.json » dit « translucent », mais
+# c'est le RÉGLAGE, pas le résultat. Sur un fond magenta, un verre se voit :
+# la bande du bas prend la teinte du fond. Opaque, elle reste au gris de
+# Windows.
+sleep 4
+reveiller_ecran
+# « qmp » n'est définie que plus bas, avec les helpers d'entrée : on prend
+# ici la même forme en ligne que les autres captures de cette étape.
+printf '{ "execute": "qmp_capabilities" }\n{ "execute": "screendump", "arguments": { "filename": "%s" } }\n' \
+    "${travail}/verre.ppm" | timeout 30 socat - UNIX-CONNECT:"${travail}/qmp.sock" > /dev/null 2>&1 || true
+if [[ -s "${travail}/verre.ppm" ]]; then
+    verre="$(python3 -I -c "
+from PIL import Image
+import sys
+im = Image.open(sys.argv[1]).convert('RGB')
+l, h = im.size
+bande = im.crop((0, max(0, h - 120), l, h))
+bande.resize((bande.width * 3, bande.height * 3), Image.NEAREST).save(sys.argv[2])
+# La couleur dominante des 24 px du bas : le cœur de la barre.
+coeur = im.crop((0, h - 24, l, h))
+c = sorted(coeur.getcolors(1000000), reverse=True)[0][1]
+print('#%02x%02x%02x' % c)
+" "${travail}/verre.ppm" "${sortie}/vm-barre-verre.png" 2>/dev/null || true)"
+    echo "   barre en verre : couleur dominante ${verre:-inconnue} (le fond est #ff00ff)"
+    echo "   vm-barre-verre.png écrite"
+fi
+
 python3 -I - "${sortie}/mesures-barre.json" "${barre_hauteur}" "${barre_position}" \
     "${barre_flottante}" "${horloge_date}" "${notif_position}" "${mesure_barre}" \
     "${barre_alignement}" "${barre_mode_longueur}" "${barre_masquage}" \
