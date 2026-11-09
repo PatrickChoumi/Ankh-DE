@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
 # Ankh DE : fabrique les pièces qui viennent d'ailleurs et ne se compilent
 # pas avec CMake (DE-005). Chacune est prise à un commit figé, vérifié après
-# le téléchargement, et recolorée au violet d'Ankh :
+# le téléchargement, et amenée aux couleurs de Windows 11 ([DE-017]) :
 #
 #   polices/selawik        la police Selawik, sosie libre de Segoe UI publié
 #                          par Microsoft (OFL 1.1), compilée depuis ses
 #                          sources UFO ;
 #   icones/Ankh-curseurs   les curseurs Fluent blancs (GPL-3.0), dont le bleu
 #                          de l'anneau d'attente et des flèches de
-#                          redimensionnement devient le violet d'Ankh ;
+#                          redimensionnement est déjà le #0078d4 de
+#                          Windows 11 : on le GARDE ;
 #   themes/Fluent-Ankh     le thème GTK Fluent (GPL-3.0), variante ronde et
-#                          sans bord, au violet d'Ankh, pour que les
+#                          sans bord, bleue, dont le #1a73e8 de Google est
+#                          ramené au #0078D4 de Windows, pour que les
 #                          applications GTK suivent ;
-#   icones/Fluent-Ankh     le thème d'icônes Fluent (GPL-3.0), aux dossiers
-#                          violets (lot 9 : pas encore fait).
+#   icones/Fluent-Ankh     le thème d'icônes Fluent (GPL-3.0), variante
+#                          jaune : le #ffcb52 des dossiers de Windows 11.
 #
 # Dérivé de build_files/outils.sh d'Ankh (https://github.com/PatrickChoumi/Ankh),
 # vérifié en VM le 2026-10-20. Différences : plus rien de Fedora (ni rpm, ni
@@ -229,7 +231,7 @@ done
 cat > "${theme}/index.theme" << 'THEME'
 [Icon Theme]
 Name=Ankh-curseurs
-Comment=Curseurs blancs d'Ankh : curseurs Fluent, au violet d'Ankh
+Comment=Curseurs Fluent blancs (vinceliuice/Fluent-icon-theme, GPL-3.0), bleus de Windows 11
 Inherits=breeze_cursors
 THEME
 install -m 0644 "${travail}/fluent/cursors/LICENSE" "${theme}/LICENSE"
@@ -894,10 +896,9 @@ echo "org.ankh.demarrer : une colonne, recherche en haut, grille 6x3, Recommand�
 # AnduinOS en livre deux, clair et sombre, en GPL-3.0 — même famille Fluent
 # que le thème GTK et le thème d'icônes que ce script reprend déjà.
 #
-# On les reprend, et on les fait nôtres par une ROTATION DE TEINTE : les
-# valeurs sont conservées, donc le modelé des facettes aussi. C'est la même
-# méthode que pour le thème d'icônes, où le rose de la variante « purple »
-# devient le violet d'Ankh.
+# On les reprend TELS QUELS depuis DE-017 : leurs teintes dominantes sont
+# déjà à 210° et 220°, le bleu de Windows. La rotation de teinte qui les
+# amenait au violet d'Ankh n'a plus d'objet, et son script est supprimé.
 ANDUIN_COMMIT=c659fae21267ba8c6d93c3d313147c8b17cf63da
 recuperer https://github.com/Anduin2017/AnduinOS "${ANDUIN_COMMIT}" \
     "${travail}/anduin" src/mods/23-wallpaper-mod
@@ -913,14 +914,15 @@ install -d -m 0755 "${paquet}/contents/images" "${paquet}/contents/images_dark"
 install -m 0644 "${fonds}/Fluent-building-light.png" "${paquet}/contents/images/3840x2160.png"
 install -m 0644 "${fonds}/Fluent-building-night.png" "${paquet}/contents/images_dark/3840x2160.png"
 
-# La vignette de la page « Fond d'écran » de Plasma : la variante sombre,
-# qui est celle par défaut d'Ankh DE.
+# La vignette de la page « Fond d'écran » de Plasma : la variante CLAIRE,
+# qui est celle par défaut depuis DE-017. Elle montrait la sombre, donc la
+# page annonçait un fond que la session ne pose pas.
 python3 -I -c "
 from PIL import Image
 import sys
 im = Image.open(sys.argv[1])
 im.resize((1280, 720), Image.LANCZOS).save(sys.argv[2], optimize=True)
-" "${paquet}/contents/images_dark/3840x2160.png" "${paquet}/contents/screenshot.png"
+" "${paquet}/contents/images/3840x2160.png" "${paquet}/contents/screenshot.png"
 
 # « X-KDE-PlasmaImageWallpaper-AccentColor » : c'est par cette clé que
 # l'accent de Plasma suit le fond d'écran (DE-004). Sans elle, Plasma calcule

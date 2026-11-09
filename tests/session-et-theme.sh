@@ -382,16 +382,31 @@ if [[ -d "${icones}" ]]; then
     echo "== Les icônes"
     attendre "nom affiché du thème d'icônes" "Ankh" \
         "$(awk -F= '/^Name=/{print $2; exit}' "${icones}/index.theme" 2>/dev/null || true)"
-    dossier_svg="$(find "${prefixe}/share/icons" -name 'folder_color_yellow.svg' 2>/dev/null | head -1)"
+    # Le dossier que l'utilisateur VOIT, et non un fichier jaune par son nom.
+    #
+    # Ce contrôle regardait « folder_color_yellow.svg ». Or ce fichier est la
+    # variante jaune NOMMÉE de Fluent : il est jaune dans toutes les
+    # versions, y compris celles dont les dossiers sont violets. Éprouvé le
+    # 2026-11-09 sur la version du 2026-11-07, d'avant DE-017 :
+    #   folder_color_yellow.svg  -> #ffcb52  (le contrôle passait)
+    #   default-folder.svg       -> #dc63ee  (ce qu'on voyait à l'écran)
+    # Un contrôle qui ne peut pas échouer n'est pas un contrôle.
+    #
+    # On suit donc « places/folder.svg », qui est le lien que Plasma résout,
+    # jusqu'à son fichier réel.
+    dossier_svg="$(readlink -f "${icones}/scalable/places/folder.svg" 2>/dev/null || true)"
+    [[ -s "${dossier_svg}" ]] \
+        || dossier_svg="$(find "${icones}" -name 'default-folder.svg' 2>/dev/null | head -1)"
     verifies=$((verifies + 1))
-    if [[ -z "${dossier_svg}" ]]; then
-        echo "  ECHEC aucun dessin de dossier trouvé dans le thème d'icônes" >&2
+    if [[ -z "${dossier_svg}" || ! -s "${dossier_svg}" ]]; then
+        echo "  ECHEC « places/folder.svg » du thème d'icônes ne mène à aucun dessin" >&2
         echecs=$((echecs + 1))
     elif grep -qi '#ffcb52' "${dossier_svg}" \
-            && ! grep -qiE '#a78bfa|#8455f0|#7c3aed|#c4b5fd' "${dossier_svg}"; then
-        printf '  ok    %s\n' "les dossiers portent le jaune de Windows 11, aucun violet"
+            && ! grep -qiE '#a78bfa|#8455f0|#7c3aed|#c4b5fd|#dc63ee' "${dossier_svg}"; then
+        printf '  ok    %s\n' "le dossier par défaut porte le jaune de Windows 11, aucun violet"
+        printf '        %s\n' "(${dossier_svg##*/}, suivi depuis places/folder.svg)"
     else
-        echo "  ECHEC les dossiers ne sont pas au jaune de Windows 11 : ${dossier_svg}" >&2
+        echo "  ECHEC le dossier PAR DÉFAUT n'est pas au jaune de Windows 11 : ${dossier_svg}" >&2
         grep -oE '#[0-9a-fA-F]{6}' "${dossier_svg}" | sort -u | head -4 >&2
         echecs=$((echecs + 1))
     fi
