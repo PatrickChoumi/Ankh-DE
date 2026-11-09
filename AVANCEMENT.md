@@ -505,6 +505,46 @@ seule preuve de fidélité est celle d'Ankh, sur Fedora.
 
 ## Ce que je dois faire moi-même
 
-- Créer le dépôt `Ankh-DE` sur GitHub et y pousser cette première version (les sessions Claude
-  Code n'ont pas le droit de créer un dépôt).
+*Relu le 2026-11-09. Les deux premières lignes sont faites : le dépôt existe et la branche
+`simplification-plasma-6.6` y est poussée.*
+
+- ~~Créer le dépôt `Ankh-DE` sur GitHub~~ — fait.
 - Choisir si le dépôt protège `main` par PR, comme Ankh.
+- **Lancer le workflow « Publier » pour `0.1.0-rc1`.** Une session Claude Code ne peut pas créer
+  de tag : c'est la seule étape de la publication qu'elle ne peut pas faire. À ne lancer que si
+  les trois épreuves sont vertes **sur un même SHA** (`CLAUDE.md` §5.18).
+
+## Où reprendre — 2026-11-09
+
+L'état des pièces est dans **[CLAUDE.md §6](CLAUDE.md)**, et nulle part ailleurs. Ce qui suit
+n'est que l'ordre des opérations.
+
+**1. Le verdict du passage en VM.** Au moment où ces lignes sont écrites, le passage sur
+`eca4be3` tourne encore — il est le premier à aller jusqu'à la désinstallation, donc il dure une
+douzaine de minutes de plus que les précédents.
+
+```
+gh run list --branch simplification-plasma-6.6 --limit 3
+```
+
+**2. S'il est vert**, les trois épreuves le sont sur un même SHA, et il reste à :
+
+- télécharger l'artefact `vm-session-ubuntu` et **regarder les captures**. C'est l'étape qui a
+  attrapé les trois derniers défauts — grille d'épingles vide, barre mesurée « 800 / 0 », menu de
+  Windows 7 pris pour celui de 11 — qu'aucun test ne signalait ;
+- remplacer les captures de `docs/images/` par celles de ce passage ;
+- lancer « Publier ».
+
+**3. S'il est rouge**, le rapport nomme la pièce. Les sept échecs du 2026-11-08 sont corrigés et
+expliqués un par un dans le journal ci-dessus ; un échec nouveau est donc un fait nouveau.
+
+**4. La finition qui reste**, dans l'ordre du rapport qualité / coût, et aucune n'est bloquante :
+
+| | Ce que c'est | Où c'est écrit |
+|---|---|---|
+| **Thème SDDM** | nous n'en avons **aucun**, et c'est le premier écran qu'on voit. Celui de KDE-Windows-Modern est juste et sous GPL-3.0 | [docs/UPSTREAMS.md](docs/UPSTREAMS.md), « Candidats » |
+| **Dessins de dossiers** | les nôtres ont une feuille blanche que Windows 11 n'a pas ; ceux d'Eleven sont vus de face, avec un dégradé. Ils sont **déjà dans le commit qu'on récupère** | idem, avec le piège des dossiers par taille |
+| **Le verre de la barre** | le harnais en prend désormais une capture ; il reste à la regarder | `vm-barre-verre.png` de l'artefact |
+
+Le thème SDDM est volontairement laissé pour la fin : c'est la seule pièce capable d'empêcher
+toute connexion, donc toute preuve. Il attend un passage vert.
