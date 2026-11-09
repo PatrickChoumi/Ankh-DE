@@ -24,19 +24,19 @@
 | Jeux de couleurs `src/colors/` | Breeze, `colors/BreezeDark.colors` | 6.7.5 | LGPL-2.0-or-later | données | Mêmes rôles, couleurs d'Ankh rangées par couches |
 | Gabarit de barre | [plasma-desktop](https://invent.kde.org/plasma/plasma-desktop), `layout-templates/…defaultPanel` | 6.7 | LGPL-2.0-or-later | code, dérivé | Barre collée de 48 px, centrée |
 | Écran de chargement | Breeze, `lookandfeel/contents/splash/` | 6.7 | LGPL-2.0-or-later | code, dérivé | Couleurs d'Ankh, barre de 3 px sur les six étapes |
-| **Style Plasma `ankh` / `ankh-clair`** | **[KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern)**, `plasma/desktoptheme/` | **`7ef6bfe`** (2026-07-19) | **GPL-3.0** | **images (SVG)** | **Repris le 2026-11-06.** Les accents de Windows 11 (`#4CC2FF`, `#60CDFF` en sombre ; `#0078D4` en clair) et les bleus de Breeze restés dans leur base (`#3DAEE9`, `#3DAEE6`, `#93CEE9`) sont remplacés par les violets d'Ankh. `metadata.json` réécrit à notre nom. 168 fichiers par thème |
+| **Style Plasma `ankh` / `ankh-clair`** | **[KDE-Windows-Modern](https://github.com/Jeysef/KDE-Windows-Modern)**, `plasma/desktoptheme/` | **`7ef6bfe`** (2026-07-19) | **GPL-3.0** | **images (SVG)** | **Repris le 2026-11-06.** Les accents de Windows 11 (`#4CC2FF`, `#60CDFF` en sombre ; `#0078D4` en clair) sont **gardés** ; seuls les bleus de Breeze restés dans leur base (`#3DAEE9`, `#3DAEE6`, `#93CEE9`) sont ramenés à l'accent de Windows ([DE-017](../DECISIONS.md)). `metadata.json` réécrit à notre nom. 168 fichiers par thème |
 | **Menu Démarrer `org.ankh.demarrer`** | **KDE-Windows-Modern**, `plasma/applets/…startmenu/` | **`7ef6bfe`** | **GPL-3.0** | **code (QML)** | **Repris le 2026-11-06 (DE-011).** 19 fichiers, QML pur, rien à compiler. Identifiant, domaine de configuration et nom affiché passés aux noms d'Ankh ; **l'auteur amont (Jeysef) est conservé** dans les métadonnées, et le test le vérifie. Dépend de `org.kde.plasma.private.kicker` et `…private.sessions` : modules **privés**, surveillés par le test hebdomadaire |
 | **Horloge `org.ankh.horloge`** | KDE-Windows-Modern, `…digitalclock/` | `7ef6bfe` | GPL-3.0 | code (QML) | Idem. Dispose l'heure au-dessus de la date, ce que l'horloge de Plasma ne sait pas faire |
 | **« Afficher le bureau » `org.ankh.bureau`** | KDE-Windows-Modern, `…showdesktop/` | `7ef6bfe` | GPL-3.0 | code (QML) | Idem. Aucun module privé |
 | Police Selawik | [microsoft/Selawik](https://github.com/microsoft/Selawik) | `89362e8` | OFL 1.1 | données | Compilée depuis ses sources UFO, **sans modification** (nom réservé) |
-| Curseurs | [Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), `cursors/` | `c8a244f` | GPL-3.0 | images | Variante blanche, bleu d'accent → violet d'Ankh |
+| Curseurs | [Fluent-icon-theme](https://github.com/vinceliuice/Fluent-icon-theme), `cursors/` | `c8a244f` | GPL-3.0 | images | Variante blanche. Ses bleus `#0078d4` et `#23e6fa` sont **ceux de Windows 11** : on les garde ([DE-017](../DECISIONS.md)) |
 | Icônes `Fluent-Ankh` | Fluent-icon-theme | `c8a244f` | GPL-3.0 | images | Variante « purple » (rose-magenta) recolorée en trois teintes |
-| Thème GTK `Fluent-Ankh` | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) | `7a49a46` | GPL-3.0 | feuilles de style | Variante ronde et sans bord, violets d'Ankh |
+| Thème GTK `Fluent-Ankh` | [Fluent-gtk-theme](https://github.com/vinceliuice/Fluent-gtk-theme) | `7a49a46` | GPL-3.0 | feuilles de style | Variante ronde, sans bord, **bleue** ; le `#1a73e8` de Google ramené au `#0078D4` de Windows, dans tous ses fichiers texte, `gtk-2.0/gtkrc` compris ([DE-017](../DECISIONS.md)) |
 | `org.ankh.etat` (lot 6) | [Tidewater](https://github.com/addition-official/tidewater), `plasmoids/status` | `4484377` | GPL-3.0-or-later | QML | Volet unique Wi-Fi / Bluetooth / volume / luminosité. Identifiant renommé, graine de couleur `#466fbd` → `#a78bfa`, épaisseur 52 → 48 px, Rubik → Selawik, police d'icônes forcée au repli Fluent-Ankh |
 | `org.ankh.notifications` (lot 6) | idem, `plasmoids/notifications` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
 | `org.ankh.taches` (lot 4) | idem, `plasmoids/tasks` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations. Lit la même clé `launchers` qu'`icontasks`, donc les épingles suivent |
 | `org.ankh.vuetaches` (lot 4) | idem, `plasmoids/taskview` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations |
-| **Fond d'écran `Ankh-Prismes`** | [AnduinOS](https://github.com/Anduin2017/AnduinOS), `src/mods/23-wallpaper-mod/Fluent-building-{light,night}.png` | `c659fae` | GPL-3.0-or-later | images | Clair et sombre. **Rotation de teinte de +52°, saturation × 0,85** : les teintes d'origine sont à 210–220° (le bleu de Windows), les violets d'Ankh à 255–258°. La rotation garde les VALEURS, donc le modelé des facettes et les arêtes. Déclare `X-KDE-PlasmaImageWallpaper-AccentColor` aux violets d'Ankh, par où `accentColorFromWallpaper` trouve le bon accent ([DE-004](../DECISIONS.md)) |
+| **Fond d'écran `Ankh-Prismes`** | [AnduinOS](https://github.com/Anduin2017/AnduinOS), `src/mods/23-wallpaper-mod/Fluent-building-{light,night}.png` | `c659fae` | GPL-3.0-or-later | images | Clair et sombre. Clair et sombre, **repris tels quels** depuis [DE-017](../DECISIONS.md) : leurs teintes dominantes sont déjà à 210–220°, le bleu de Windows. La rotation de +52° qui les amenait aux violets d'Ankh n'a plus d'objet, et `recolorer-fond.py` est supprimé. La vignette de la page « Fond d'écran » montre la variante **claire**, qui est celle par défaut |
 | `org.ankh.separateur` (lot 4) | idem, `plasmoids/divider` | `4484377` | GPL-3.0-or-later | QML | Mêmes transformations, **plus une** : son trait est rendu transparent. Il donne 9 px entre la zone système et l'horloge — sur la capture du 2026-11-06, l'icône de réseau touchait le « 2 » de « 2:10 PM ». Windows 11 sépare par de l'espace, pas par un trait |
 | `ankh-selecteur` (lot 7) | idem, `switcher/tidewater-switcher` | `4484377` | GPL-3.0-or-later | QML | Paquet `KWin/WindowSwitcher`, désigné par `src/config/kwinrc`. **Une mise à jour ne prend qu'à la déconnexion** : KWin garde le code en mémoire par nom de paquet |
 | module QML partagé, et le `common/` de chaque applet repris | idem, `shared/` et `common/` | `4484377` | GPL-3.0-or-later | QML | Installé dans `share/ankh-de/qml` ; les applets l'atteignent par cinq niveaux relatifs, ce que `tests/session-et-theme.sh` résout vraiment plutôt que de le compter |
@@ -48,6 +48,31 @@
 | [menu-11-next](https://github.com/Eisteed/menu-11-next) | `GPL-2.0+` **déclarée dans `metadata.json`**, mais **aucun fichier `LICENSE`** à la racine (relevé le 2026-11-06) | Gardé en **référence d'ergonomie**. Rien n'en est copié tant que la licence n'est pas portée par un fichier : une déclaration dans un fichier de métadonnées ne vaut pas le texte de la licence |
 | [Klassy](https://github.com/paulmcauley/klassy), Lightly, KDE-Rounded-Corners | diverses | SPEC §5.6 : un seul mainteneur chacun, à recompiler à chaque version de Plasma — le même problème que le nôtre, en double |
 | [PlasmaZones](https://github.com/fuddlesworth/PlasmaZones) | GPL-3.0-or-later | Exige **Qt 6.10+**, au-dessus de notre plancher (Qt 6.6+) : exclurait des distributions visées. À citer comme extension facultative |
+
+## Candidats, repérés le 2026-11-09 et pas encore repris
+
+KDE-Windows-Modern a publié une **v1.0.0** le 2026-07. Je l'ai téléchargée et
+regardée, image par image, avec ses quatre captures officielles.
+
+**Ce qu'on ne lui prendra pas**, et la raison tient en une phrase : ses
+captures sont plus finies que les nôtres, et sa disposition l'est moins. Son
+menu Démarrer a la forme de **Windows 7** — colonne de catégories à gauche,
+grille à droite, barre d'actions en bas. Sa barre des tâches **flotte**,
+détachée, façon Latte ; celle de Windows 11 est collée au bas, bord à bord.
+Il pose une **barre de menu globale** en haut de l'écran, avec l'horloge au
+centre : c'est macOS. Et son bouton « Agrandir » est une double flèche
+diagonale, là où Windows 11 met un carré.
+
+**Ce qu'on peut lui prendre**, en revanche :
+
+| Élément | Source | Licence | Pourquoi, et ce qu'il faudrait faire |
+|---|---|---|---|
+| **Thème SDDM** | KDE-Windows-Modern v1.0.0, `sddm-light/` et `sddm-dark/`, eux-mêmes dérivés de [Win11OS-kde](https://github.com/yeyushengfan258/Win11OS-kde) | GPL-3.0-or-later, déclarée dans `metadata.desktop` | **C'est le premier écran qu'on voit, et nous n'en avons aucun.** Sa capture est juste : grande horloge, fond flouté, avatar rond, champ de mot de passe avec la flèche, actions d'alimentation en bas. 836 Ko, 7 fichiers QML. À reprendre en remplaçant son `background.jpg` (Pexels) par **notre** fond d'écran, pour n'avoir qu'une licence à suivre |
+| **Dessins de dossiers** | [Eleven](https://github.com/mjkim0727/Eleven-icon-theme), pack d'ancrage de son thème d'icônes | GPL-3.0 | Les nôtres sont un aplat ; ceux de Windows 11 ont un dégradé, un onglet plus foncé et un contour. **Pour la famille `places` seulement** : notre thème d'icônes marche et il est mesuré, on ne le remplace pas |
+
+Aucun des deux n'est repris à ce jour : ils attendent un passage en VM vert,
+parce qu'un thème SDDM qui ne se charge pas est la seule pièce capable
+d'empêcher toute connexion — donc toute preuve.
 
 ## La reconnaissance qui a conduit à ces choix — 2026-11-06
 
